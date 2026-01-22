@@ -1,0 +1,1052 @@
+import React, { useState, useMemo, useRef } from 'react';
+import { 
+  Book, Layers, FileText, Paperclip, Maximize2, Copy, Check, ChevronRight, 
+  RefreshCw, Video, Wrench, Mic, GraduationCap, Globe, ExternalLink, Sparkles, Lightbulb, Settings, Wand2, UploadCloud, File, X, Image as ImageIcon, Music, Film, Table, Bot, FilePlus, Package, MonitorPlay, Megaphone, BrainCircuit
+} from 'lucide-react';
+
+// --- CONSTANTS FOR DROPDOWNS ---
+const LANGUAGES = ["Bahasa Indonesia", "English"];
+
+const OUTPUT_FORMATS = [
+  "Default", "Concise", "Step-by-step", "Extreme Detail", "ELI5", "Essay", "Report", "Summary", 
+  "Table", "FAQ", "Listicle", "Interview", "Review", "News", "Opinion", "Tutorial", "Case Study", 
+  "Profile", "Blog", "Poem", "Script", "Whitepaper", "eBook", "Press Release", "Infographic", 
+  "Webinar", "Podcast Script", "Email Campaign", "Social Media Post", "Proposal", "Brochure", 
+  "Newsletter", "Presentation", "Product Description", "Research Paper", "Speech", "Memo", 
+  "Policy Document", "User Guide", "Technical Documentation", "Q&A", "Tutorial Video", 
+  "Case Study Example", "Flowchart", "Interactive Guide", "Checklist", "System Prompt (GPTs)",
+  "Formal Document", "JSON Sequence", "Markdown List", "Course Curriculum", "Marketing Copy", "Visual Prompt"
+];
+
+const TONES = [
+  "Default", "Authoritative", "Clinical", "Cold", "Confident", "Cynical", "Emotional", "Empathetic", 
+  "Formal", "Friendly", "Humorous", "Informal", "Ironic", "Optimistic", "Pessimistic", "Playful", 
+  "Sarcastic", "Serious", "Sympathetic", "Tentative", "Warm", "Persuasive", "Nostalgic", 
+  "Assertive", "Encouraging", "Inspirational", "Urgent", "Professional"
+];
+
+const WRITING_STYLES = [
+  "Default", "Academic", "Analytical", "Argumentative", "Conversational", "Creative", "Critical", 
+  "Descriptive", "Epigrammatic", "Epistolary", "Expository", "Informative", "Instructive", 
+  "Journalistic", "Metaphorical", "Narrative", "Persuasive", "Poetic", "Satirical", "Technical", 
+  "Reflective", "Storytelling", "Process-Oriented", "Abstract", "Review", "Direct Response", "StoryBrand"
+];
+
+// --- AI CHARACTERS / BRAIN MODES ---
+const AI_CHARACTERS = [
+  "Agentic Strategist (Attentive & Proactive)", // New Agentic Mode
+  "Standard Assistant (Helpful & Direct)",
+  "Socratic Mentor (Guide by Questioning)",
+  "Creative Visionary (Out of the Box)",
+  "Strict Professional (Formal & Concise)",
+  "Data-Driven Analyst (Logical & Factual)"
+];
+
+// --- PACK TYPES FOR PROMPT PACK GENERATOR ---
+const PACK_TYPES = [
+  "The Ebook Author Kit (Ide -> Outline -> Bab -> Editing)",
+  "Social Media 30-Day Calendar (Ide -> Caption -> Hashtag)",
+  "Product Launch Sequence (Email 1 -> Email 3 -> Sales Page)",
+  "Online Course Creator (Kurikulum -> Skrip -> Slide)",
+  "SEO Blog Post Workflow (Keyword -> Outline -> Artikel -> Meta)",
+  "Business Starter Pack (Nama -> Tagline -> Business Model -> Plan)",
+  "Personal Branding Kit (Bio -> Content Pillars -> Story)"
+];
+
+// --- DOCUMENT TYPES FOR GENERATOR ---
+const DOCUMENT_TYPES = [
+  "Standard Operating Procedure (SOP)",
+  "Kebijakan Perusahaan (Policy)",
+  "Kerangka Acuan Kerja (KAK / ToR)",
+  "Surat Keputusan (SK)",
+  "Berita Acara (Minutes of Meeting)",
+  "Job Description (Uraian Jabatan)",
+  "Key Performance Indicators (KPI)",
+  "Surat Perjanjian Kerjasama (SPK)",
+  "Non-Disclosure Agreement (NDA)",
+  "Proposal Proyek",
+  "Laporan Bulanan/Tahunan",
+  "Memo Internal",
+  "Surat Penawaran Harga",
+  "Formulir Evaluasi Kinerja",
+  "Kuesioner Survei",
+  "Rencana Anggaran Biaya (RAB - Struktur)",
+  "Risk Register (Daftar Risiko)",
+  "Audit Checklist",
+  "Panduan Onboarding Karyawan",
+  "Press Release (Siaran Pers)"
+];
+
+// --- MARKETING ASSETS ---
+const MARKETING_ASSETS = [
+  "Landing Page Copy (Long Form)",
+  "Sales Page Headline & Hook",
+  "Email Sales Sequence (3-5 Emails)",
+  "Facebook / Instagram Ads Copy",
+  "LinkedIn Authority Post",
+  "Twitter / X Thread",
+  "Flyer / Brosur Content",
+  "Banner Text (Taglines)",
+  "Video Script (Shorts/Reels/TikTok) - Promosi",
+  "Prompt Gambar (Untuk Midjourney/DALL-E)",
+  "Prompt Video (Untuk Runway/Sora)"
+];
+
+// --- DATA STRUKTUR EBOOK (Navigasi) ---
+const EBOOK_SERIES_DATA = {
+  "Single Ebook": [
+    { id: 1, label: "Ebook Utama (Single)" }
+  ],
+  "3 Ebook (Trilogi Simple)": [
+    { id: 1, label: "Buku 1: Fundamental (Mindset & Konsep)" },
+    { id: 2, label: "Buku 2: Strategi & Implementasi (Teknis)" },
+    { id: 3, label: "Buku 3: Advanced & Scaling (Pengembangan)" }
+  ],
+  "9 Ebook (Trilogi Lengkap)": [
+    { id: 1, label: "Ebook 1: Mindset & Dasar (Basic)" },
+    { id: 2, label: "Ebook 2: Validasi Market (Basic)" },
+    { id: 3, label: "Ebook 3: Persiapan Produk (Basic)" },
+    { id: 4, label: "Ebook 4: Strategi Marketing (Inter)" },
+    { id: 5, label: "Ebook 5: Funnel & Sales (Inter)" },
+    { id: 6, label: "Ebook 6: Operasional (Inter)" },
+    { id: 7, label: "Ebook 7: Tim & Delegasi (Adv)" },
+    { id: 8, label: "Ebook 8: Automasi Sistem (Adv)" },
+    { id: 9, label: "Ebook 9: Ekspansi & Exit (Adv)" }
+  ]
+};
+
+const CHAPTER_TEMPLATES = [
+  "Bab 1: Pendahuluan & Latar Belakang",
+  "Bab 2: Identifikasi Masalah (Pain Point)",
+  "Bab 3: Analisis & Akar Masalah",
+  "Bab 4: Konsep Utama / Solusi",
+  "Bab 5: Langkah Implementasi 1",
+  "Bab 6: Langkah Implementasi 2",
+  "Bab 7: Studi Kasus / Contoh Nyata",
+  "Bab 8: Tantangan & Cara Mengatasinya",
+  "Bab 9: Kesimpulan & Penutup",
+  "Custom / Tulis Judul Sendiri..."
+];
+
+// --- AI MODEL LINKS ---
+const AI_MODELS = [
+  { name: 'ChatGPT', url: 'https://chatgpt.com', color: 'hover:text-green-400' },
+  { name: 'Claude', url: 'https://claude.ai', color: 'hover:text-orange-400' },
+  { name: 'Gemini', url: 'https://gemini.google.com', color: 'hover:text-blue-400' },
+  { name: 'DeepSeek', url: 'https://chat.deepseek.com', color: 'hover:text-cyan-400' },
+  { name: 'Perplexity', url: 'https://www.perplexity.ai', color: 'hover:text-teal-400' },
+  { name: 'Manus AI', url: 'https://manus.im', color: 'hover:text-purple-400' },
+  { name: 'Kimi', url: 'https://kimi.moonshot.cn', color: 'hover:text-pink-400' },
+  { name: 'Llama (Meta)', url: 'https://www.meta.ai', color: 'hover:text-indigo-400' },
+];
+
+const EbookBuilderPro = () => {
+  // --- STATE MANAGEMENT ---
+  const [projectData, setProjectData] = useState({
+    topik: '', 
+    judul: '',
+    target: '',
+    language: 'Bahasa Indonesia',
+    outputFormat: 'eBook',
+    tone: 'Authoritative',
+    writingStyle: 'Instructive',
+    aiCharacter: 'Agentic Strategist (Attentive & Proactive)', // Default ke Agentic
+    tujuan: '',
+    painPoint: '', 
+    bigIdea: '', 
+    hasilRiset: '', 
+    produk: '',
+    level: 'Single Ebook' 
+  });
+
+  const [activeMode, setActiveMode] = useState('BRAINSTORM');
+  const [isCopied, setIsCopied] = useState(false);
+  const [uploadedFiles, setUploadedFiles] = useState([]); // State untuk file upload
+  const textAreaRef = useRef(null);
+  const fileInputRef = useRef(null);
+
+  // State konfigurasi dinamis
+  const [taskConfig, setTaskConfig] = useState({
+    selectedEbookId: 1, 
+    selectedEbookLabel: '',
+    judulBab: '', 
+    manualJudulBab: '', 
+    tujuanBab: '',
+    fokusLevel: 'Basic',
+    jenisTemplate: 'SOP', 
+    topikModul: '',
+    durasiScript: '5-10 menit',
+    judulScript: '',
+    // Chatbot Config
+    botName: '',
+    botRole: 'Mentor Pribadi',
+    botPersonality: 'Ramah, Suportif, dan Berbasis Data',
+    // Document Generator Config
+    docType: 'Standard Operating Procedure (SOP)',
+    docContext: '',
+    // Prompt Pack Config
+    packType: 'The Ebook Author Kit (Ide -> Outline -> Bab -> Editing)',
+    // E-Course Config
+    courseDuration: '4 Minggu',
+    courseFormat: 'Video + Worksheet',
+    courseGoal: '',
+    // Marketing Kit Config
+    marketingAsset: 'Landing Page Copy (Long Form)',
+    marketingAngle: ''
+  });
+
+  const [extendConfig, setExtendConfig] = useState({
+    teksAwal: '',
+    targetPanjang: '300-500 kata'
+  });
+
+  // --- HANDLERS ---
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setProjectData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTaskConfigChange = (e) => {
+    const { name, value } = e.target;
+    
+    if (name === 'judulBab') {
+       if (value === "Custom / Tulis Judul Sendiri...") {
+          setTaskConfig(prev => ({ ...prev, judulBab: value, manualJudulBab: '' }));
+       } else {
+          setTaskConfig(prev => ({ ...prev, [name]: value }));
+       }
+    } else if (name === 'selectedEbookId') {
+       const selectedSeries = EBOOK_SERIES_DATA[projectData.level] || [];
+       const ebookObj = selectedSeries.find(item => item.id.toString() === value);
+       setTaskConfig(prev => ({ 
+         ...prev, 
+         selectedEbookId: value,
+         selectedEbookLabel: ebookObj ? ebookObj.label : ''
+       }));
+    } else {
+       setTaskConfig(prev => ({ ...prev, [name]: value }));
+    }
+  };
+
+  const handleExtendChange = (e) => {
+    const { name, value } = e.target;
+    setExtendConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  // --- FILE UPLOAD HANDLERS ---
+  const handleFileChange = (e) => {
+    const files = Array.from(e.target.files);
+    const newFiles = files.map(file => ({
+      name: file.name,
+      type: file.type,
+      size: (file.size / 1024 / 1024).toFixed(2) + ' MB'
+    }));
+    setUploadedFiles(prev => [...prev, ...newFiles]);
+  };
+
+  const removeFile = (index) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (type) => {
+    if (type.includes('image')) return <ImageIcon size={14} className="text-purple-500"/>;
+    if (type.includes('video')) return <Film size={14} className="text-red-500"/>;
+    if (type.includes('audio')) return <Music size={14} className="text-pink-500"/>;
+    if (type.includes('sheet') || type.includes('csv')) return <Table size={14} className="text-green-500"/>;
+    return <FileText size={14} className="text-blue-500"/>;
+  };
+
+  // --- CORE PROMPT GENERATION LOGIC (MEMOIZED) ---
+  const generatedPrompt = useMemo(() => {
+    
+    // --- BUILD AGENTIC INSTRUCTIONS ---
+    const agenticLogic = projectData.aiCharacter.includes("Agentic") 
+      ? `
+=== 🧠 AGENTIC THOUGHT PROCESS (ATTENTIVE MODE) ===
+Anda adalah **Agentic AI yang Cerdas & Attentive**. Sebelum memberikan jawaban akhir, lakukan langkah berikut di dalam "pikiran" Anda:
+1. **Analisis Niat:** Apa yang *sebenarnya* diinginkan user di balik perintah ini?
+2. **Cek Kelengkapan:** Apakah data user sudah cukup? Jika kurang, gunakan asumsi logis terbaik (jangan hanya bertanya balik).
+3. **Antisipasi:** Apa langkah selanjutnya yang mungkin dibutuhkan user? Sertakan dalam jawaban.
+4. **Self-Critique:** Apakah jawaban ini terlalu generik? Jika ya, buat lebih spesifik dan *actionable*.
+` 
+      : `
+=== KARAKTER AI ===
+Berperanlah sebagai: **${projectData.aiCharacter}**.
+`;
+
+    const systemPrompt = `
+Anda adalah “Julycia AI : Engine Ebook Builder”, mesin pembuat ekosistem ebook profesional yang dirancang untuk menangani **BERBAGAI TOPIK (Generik)**.
+Aplikasi ini fleksibel dan tidak terbatas pada satu industri tertentu.
+
+${agenticLogic}
+
+=== DATA UTAMA DARI FORM ===
+- Topik/Kata Kunci: ${projectData.topik || '[Belum diisi]'}
+- Judul Ebook (Utama): ${projectData.judul || '[Belum diisi]'}
+- Target Pembaca: ${projectData.target || '[Belum diisi]'}
+- Level Ebook: ${projectData.level}
+- Pain Point/Masalah: ${projectData.painPoint || '[Belum diisi]'}
+
+=== PENGATURAN GAYA & FORMAT (WAJIB DIIKUTI) ===
+Instruksi di bawah ini bersifat MANDATORI:
+1. BAHASA OUTPUT: Gunakan **${projectData.language}** sepenuhnya.
+2. FORMAT STRUKTUR: **${projectData.outputFormat}**.
+3. NADA BICARA (TONE): **${projectData.tone}**.
+4. GAYA PENULISAN (STYLE): **${projectData.writingStyle}**.
+
+=== INSTRUKSI UMUM ===
+Kerjakan tugas di bawah ini dengan output yang TERSTRUKTUR, MENDALAM, dan SIAP PAKAI.
+`;
+
+    let taskInstruction = "";
+    const styleReminder = `
+    [PENTING: Pastikan Output menggunakan format: ${projectData.outputFormat}, Tone: ${projectData.tone}, Style: ${projectData.writingStyle}, Bahasa: ${projectData.language}]
+    `;
+    
+    const finalJudulBab = taskConfig.judulBab === "Custom / Tulis Judul Sendiri..." ? taskConfig.manualJudulBab : taskConfig.judulBab;
+    
+    const currentSeriesList = EBOOK_SERIES_DATA[projectData.level] || [];
+    const currentEbookObj = currentSeriesList.find(e => e.id.toString() === taskConfig.selectedEbookId.toString());
+    const currentEbookTitle = currentEbookObj ? currentEbookObj.label : "Ebook Utama";
+
+    switch (activeMode) {
+      case 'BRAINSTORM':
+        const hasFiles = uploadedFiles.length > 0;
+        const isAutoGenerate = !projectData.painPoint && !projectData.bigIdea && !projectData.hasilRiset;
+        
+        taskInstruction = `
+MODE TUGAS: BRAINSTORMING IDE & POSITIONING (DARI REFERENSI & KEYWORD)
+${styleReminder}
+
+Saya ingin mencari ide ebook yang kuat.
+
+DATA INPUT:
+1. Topik/Kata Kunci Utama: **"${projectData.topik || '[Isi Topik Anda]'}"**
+${hasFiles ? `
+2. FILE REFERENSI YANG DILAMPIRKAN:
+   (Saya telah mengupload file ke dalam chat ini. Tolong baca dan analisis kontennya)
+   Daftar File:
+   ${uploadedFiles.map(f => `- [${f.name}]`).join('\n   ')}
+` : ''}
+${!isAutoGenerate ? `
+3. Data Tambahan User:
+   - Masalah: ${projectData.painPoint}
+   - Konsep Awal: ${projectData.bigIdea}
+   - Data Riset: ${projectData.hasilRiset}
+` : ''}
+
+TUGAS ANDA:
+${hasFiles ? `
+1. **Analisis Mendalam File:** Baca seluruh konten file yang saya lampirkan (Transkrip Video/Audio, Isi PDF, Data Excel, atau Visual Gambar).
+2. **Ekstraksi Insight:** Cari pola, masalah tersembunyi, atau metode unik dari file tersebut yang berkaitan dengan Kata Kunci "${projectData.topik}".
+3. **Sintesis Ide:** Gabungkan insight dari file tersebut dengan tren pasar saat ini.
+` : `
+1. Lakukan riset pasar simulasi berdasarkan topik "${projectData.topik}".
+`}
+
+OUTPUT YANG DIMINTA (5 OPSI IDE EBOOK):
+Untuk setiap opsi, berikan:
+- **Judul Ebook yang Menjual**
+- **Target Spesifik & Niche**
+- **Analisis Masalah (Pain Point):** (Jika ada file, tunjukkan bagaimana file tersebut memvalidasi masalah ini).
+- **Big Idea & Positioning:** (Jelaskan "Why" ebook ini berbeda berdasarkan referensi yang ada).
+- **Data Pendukung:** (Kutip poin penting dari file referensi atau pengetahuan umum).
+`;
+        break;
+
+      case 'ECOURSE_BUILDER':
+        taskInstruction = `
+MODE TUGAS: E-COURSE BLUEPRINT GENERATOR (DARI EBOOK KE KURSUS)
+${styleReminder}
+
+Saya ingin mengubah materi ebook ini menjadi sebuah **E-Course (Kursus Online)** yang komprehensif.
+Anda bertindak sebagai **Instructional Designer** yang ahli dalam membuat kurikulum pembelajaran.
+
+=== DATA KURSUS ===
+1. **Sumber Materi:** Ebook "${projectData.judul}" (Topik: ${projectData.topik})
+2. **Durasi Kursus:** ${taskConfig.courseDuration || '4 Minggu (Standard)'}
+3. **Format Delivery:** ${taskConfig.courseFormat || 'Video + Worksheet'}
+4. **Tujuan Akhir Siswa (Goal):** ${taskConfig.courseGoal || 'Menguasai skill praktis dari topik ini'}
+
+=== TUGAS ANDA ===
+Buatkan Blueprint Kurikulum Lengkap yang memecah materi ebook menjadi paket pembelajaran yang mudah dicerna.
+
+Struktur Output yang Diminta:
+1. **Nama E-Course:** (Buat nama yang lebih "Action-Oriented" dibanding judul ebook).
+2. **Transformasi Siswa:** (Before vs After mengikuti kursus).
+3. **Struktur Modul (Curriculum Roadmap):**
+   - Bagi materi menjadi Modul/Minggu (sesuai durasi).
+   - Untuk SETIAP Modul, rincikan:
+     - **Judul Modul:**
+     - **Learning Objective:** (Apa yang dipelajari).
+     - **Daftar Lesson (Video/Materi):** (Topik video 1, Topik video 2, dst).
+     - **Action Item / Tugas:** (Apa yang harus siswa kerjakan).
+     - **Aset Pendukung:** (Sebutkan worksheet/template yang dibutuhkan, ambil dari ebook).
+4. **Bonus Ideas:** Ide bonus modul atau webinar untuk menambah nilai jual kursus.
+`;
+        break;
+
+      case 'DOC_GENERATOR':
+        taskInstruction = `
+MODE TUGAS: DOCUMENT GENERATOR (DOKUMEN KERJA)
+${styleReminder}
+
+Saya membutuhkan dokumen kerja profesional yang berkaitan dengan topik ebook ini.
+Anda bertindak sebagai **Technical Writer / Legal Drafter Profesional**.
+
+=== SPESIFIKASI DOKUMEN ===
+1. **Jenis Dokumen:** ${taskConfig.docType}
+2. **Konteks Spesifik:** ${taskConfig.docContext || `Terkait dengan penerapan materi dari ebook "${projectData.judul || projectData.topik}"`}
+3. **Target Pengguna Dokumen:** ${projectData.target || 'Karyawan/Tim Internal'}
+
+=== INSTRUKSI PENULISAN ===
+Buat dokumen ini secara LENGKAP, FORMAL, dan SIAP PAKAI (Ready to use).
+Jangan hanya memberikan outline, tapi berikan ISI SEBENARNYA.
+
+Struktur Wajib (Sesuaikan dengan jenis dokumen):
+- **Header:** (Nama Dokumen, No. Dokumen [Placeholder], Tanggal).
+- **Tujuan/Purpose:** Mengapa dokumen ini dibuat.
+- **Ruang Lingkup/Scope:** Siapa yang terlibat.
+- **Isi Utama:** (Pasal-pasal untuk Kebijakan, Langkah-langkah detail untuk SOP, Butir kesepakatan untuk SPK, dll).
+- **Kolom Tanda Tangan:** (Dibuat, Diperiksa, Disetujui).
+
+Pastikan bahasa yang digunakan baku dan sesuai standar industri untuk ${taskConfig.docType}.
+`;
+        break;
+
+      case 'MARKETING_KIT':
+        const isVisualPrompt = taskConfig.marketingAsset.includes('Prompt Gambar') || taskConfig.marketingAsset.includes('Prompt Video');
+        
+        taskInstruction = `
+MODE TUGAS: MARKETING KIT GENERATOR
+${styleReminder}
+
+Saya membutuhkan materi pemasaran yang persuasif untuk menjual ebook/produk ini.
+Anda bertindak sebagai **Expert Copywriter** dan **Creative Director**.
+
+=== DATA PRODUK ===
+- Produk: Ebook "${projectData.judul}"
+- Target: ${projectData.target}
+- Masalah yang diselesaikan: ${projectData.painPoint}
+- Jenis Aset Marketing: **${taskConfig.marketingAsset}**
+- Angle/Hook Khusus: ${taskConfig.marketingAngle || 'Fokus pada Transformasi & Kemudahan'}
+
+=== INSTRUKSI KHUSUS ===
+${isVisualPrompt ? `
+**TUGAS: GENERATE AI IMAGE/VIDEO PROMPT**
+Jangan buat copy iklan! Tapi buatlah **Prompt Teknis dalam Bahasa Inggris** yang bisa saya copy-paste ke Midjourney/DALL-E/Runway.
+Struktur Prompt:
+1. **Subject:** (Deskripsi objek utama, misal: buku di atas meja kerja modern).
+2. **Environment:** (Latar belakang, pencahayaan, suasana).
+3. **Style:** (Photorealistic, 3D Render, Minimalist Vector, Cinematic).
+4. **Parameters:** (Aspect ratio --ar 16:9, v 6.0, dll).
+Buat 3 Variasi Prompt yang berbeda.
+` : `
+**TUGAS: TULIS COPYWRITING PENJUALAN**
+Tulis naskah iklan/konten yang sangat membujuk menggunakan teknik **Direct Response Marketing**.
+Gunakan kerangka **PAS (Problem - Agitate - Solution)** atau **AIDA (Attention - Interest - Desire - Action)**.
+- Gunakan bahasa yang "nendang" (Punchy).
+- Fokus pada *Benefit*, bukan hanya *Features*.
+- Sertakan Call to Action (CTA) yang jelas.
+`}
+`;
+        break;
+
+      case 'PROMPT_PACK':
+        taskInstruction = `
+MODE TUGAS: PROMPT PACK GENERATOR (WORKFLOW CREATOR)
+${styleReminder}
+
+Saya ingin Anda bertindak sebagai **Senior Prompt Engineer**.
+Tugas Anda BUKAN membuat konten ebook, melainkan membuat **RANGKAIAN PROMPT (PACK)** yang bisa saya gunakan di ChatGPT/Claude untuk menyelesaikan pekerjaan besar langkah demi langkah.
+
+=== SPESIFIKASI PACK ===
+1. **Jenis Workflow:** ${taskConfig.packType}
+2. **Topik Utama:** ${projectData.topik}
+3. **Tujuan Akhir:** Membantu user menyelesaikan seluruh proses dari A sampai Z secara mandiri menggunakan AI.
+
+=== OUTPUT YANG DIMINTA ===
+Buatkan 5-7 Prompt Berurutan (Sequential Prompts). Untuk setiap prompt, berikan:
+1. **Judul Tahapan** (Misal: Tahap 1 - Riset Ide).
+2. **Isi Prompt** (Teks prompt yang siap di-copy paste oleh user, gunakan teknik *persona acting* dan *chain of thought*).
+3. **Penjelasan Singkat** (Apa tujuan prompt ini).
+
+Pastikan prompt tersebut saling berkesinambungan (Prompt 2 menggunakan hasil dari Prompt 1).
+`;
+        break;
+
+      case 'GPT_BUILDER':
+        taskInstruction = `
+MODE TUGAS: MEMBUAT SYSTEM PROMPT UNTUK CHATBOT (GPTs)
+${styleReminder}
+
+Saya ingin membuat "Custom GPT" (Chatbot AI) yang bertindak sebagai MENTOR/PAKAR berdasarkan ebook ini.
+Tolong buatkan **Instruksi Konfigurasi (System Prompt)** lengkap yang siap saya copy-paste ke halaman "Configure" di ChatGPT/Platform AI.
+
+=== PROFIL CHATBOT ===
+- **Nama Bot:** ${taskConfig.botName || 'Mentor ' + (projectData.judul || projectData.topik)}
+- **Peran (Role):** ${taskConfig.botRole}
+- **Kepribadian:** ${taskConfig.botPersonality}
+- **Sumber Pengetahuan:** Konten dari ebook "${projectData.judul}" (Saya akan upload file ebooknya ke Knowledge Base GPTs).
+
+=== TUGAS ANDA ===
+Buatkan Teks Konfigurasi Lengkap dengan struktur berikut:
+
+1. **Name:** Usulan nama bot yang menarik.
+2. **Description:** Deskripsi singkat 1 kalimat untuk ditampilkan di store.
+3. **Instructions (System Prompt Inti):**
+   - Definisikan Persona secara detail (Kamu adalah...).
+   - Definisikan Misi (Membantu pembaca memahami topik ${projectData.topik}).
+   - **Knowledge Base Rules (PENTING):** Instruksikan bot untuk SELALU mencari jawaban di file yang diupload ("Knowledge") TERLEBIH DAHULU sebelum menggunakan pengetahuan umum. Jika jawaban ada di buku, kutip halamannya.
+   - **Tone & Style:** ${projectData.tone} dan ${projectData.writingStyle}.
+   - **Guardrails:** Apa yang TIDAK boleh dilakukan (misal: memberi saran medis/hukum sembarangan jika topik sensitif).
+4. **Conversation Starters:** 4 Contoh pertanyaan pemancing yang relevan dengan isi ebook.
+`;
+        break;
+
+      case 'BIG_IDEA':
+        taskInstruction = `
+MODE TUGAS: BIG_IDEA (PEMANTAPAN KONSEP)
+${styleReminder}
+Saya sudah memilih satu konsep. Tolong pertajam menjadi Positioning yang kuat.
+Topik: ${projectData.topik}
+Rumuskan Definisi, Big Idea (Hook), Pain Points, Solusi, dan Peluang Ekosistem.
+`;
+        break;
+
+      case 'OUTLINE':
+        taskInstruction = `
+MODE TUGAS: OUTLINE
+${styleReminder}
+Level Ebook: ${projectData.level}
+Format: **${projectData.outputFormat}**
+Instruksi: Susun daftar isi/outline lengkap untuk ${projectData.level}.
+`;
+        break;
+
+      case 'DRAFT_BAB':
+        taskInstruction = `
+MODE TUGAS: MENULIS DRAFT BAB (KONTEN INTI)
+${styleReminder}
+
+=== KONTEKS PENULISAN ===
+1. Seri Ebook: **${projectData.level}**
+2. Buku yang Sedang Ditulis: **${currentEbookTitle}** (Fokus pada cakupan buku ini)
+3. Bab yang Ditulis: **${finalJudulBab || '[Judul Bab Belum Diisi]'}**
+4. Tujuan Bab: ${taskConfig.tujuanBab || 'Menjelaskan konsep secara mendalam'}
+
+=== INSTRUKSI KHUSUS ===
+Tulis isi bab secara lengkap dalam Bahasa **${projectData.language}**.
+Pastikan isi bab ini relevan dengan level buku ("${currentEbookTitle}").
+Jangan mencampuradukkan materi dari buku level lain.
+
+Struktur Konten Bab:
+a) Pendahuluan (Hook & Relevansi).
+b) Pembahasan Utama (Sub-bab detail).
+c) Contoh / Studi Kasus (Relevan dengan topik bab).
+d) Actionable Steps / Checklist.
+e) Kesimpulan & Transisi ke bab berikutnya.
+`;
+        break;
+
+      case 'MODUL_PEMBELAJARAN':
+        taskInstruction = `
+MODE TUGAS: MODUL_PEMBELAJARAN
+${styleReminder}
+Tugas: Buat Lesson Plan/Modul Teknis untuk Topik: ${taskConfig.topikModul || projectData.topik}
+Format: **${projectData.outputFormat}**
+`;
+        break;
+
+      case 'TEMPLATE_TOOLBOX':
+        taskInstruction = `
+MODE TUGAS: TEMPLATE_TOOLBOX
+${styleReminder}
+Jenis: ${taskConfig.jenisTemplate}
+Topik: ${taskConfig.topikModul || projectData.topik}
+Format: **${projectData.outputFormat}**
+`;
+        break;
+
+      case 'SCRIPT_VIDEO':
+        taskInstruction = `
+MODE TUGAS: SCRIPT_VIDEO
+${styleReminder}
+Judul Video: ${taskConfig.judulScript || projectData.topik}
+Tone Visual: **${projectData.tone}**
+`;
+        break;
+
+      case 'SCRIPT_AUDIO':
+        taskInstruction = `
+MODE TUGAS: SCRIPT_AUDIO
+${styleReminder}
+Judul Audio: ${taskConfig.judulScript || projectData.topik}
+Tone Suara: **${projectData.tone}**
+`;
+        break;
+
+      case 'LAMPIRAN':
+        taskInstruction = `
+MODE TUGAS: LAMPIRAN_EBOOK
+${styleReminder}
+Buatkan lampiran pendukung (Checklist/Glossary/Worksheet) untuk topik ini.
+Format: **${projectData.outputFormat}**
+`;
+        break;
+
+      case 'PERPANJANG_PARAGRAF':
+        taskInstruction = `
+MODE TUGAS: PERPANJANG_PARAGRAF
+${styleReminder}
+Target Panjang: ${extendConfig.targetPanjang}
+Teks Awal: "${extendConfig.teksAwal}"
+Instruksi: Perkaya teks menggunakan gaya **${projectData.writingStyle}**.
+`;
+        break;
+
+      default:
+        taskInstruction = "Silakan pilih mode tugas di sidebar.";
+    }
+
+    return (systemPrompt + taskInstruction).trim();
+  }, [activeMode, projectData, taskConfig, extendConfig, uploadedFiles]);
+
+  const copyToClipboard = () => {
+    if (textAreaRef.current) {
+      try {
+        textAreaRef.current.select();
+        textAreaRef.current.setSelectionRange(0, 99999);
+        const successful = document.execCommand('copy');
+        if (successful) {
+          setIsCopied(true);
+          setTimeout(() => setIsCopied(false), 2000);
+        }
+      } catch (err) {
+        console.error('Oops, unable to copy', err);
+      }
+    }
+  };
+
+  const openAIModel = (url) => {
+    window.open(url, '_blank');
+  };
+
+  const AIQuickAccess = () => (
+    <div className="bg-slate-800 text-white px-6 py-2 flex items-center justify-between shadow-md">
+      <div className="flex items-center gap-2 text-xs font-medium text-slate-300 shrink-0">
+        <Globe size={14} />
+        <span className="hidden sm:inline">Quick Access AI:</span>
+      </div>
+      <div className="flex gap-4 overflow-x-auto no-scrollbar items-center ml-4 mask-linear-fade">
+        {AI_MODELS.map((model, idx) => (
+          <button key={idx} onClick={() => openAIModel(model.url)} className={`flex items-center gap-1 ${model.color} text-xs transition-colors whitespace-nowrap`}>
+            <ExternalLink size={10} /> {model.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+
+  const Logo = () => (
+    <div className="flex items-center gap-2">
+      <div className="relative flex items-center justify-center w-10 h-10 bg-gradient-to-br from-indigo-600 to-purple-600 rounded-xl shadow-lg shadow-indigo-200">
+        <Book className="text-white w-6 h-6" />
+        <div className="absolute -top-1 -right-1 bg-yellow-400 rounded-full p-0.5 border-2 border-white">
+          <Sparkles size={10} className="text-white" />
+        </div>
+      </div>
+      <div>
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight leading-none">
+          Julycia <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">AI</span>
+        </h1>
+        <p className="text-[10px] font-bold text-slate-400 tracking-wider uppercase">Engine Ebook Builder</p>
+      </div>
+    </div>
+  );
+
+  const SidebarItem = ({ icon: Icon, label, value, onClick, isSubItem = false }) => (
+    <button
+      onClick={() => onClick(value)}
+      className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium transition-colors duration-200 border-r-4 ${
+        activeMode === value ? 'bg-indigo-50 text-indigo-700 border-indigo-600' : 'text-slate-600 hover:bg-slate-50 border-transparent'
+      } ${isSubItem ? 'pl-8 text-xs' : ''}`}
+    >
+      <Icon size={isSubItem ? 16 : 18} />
+      {label}
+    </button>
+  );
+
+  const SectionHeader = ({ label }) => (
+    <div className="px-4 py-2 mt-2 text-[10px] font-bold text-slate-400 uppercase tracking-wider bg-slate-50/50">{label}</div>
+  );
+
+  const FormSelect = ({ label, name, value, options, onChange }) => (
+    <div>
+      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">{label}</label>
+      <select name={name} value={value} onChange={onChange} className="w-full rounded border-slate-300 p-2 text-sm border focus:ring-2 focus:ring-indigo-500 bg-white">
+        {options.map((opt, idx) => (<option key={idx} value={opt}>{opt}</option>))}
+      </select>
+    </div>
+  );
+
+  return (
+    <div className="flex flex-col h-screen bg-slate-100 font-sans text-slate-800 overflow-hidden">
+      <AIQuickAccess />
+      <header className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between shadow-sm z-10">
+        <Logo />
+        <div className="hidden md:flex items-center gap-2 text-sm text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
+           <Sparkles size={16} className="text-yellow-600"/>
+           <span className="text-xs font-semibold text-slate-700">Generic / Any Topic Ready</span>
+        </div>
+      </header>
+
+      <div className="flex flex-1 overflow-hidden">
+        <div className="w-64 bg-white border-r border-slate-200 flex flex-col shrink-0 overflow-y-auto custom-scrollbar">
+          <nav className="flex-1 pb-4">
+            <SectionHeader label="0. Ideasi Awal" />
+            <SidebarItem icon={Lightbulb} label="Cari Ide & Positioning" value="BRAINSTORM" onClick={setActiveMode} />
+            <SectionHeader label="1. Konsep & Struktur" />
+            <SidebarItem icon={Layers} label="Pertajam Big Idea" value="BIG_IDEA" onClick={setActiveMode} />
+            <SidebarItem icon={FileText} label="Outline Ebook" value="OUTLINE" onClick={setActiveMode} />
+            <SectionHeader label="2. Penulisan Konten" />
+            <SidebarItem icon={ChevronRight} label="Draft Bab" value="DRAFT_BAB" onClick={setActiveMode} />
+            <SidebarItem icon={Paperclip} label="Lampiran Ebook" value="LAMPIRAN" onClick={setActiveMode} />
+            <SidebarItem icon={Maximize2} label="Perpanjang Teks" value="PERPANJANG_PARAGRAF" onClick={setActiveMode} />
+            <SectionHeader label="3. Ekosistem Produk" />
+            <SidebarItem icon={MonitorPlay} label="E-Course Blueprint" value="ECOURSE_BUILDER" onClick={setActiveMode} />
+            <SidebarItem icon={GraduationCap} label="Modul Pembelajaran" value="MODUL_PEMBELAJARAN" onClick={setActiveMode} />
+            <SidebarItem icon={Wrench} label="Template & Toolbox" value="TEMPLATE_TOOLBOX" onClick={setActiveMode} />
+            <SidebarItem icon={FilePlus} label="Document Generator" value="DOC_GENERATOR" onClick={setActiveMode} />
+            <SidebarItem icon={Bot} label="Buat Persona Chatbot" value="GPT_BUILDER" onClick={setActiveMode} />
+            <SectionHeader label="4. Marketing & Sales" />
+            <SidebarItem icon={Megaphone} label="Marketing Kit" value="MARKETING_KIT" onClick={setActiveMode} />
+            <SidebarItem icon={Package} label="Prompt Pack Generator" value="PROMPT_PACK" onClick={setActiveMode} />
+            <SectionHeader label="5. Multimedia Script" />
+            <SidebarItem icon={Video} label="Script Video" value="SCRIPT_VIDEO" onClick={setActiveMode} />
+            <SidebarItem icon={Mic} label="Script Audio" value="SCRIPT_AUDIO" onClick={setActiveMode} />
+          </nav>
+        </div>
+
+        <main className="flex-1 flex overflow-hidden">
+          <div className="flex-1 bg-white p-6 overflow-y-auto border-r border-slate-200">
+            <h2 className="text-lg font-bold mb-5 flex items-center gap-2 text-slate-700">
+              <span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs text-slate-600">1</span>
+              Isi Konteks Proyek
+            </h2>
+            
+            <div className="space-y-4">
+              {/* --- BRAINSTORM MODE UI --- */}
+              {activeMode === 'BRAINSTORM' && (
+                <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200 mb-6 animate-in fade-in">
+                  <h3 className="font-bold text-yellow-800 text-sm mb-2 flex items-center gap-2"><Wand2 size={16} /> Auto-Generate / Ideasi dari File</h3>
+                  <p className="text-xs text-yellow-700 mb-3 leading-relaxed">
+                    <strong>Cara Penggunaan:</strong> Masukkan <strong>Topik/Kata Kunci</strong> di bawah. Anda juga bisa mengupload file (PDF, Video, Gambar) untuk dianalisis AI sebagai sumber ide.
+                  </p>
+                  
+                  {/* File Upload Section */}
+                  <div 
+                    className="border-2 border-dashed border-yellow-400 rounded-lg p-4 bg-white mb-4 text-center cursor-pointer hover:bg-yellow-50 transition-colors"
+                    onClick={() => fileInputRef.current.click()}
+                  >
+                    <input 
+                      type="file" 
+                      ref={fileInputRef} 
+                      className="hidden" 
+                      multiple 
+                      onChange={handleFileChange} 
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.mp3,.mp4"
+                    />
+                    <div className="flex flex-col items-center justify-center text-yellow-700">
+                      <UploadCloud size={24} className="mb-2"/>
+                      <span className="text-xs font-bold">Klik untuk Upload Referensi (Video, Audio, PDF, Gambar)</span>
+                      <span className="text-[10px] opacity-75">AI akan menganalisis file ini untuk mencari ide.</span>
+                    </div>
+                  </div>
+
+                  {/* Uploaded File List */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mb-4 space-y-2">
+                      <p className="text-xs font-bold text-slate-500">File Terlampir ({uploadedFiles.length}):</p>
+                      {uploadedFiles.map((file, idx) => (
+                        <div key={idx} className="flex items-center justify-between bg-white p-2 rounded border border-slate-200 text-xs">
+                          <div className="flex items-center gap-2 overflow-hidden">
+                            {getFileIcon(file.type)}
+                            <span className="truncate max-w-[150px]">{file.name}</span>
+                            <span className="text-slate-400 text-[10px]">({file.size})</span>
+                          </div>
+                          <button onClick={() => removeFile(idx)} className="text-slate-400 hover:text-red-500"><X size={14}/></button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="space-y-3">
+                    <div><label className="block text-xs font-bold text-slate-800 uppercase mb-1">1. Kata Kunci / Topik Utama (WAJIB)</label><input type="text" name="topik" value={projectData.topik} onChange={handleInputChange} placeholder="Contoh: Digital Marketing, Diet Keto..." className="w-full rounded border-yellow-400 p-2 text-sm border-2 focus:ring-2 focus:ring-yellow-500 bg-white" /></div>
+                    <div><label className="block text-xs font-bold text-slate-400 uppercase mb-1">2. Problem (Opsional / Auto)</label><textarea name="painPoint" value={projectData.painPoint} onChange={handleInputChange} rows={2} placeholder="(Biarkan kosong untuk Auto-Generate)" className="w-full rounded border-slate-200 p-2 text-sm border focus:ring-2 focus:ring-indigo-500 bg-slate-50" /></div>
+                    <div><label className="block text-xs font-bold text-slate-400 uppercase mb-1">3. Konsep Awal (Opsional / Auto)</label><textarea name="bigIdea" value={projectData.bigIdea} onChange={handleInputChange} rows={2} placeholder="(Biarkan kosong untuk Auto-Generate)" className="w-full rounded border-slate-200 p-2 text-sm border focus:ring-2 focus:ring-indigo-500 bg-slate-50" /></div>
+                    <div><label className="block text-xs font-bold text-slate-400 uppercase mb-1">4. Data Riset (Opsional / Auto)</label><textarea name="hasilRiset" value={projectData.hasilRiset} onChange={handleInputChange} rows={2} placeholder="(Biarkan kosong untuk Auto-Generate)" className="w-full rounded border-slate-200 p-2 text-sm border focus:ring-2 focus:ring-indigo-500 bg-slate-50" /></div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- STANDARD INPUTS --- */}
+              {activeMode !== 'BRAINSTORM' && (
+                <div className="animate-in fade-in slide-in-from-bottom-2 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Topik Utama</label><input type="text" name="topik" value={projectData.topik} onChange={handleInputChange} placeholder="Topik..." className="w-full rounded border-slate-300 p-2 text-sm border focus:ring-2 focus:ring-indigo-500" /></div>
+                    <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Judul Ebook</label><input type="text" name="judul" value={projectData.judul} onChange={handleInputChange} placeholder="Judul..." className="w-full rounded border-slate-300 p-2 text-sm border focus:ring-2 focus:ring-indigo-500" /></div>
+                  </div>
+                  <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target & Pain Point</label><input type="text" name="target" value={projectData.target} onChange={handleInputChange} placeholder="Target Pembaca..." className="w-full rounded border-slate-300 p-2 text-sm border mb-2" /><textarea name="painPoint" value={projectData.painPoint} onChange={handleInputChange} rows={2} placeholder="Masalah utama..." className="w-full rounded border-slate-300 p-2 text-sm border" /></div>
+                </div>
+              )}
+              
+              <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 mt-2">
+                 <h3 className="font-bold text-slate-600 text-xs uppercase mb-3 flex items-center gap-2"><Settings size={14}/> Pengaturan Gaya & Format</h3>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormSelect label="Bahasa / Language" name="language" value={projectData.language} options={LANGUAGES} onChange={handleInputChange} />
+                    <FormSelect label="Output Format" name="outputFormat" value={projectData.outputFormat} options={OUTPUT_FORMATS} onChange={handleInputChange} />
+                    <FormSelect label="Tone (Nada Bicara)" name="tone" value={projectData.tone} options={TONES} onChange={handleInputChange} />
+                    <FormSelect label="Writing Style (Gaya Tulisan)" name="writingStyle" value={projectData.writingStyle} options={WRITING_STYLES} onChange={handleInputChange} />
+                    <FormSelect label="AI Character (Brain Mode)" name="aiCharacter" value={projectData.aiCharacter} options={AI_CHARACTERS} onChange={handleInputChange} />
+                 </div>
+                 <div className="mt-4">
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Level Seri</label>
+                    <select name="level" value={projectData.level} onChange={handleInputChange} className="w-full rounded border-slate-300 p-2 text-sm border focus:ring-2 focus:ring-indigo-500 bg-white">
+                       <option value="Single Ebook">Single Ebook (1 Buku)</option>
+                       <option value="3 Ebook (Trilogi Simple)">3 Ebook (Trilogi Simple)</option>
+                       <option value="9 Ebook (Trilogi Lengkap)">9 Ebook (Trilogi Lengkap)</option>
+                    </select>
+                 </div>
+              </div>
+
+              <hr className="border-slate-100 my-4" />
+
+              {/* --- MARKETING KIT MODE UI (NEW) --- */}
+              {activeMode === 'MARKETING_KIT' && (
+                <div className="bg-pink-50 p-4 rounded-lg border border-pink-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-pink-800 text-sm mb-3 flex items-center gap-2"><Megaphone size={14}/> Marketing Kit Generator</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-pink-700 uppercase mb-1">Pilih Aset Marketing</label>
+                      <select name="marketingAsset" value={taskConfig.marketingAsset} onChange={handleTaskConfigChange} className="w-full rounded border-pink-200 p-2 text-sm bg-white">
+                        {MARKETING_ASSETS.map((asset, idx) => (
+                          <option key={idx} value={asset}>{asset}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-pink-700 uppercase mb-1">Angle / Hook Khusus</label>
+                      <input 
+                        type="text" 
+                        name="marketingAngle" 
+                        value={taskConfig.marketingAngle} 
+                        onChange={handleTaskConfigChange} 
+                        placeholder="Contoh: Fokus pada 'Hemat Waktu' atau 'Rahasia Tersembunyi'..." 
+                        className="w-full rounded border-pink-200 p-2 text-sm bg-white focus:ring-2 focus:ring-pink-500" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- ECOURSE BUILDER MODE UI --- */}
+              {activeMode === 'ECOURSE_BUILDER' && (
+                <div className="bg-teal-50 p-4 rounded-lg border border-teal-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-teal-800 text-sm mb-3 flex items-center gap-2"><MonitorPlay size={14}/> Konfigurasi E-Course Blueprint</h3>
+                  <div className="space-y-3">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div>
+                          <label className="block text-xs font-bold text-teal-700 uppercase mb-1">Durasi Kursus</label>
+                          <input type="text" name="courseDuration" value={taskConfig.courseDuration} onChange={handleTaskConfigChange} placeholder="Contoh: 4 Minggu, 7 Hari..." className="w-full rounded border-teal-200 p-2 text-sm bg-white focus:ring-2 focus:ring-teal-500" />
+                       </div>
+                       <div>
+                          <label className="block text-xs font-bold text-teal-700 uppercase mb-1">Format Delivery</label>
+                          <input type="text" name="courseFormat" value={taskConfig.courseFormat} onChange={handleTaskConfigChange} placeholder="Video, Live Zoom, Teks..." className="w-full rounded border-teal-200 p-2 text-sm bg-white focus:ring-2 focus:ring-teal-500" />
+                       </div>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-teal-700 uppercase mb-1">Goal / Transformasi Utama</label>
+                      <textarea name="courseGoal" value={taskConfig.courseGoal} onChange={handleTaskConfigChange} rows={2} placeholder="Apa hasil akhir yang didapat siswa setelah lulus?" className="w-full rounded border-teal-200 p-2 text-sm bg-white focus:ring-2 focus:ring-teal-500" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- GPT BUILDER MODE UI --- */}
+              {activeMode === 'GPT_BUILDER' && (
+                <div className="bg-sky-50 p-4 rounded-lg border border-sky-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-sky-800 text-sm mb-3 flex items-center gap-2"><Bot size={14}/> Konfigurasi Chatbot Mentor</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-sky-700 uppercase mb-1">Nama Bot / Mentor</label>
+                      <input type="text" name="botName" value={taskConfig.botName} onChange={handleTaskConfigChange} placeholder="Contoh: Coach Diet AI, Mentor Bisnis Digital..." className="w-full rounded border-sky-200 p-2 text-sm bg-white focus:ring-2 focus:ring-sky-500" />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-sky-700 uppercase mb-1">Peran Utama (Role)</label>
+                      <select name="botRole" value={taskConfig.botRole} onChange={handleTaskConfigChange} className="w-full rounded border-sky-200 p-2 text-sm bg-white">
+                        <option value="Mentor Pribadi">Mentor Pribadi (Membimbing Step-by-Step)</option>
+                        <option value="Asisten Teknis">Asisten Teknis (Menjawab How-to)</option>
+                        <option value="Teman Curhat & Motivator">Teman Curhat & Motivator</option>
+                        <option value="Kritikus / Penguji Ide">Kritikus / Penguji Ide (Challenger)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-sky-700 uppercase mb-1">Kepribadian / Sifat</label>
+                      <input type="text" name="botPersonality" value={taskConfig.botPersonality} onChange={handleTaskConfigChange} placeholder="Contoh: Ramah, Tegas, Lucu, Formal..." className="w-full rounded border-sky-200 p-2 text-sm bg-white" />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- DOCUMENT GENERATOR MODE UI --- */}
+              {activeMode === 'DOC_GENERATOR' && (
+                <div className="bg-orange-50 p-4 rounded-lg border border-orange-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-orange-800 text-sm mb-3 flex items-center gap-2"><FilePlus size={14}/> Generate Dokumen Kerja</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-orange-700 uppercase mb-1">Pilih Jenis Dokumen</label>
+                      <select name="docType" value={taskConfig.docType} onChange={handleTaskConfigChange} className="w-full rounded border-orange-200 p-2 text-sm bg-white">
+                        {DOCUMENT_TYPES.map((type, idx) => (
+                          <option key={idx} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-bold text-orange-700 uppercase mb-1">Konteks / Detail Dokumen</label>
+                      <textarea 
+                        name="docContext" 
+                        value={taskConfig.docContext} 
+                        onChange={handleTaskConfigChange} 
+                        rows={3}
+                        placeholder="Contoh: SOP untuk Penanganan Keluhan Pelanggan di bagian Customer Service..." 
+                        className="w-full rounded border-orange-200 p-2 text-sm bg-white" 
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- PROMPT PACK MODE UI --- */}
+              {activeMode === 'PROMPT_PACK' && (
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-purple-800 text-sm mb-3 flex items-center gap-2"><Package size={14}/> Generate Prompt Pack</h3>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-xs font-bold text-purple-700 uppercase mb-1">Pilih Jenis Workflow</label>
+                      <select name="packType" value={taskConfig.packType} onChange={handleTaskConfigChange} className="w-full rounded border-purple-200 p-2 text-sm bg-white">
+                        {PACK_TYPES.map((type, idx) => (
+                          <option key={idx} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- DRAFT BAB MODE UI --- */}
+              {activeMode === 'DRAFT_BAB' && (
+                <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-indigo-800 text-sm mb-3 flex items-center gap-2"><Book size={14}/> Detail Bab Ebook</h3>
+                  <div className="space-y-3">
+                    
+                    {/* DROPDOWN EBOOK SELECTOR (Hanya muncul jika bukan Single Ebook) */}
+                    {projectData.level !== "Single Ebook" && (
+                        <div>
+                           <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Pilih Ebook ke-Berapa</label>
+                           <select name="selectedEbookId" value={taskConfig.selectedEbookId} onChange={handleTaskConfigChange} className="w-full rounded border-indigo-200 p-2 text-sm mb-2 bg-white">
+                              {(EBOOK_SERIES_DATA[projectData.level] || []).map((ebook) => (
+                                 <option key={ebook.id} value={ebook.id}>{ebook.label}</option>
+                              ))}
+                           </select>
+                        </div>
+                    )}
+
+                    {/* DROPDOWN CHAPTER SELECTOR */}
+                    <div>
+                      <label className="block text-xs font-bold text-indigo-800 uppercase mb-1">Pilih Bab / Tulis Manual</label>
+                      <select name="judulBab" value={taskConfig.judulBab} onChange={handleTaskConfigChange} className="w-full rounded border-indigo-200 p-2 text-sm mb-2 bg-white">
+                        <option value="">-- Pilih Bab untuk Ditulis --</option>
+                        {CHAPTER_TEMPLATES.map((chapter, idx) => (<option key={idx} value={chapter}>{chapter}</option>))}
+                      </select>
+                      {taskConfig.judulBab === "Custom / Tulis Judul Sendiri..." && (
+                        <input type="text" name="manualJudulBab" value={taskConfig.manualJudulBab} onChange={handleTaskConfigChange} placeholder="Ketik Judul Bab di sini..." className="w-full rounded border-indigo-200 p-2 text-sm border-2 border-indigo-300 focus:ring-2 focus:ring-indigo-500" />
+                      )}
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                       <input type="text" name="tujuanBab" value={taskConfig.tujuanBab} onChange={handleTaskConfigChange} placeholder="Tujuan Bab..." className="w-full rounded border-indigo-200 p-2 text-sm" />
+                       <select name="fokusLevel" value={taskConfig.fokusLevel} onChange={handleTaskConfigChange} className="w-full rounded border-indigo-200 p-2 text-sm">
+                          <option value="Basic">Basic</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                       </select>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* --- OTHER MODES UI --- */}
+              {activeMode === 'MODUL_PEMBELAJARAN' && (
+                <div className="bg-emerald-50 p-4 rounded-lg border border-emerald-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-emerald-800 text-sm mb-3 flex items-center gap-2"><GraduationCap size={14}/> Detail Modul</h3>
+                  <div className="space-y-3">
+                    <input type="text" name="topikModul" value={taskConfig.topikModul} onChange={handleTaskConfigChange} placeholder="Topik Modul..." className="w-full rounded border-emerald-200 p-2 text-sm" />
+                    <p className="text-xs text-emerald-600">AI akan membuat struktur: Learning Obj &rarr; Materi &rarr; Quiz &rarr; Tugas.</p>
+                  </div>
+                </div>
+              )}
+
+              {activeMode === 'TEMPLATE_TOOLBOX' && (
+                <div className="bg-amber-50 p-4 rounded-lg border border-amber-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-amber-800 text-sm mb-3 flex items-center gap-2"><Wrench size={14}/> Detail Template/Alat</h3>
+                  <div className="space-y-3">
+                    <select name="jenisTemplate" value={taskConfig.jenisTemplate} onChange={handleTaskConfigChange} className="w-full rounded border-amber-200 p-2 text-sm">
+                      <option value="SOP">SOP</option><option value="Formulir">Formulir</option><option value="Checklist">Checklist</option><option value="Worksheet">Worksheet</option><option value="Cheatsheet">Cheatsheet</option>
+                    </select>
+                    <input type="text" name="topikModul" value={taskConfig.topikModul} onChange={handleTaskConfigChange} placeholder="Topik spesifik template..." className="w-full rounded border-amber-200 p-2 text-sm" />
+                  </div>
+                </div>
+              )}
+
+              {(activeMode === 'SCRIPT_VIDEO' || activeMode === 'SCRIPT_AUDIO') && (
+                <div className="bg-rose-50 p-4 rounded-lg border border-rose-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-bold text-rose-800 text-sm mb-3 flex items-center gap-2">{activeMode === 'SCRIPT_VIDEO' ? <Video size={14}/> : <Mic size={14}/>} Detail Script Multimedia</h3>
+                  <div className="space-y-3">
+                    <input type="text" name="judulScript" value={taskConfig.judulScript} onChange={handleTaskConfigChange} placeholder="Judul / Topik Script..." className="w-full rounded border-rose-200 p-2 text-sm" />
+                    <input type="text" name="durasiScript" value={taskConfig.durasiScript} onChange={handleTaskConfigChange} placeholder="Estimasi Durasi..." className="w-full rounded border-rose-200 p-2 text-sm" />
+                  </div>
+                </div>
+              )}
+
+               {activeMode === 'PERPANJANG_PARAGRAF' && (
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-100 animate-in fade-in slide-in-from-bottom-2">
+                  <h3 className="font-semibold text-purple-800 text-sm mb-3">Input Teks Pendek</h3>
+                  <textarea name="teksAwal" value={extendConfig.teksAwal} onChange={handleExtendChange} rows={4} placeholder="Paste paragraf..." className="w-full rounded border-purple-200 p-2 text-sm mb-2" />
+                  <input type="text" name="targetPanjang" value={extendConfig.targetPanjang} onChange={handleExtendChange} placeholder="Target jumlah kata" className="w-full rounded border-purple-200 p-2 text-sm" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex-1 bg-slate-50 flex flex-col p-6 overflow-hidden">
+             <div className="flex justify-between items-center mb-4">
+                <h2 className="text-lg font-bold text-slate-700 flex items-center gap-2"><span className="w-6 h-6 rounded-full bg-slate-200 flex items-center justify-center text-xs text-slate-600">2</span> Generated Master Prompt</h2>
+                <button onClick={copyToClipboard} className={`flex items-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-all ${isCopied ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-slate-800 text-white hover:bg-slate-900'}`}>
+                  {isCopied ? <Check size={16} /> : <Copy size={16} />}{isCopied ? 'Tersalin!' : 'Copy Prompt'}
+                </button>
+             </div>
+             <div className="flex-1 relative shadow-inner">
+                <textarea ref={textAreaRef} className="w-full h-full p-4 rounded-lg border border-slate-300 font-mono text-sm leading-relaxed text-slate-600 resize-none focus:ring-2 focus:ring-indigo-500 focus:outline-none" value={generatedPrompt} readOnly />
+             </div>
+             <div className="mt-4 p-3 bg-white border border-slate-200 rounded-md text-xs text-slate-500 flex justify-between items-center shadow-sm">
+                <div className="flex items-center gap-2"><div className="bg-slate-100 p-1 rounded"><RefreshCw size={12}/></div><span>Gunakan "Quick Access AI" di atas untuk hasil terbaik.</span></div>
+             </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+};
+
+export default EbookBuilderPro;
