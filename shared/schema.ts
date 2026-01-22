@@ -122,12 +122,7 @@ export const CHAPTER_TEMPLATES = [
 ] as const;
 
 export const AI_MODELS = [
-  { name: 'ChatGPT', url: 'https://chatgpt.com', color: 'text-green-500' },
-  { name: 'Claude', url: 'https://claude.ai', color: 'text-orange-500' },
-  { name: 'Gemini', url: 'https://gemini.google.com', color: 'text-blue-500' },
-  { name: 'DeepSeek', url: 'https://chat.deepseek.com', color: 'text-cyan-500' },
-  { name: 'Perplexity', url: 'https://www.perplexity.ai', color: 'text-teal-500' },
-  { name: 'Grok', url: 'https://x.com/i/grok', color: 'text-purple-500' },
+  { name: 'DokumenTender AI', url: 'https://ai.dokumentender.com', color: 'text-primary' },
 ] as const;
 
 export const MODES = [
