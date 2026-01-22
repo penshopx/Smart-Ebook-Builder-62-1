@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
+import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 
 const projectDataSchema = z.object({
   topik: z.string(),
@@ -61,7 +62,11 @@ export async function registerRoutes(
   app: Express
 ): Promise<Server> {
   
-  app.get("/api/projects", async (_req, res) => {
+  // Setup authentication (BEFORE other routes)
+  await setupAuth(app);
+  registerAuthRoutes(app);
+
+  app.get("/api/projects", isAuthenticated, async (_req, res) => {
     try {
       const projects = await storage.getProjects();
       res.json(projects);
@@ -70,9 +75,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/projects/:id", async (req, res) => {
+  app.get("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
-      const project = await storage.getProject(req.params.id);
+      const project = await storage.getProject(req.params.id as string);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -82,7 +87,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/projects", async (req, res) => {
+  app.post("/api/projects", isAuthenticated, async (req, res) => {
     try {
       const parsed = createProjectSchema.safeParse(req.body);
       if (!parsed.success) {
@@ -95,13 +100,13 @@ export async function registerRoutes(
     }
   });
 
-  app.put("/api/projects/:id", async (req, res) => {
+  app.put("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
       const parsed = createProjectSchema.partial().safeParse(req.body);
       if (!parsed.success) {
         return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
       }
-      const project = await storage.updateProject(req.params.id, parsed.data);
+      const project = await storage.updateProject(req.params.id as string, parsed.data);
       if (!project) {
         return res.status(404).json({ error: "Project not found" });
       }
@@ -111,9 +116,9 @@ export async function registerRoutes(
     }
   });
 
-  app.delete("/api/projects/:id", async (req, res) => {
+  app.delete("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
-      const deleted = await storage.deleteProject(req.params.id);
+      const deleted = await storage.deleteProject(req.params.id as string);
       if (!deleted) {
         return res.status(404).json({ error: "Project not found" });
       }

@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+// Re-export auth models
+export * from "./models/auth";
+
 // --- CONSTANTS FOR DROPDOWNS ---
 export const LANGUAGES = ["Bahasa Indonesia", "English"] as const;
 
