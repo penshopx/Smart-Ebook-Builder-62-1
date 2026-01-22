@@ -14,7 +14,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen } from 'lucide-react';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import type { ProjectData, TaskConfig, ExtendConfig, UploadedFile } from '@shared/schema';
@@ -89,6 +91,7 @@ export default function Home() {
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
   const { toast } = useToast();
+  const { user } = useAuth();
 
   const handleProjectChange = (name: string, value: string) => {
     setProjectData(prev => ({ ...prev, [name]: value }));
@@ -210,6 +213,31 @@ export default function Home() {
               <RotateCcw className="h-4 w-4" />
             </Button>
             <ThemeToggle />
+            <div className="flex items-center gap-2 ml-2 pl-2 border-l">
+              {user && (
+                <>
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
+                    <AvatarFallback>
+                      {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="text-sm font-medium hidden lg:block">
+                    {user.firstName || user.email?.split('@')[0]}
+                  </span>
+                </>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                asChild
+                data-testid="button-logout"
+              >
+                <a href="/api/logout">
+                  <LogOut className="h-4 w-4" />
+                </a>
+              </Button>
+            </div>
           </div>
         </div>
       </header>
