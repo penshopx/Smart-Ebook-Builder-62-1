@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, RefreshCw } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket } from 'lucide-react';
 import { AI_MODELS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -29,7 +29,7 @@ export function PromptOutput({ prompt, onRegenerate }: PromptOutputProps) {
       setIsCopied(true);
       toast({
         title: "Prompt berhasil disalin!",
-        description: "Paste ke ChatGPT, Claude, atau AI lainnya.",
+        description: "Paste ke DokumenTender AI atau AI lainnya.",
       });
       setTimeout(() => setIsCopied(false), 2000);
     } catch (err) {
@@ -80,57 +80,61 @@ export function PromptOutput({ prompt, onRegenerate }: PromptOutputProps) {
             {promptContent}
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              onClick={handleCopy}
-              className="flex-1 sm:flex-none"
-              data-testid="button-copy-prompt"
-            >
-              {isCopied ? (
-                <>
-                  <Check className="h-4 w-4 mr-2" />
-                  Tersalin!
-                </>
-              ) : (
-                <>
-                  <Copy className="h-4 w-4 mr-2" />
-                  Salin Prompt
-                </>
-              )}
-            </Button>
+          <div className="flex flex-col gap-3">
             {onRegenerate && (
               <Button
-                variant="outline"
+                size="lg"
                 onClick={onRegenerate}
-                data-testid="button-regenerate"
+                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+                data-testid="button-generate"
               >
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+                <Sparkles className="h-5 w-5 mr-2" />
+                Generate Prompt
               </Button>
             )}
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={handleCopy}
+                variant="outline"
+                className="flex-1"
+                data-testid="button-copy-prompt"
+              >
+                {isCopied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Tersalin!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-4 w-4 mr-2" />
+                    Salin Prompt
+                  </>
+                )}
+              </Button>
+            </div>
           </div>
 
           <div className="pt-4 border-t">
             <p className="text-xs text-muted-foreground mb-3">
-              Buka AI Model dan paste prompt:
+              Eksekusi prompt ke AI:
             </p>
             <div className="flex flex-wrap gap-2">
               {AI_MODELS.map((model) => (
                 <Button
                   key={model.name}
-                  variant="outline"
-                  size="sm"
+                  size="lg"
                   asChild
-                  className="gap-1.5"
+                  className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
                 >
                   <a
                     href={model.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    data-testid={`link-ai-${model.name.toLowerCase()}`}
+                    data-testid={`link-ai-${model.name.toLowerCase().replace(/\s+/g, '-')}`}
                   >
-                    <span className={model.color}>{model.name}</span>
-                    <ExternalLink className="h-3 w-3" />
+                    <Rocket className="h-5 w-5" />
+                    Eksekusi ke {model.name}
+                    <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
               ))}
