@@ -81,3 +81,33 @@ The `shared/` directory contains code used by both frontend and backend:
 - **date-fns**: Date utilities
 - **embla-carousel-react**: Carousel functionality
 - **vaul**: Drawer component
+
+### Authentication
+- **Replit Auth**: OpenID Connect authentication via Replit
+- User sessions stored in PostgreSQL via connect-pg-simple
+- Protected routes use `isAuthenticated` middleware
+
+### Future Enhancements (TODO)
+- **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
+
+## Application Features
+
+### 11 Generation Modes
+1. **Brainstorm Ide** - Generate creative ebook ideas
+2. **Big Idea** - Sharpen positioning and unique concept
+3. **Outline** - Create comprehensive table of contents
+4. **Draft Bab** - Write chapter content section by section
+5. **Video Script** - Create video/podcast scripts
+6. **E-Course Builder** - Transform ebook into course curriculum
+7. **Document Generator** - Create SOP, Policy, and other documents
+8. **Prompt Pack** - Generate workflow prompt sequences
+9. **GPT Builder** - Create chatbot system prompts
+10. **Marketing Kit** - Create marketing and promotional materials
+11. **Extend Text** - Expand/develop short text
+
+### Key Screens
+- **Landing Page** (`/`) - Marketing page for unauthenticated users with pricing tiers
+- **App Home** (`/`) - Main application for authenticated users with prompt generation tools
+- Project saving/loading functionality
+- Copy prompts to clipboard
+- Direct link to DokumenTender AI for execution
