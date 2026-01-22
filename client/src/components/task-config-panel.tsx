@@ -1,0 +1,406 @@
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  EBOOK_SERIES_DATA, CHAPTER_TEMPLATES, DOCUMENT_TYPES, PACK_TYPES, MARKETING_ASSETS 
+} from '@shared/schema';
+import type { ProjectData, TaskConfig, ExtendConfig } from '@shared/schema';
+import { Settings2 } from 'lucide-react';
+
+interface TaskConfigPanelProps {
+  activeMode: string;
+  projectData: ProjectData;
+  taskConfig: TaskConfig;
+  extendConfig: ExtendConfig;
+  onTaskConfigChange: (name: string, value: string | number) => void;
+  onExtendConfigChange: (name: string, value: string) => void;
+}
+
+export function TaskConfigPanel({
+  activeMode,
+  projectData,
+  taskConfig,
+  extendConfig,
+  onTaskConfigChange,
+  onExtendConfigChange,
+}: TaskConfigPanelProps) {
+  const currentSeriesList = EBOOK_SERIES_DATA[projectData.level] || [];
+
+  const renderContent = () => {
+    switch (activeMode) {
+      case 'DRAFT_BAB':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Pilih Ebook (dalam seri)</Label>
+                <Select
+                  value={taskConfig.selectedEbookId.toString()}
+                  onValueChange={(value) => onTaskConfigChange('selectedEbookId', parseInt(value))}
+                >
+                  <SelectTrigger data-testid="select-ebook">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {currentSeriesList.map((ebook) => (
+                      <SelectItem key={ebook.id} value={ebook.id.toString()}>
+                        {ebook.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Template Judul Bab</Label>
+                <Select
+                  value={taskConfig.judulBab}
+                  onValueChange={(value) => onTaskConfigChange('judulBab', value)}
+                >
+                  <SelectTrigger data-testid="select-judul-bab">
+                    <SelectValue placeholder="Pilih template bab..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CHAPTER_TEMPLATES.map((chapter) => (
+                      <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {taskConfig.judulBab === "Custom / Tulis Judul Sendiri..." && (
+              <div className="space-y-2">
+                <Label>Judul Bab Custom</Label>
+                <Input
+                  placeholder="Tulis judul bab Anda sendiri..."
+                  value={taskConfig.manualJudulBab}
+                  onChange={(e) => onTaskConfigChange('manualJudulBab', e.target.value)}
+                  data-testid="input-manual-judul-bab"
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label>Tujuan/Fokus Bab Ini</Label>
+              <Textarea
+                placeholder="Apa yang ingin dicapai dari bab ini? Skill apa yang pembaca dapatkan?"
+                value={taskConfig.tujuanBab}
+                onChange={(e) => onTaskConfigChange('tujuanBab', e.target.value)}
+                className="min-h-[80px] resize-none"
+                data-testid="textarea-tujuan-bab"
+              />
+            </div>
+          </div>
+        );
+
+      case 'VIDEO_SCRIPT':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Judul Video/Episode</Label>
+                <Input
+                  placeholder="Contoh: 5 Kesalahan Fatal dalam Digital Marketing"
+                  value={taskConfig.judulScript}
+                  onChange={(e) => onTaskConfigChange('judulScript', e.target.value)}
+                  data-testid="input-judul-script"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Durasi Target</Label>
+                <Select
+                  value={taskConfig.durasiScript}
+                  onValueChange={(value) => onTaskConfigChange('durasiScript', value)}
+                >
+                  <SelectTrigger data-testid="select-durasi">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-3 menit">1-3 menit (Short/Reels)</SelectItem>
+                    <SelectItem value="5-10 menit">5-10 menit (Standard)</SelectItem>
+                    <SelectItem value="15-20 menit">15-20 menit (Deep Dive)</SelectItem>
+                    <SelectItem value="30+ menit">30+ menit (Podcast/Webinar)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Bab Sumber (Opsional)</Label>
+              <Select
+                value={taskConfig.judulBab}
+                onValueChange={(value) => onTaskConfigChange('judulBab', value)}
+              >
+                <SelectTrigger data-testid="select-bab-sumber">
+                  <SelectValue placeholder="Pilih bab sebagai sumber materi..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHAPTER_TEMPLATES.slice(0, -1).map((chapter) => (
+                    <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'ECOURSE_BUILDER':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Durasi Kursus</Label>
+                <Select
+                  value={taskConfig.courseDuration}
+                  onValueChange={(value) => onTaskConfigChange('courseDuration', value)}
+                >
+                  <SelectTrigger data-testid="select-course-duration">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1 Minggu">1 Minggu (Intensif)</SelectItem>
+                    <SelectItem value="2 Minggu">2 Minggu</SelectItem>
+                    <SelectItem value="4 Minggu">4 Minggu (Standard)</SelectItem>
+                    <SelectItem value="8 Minggu">8 Minggu (Komprehensif)</SelectItem>
+                    <SelectItem value="12 Minggu">12 Minggu (Bootcamp)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Format Delivery</Label>
+                <Select
+                  value={taskConfig.courseFormat}
+                  onValueChange={(value) => onTaskConfigChange('courseFormat', value)}
+                >
+                  <SelectTrigger data-testid="select-course-format">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Video Only">Video Only</SelectItem>
+                    <SelectItem value="Video + Worksheet">Video + Worksheet</SelectItem>
+                    <SelectItem value="Video + Live Session">Video + Live Session</SelectItem>
+                    <SelectItem value="Self-Paced Text">Self-Paced Text</SelectItem>
+                    <SelectItem value="Hybrid (Video + Text + Live)">Hybrid (Video + Text + Live)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Tujuan Akhir Siswa</Label>
+              <Textarea
+                placeholder="Apa yang bisa dilakukan siswa setelah menyelesaikan kursus ini?"
+                value={taskConfig.courseGoal}
+                onChange={(e) => onTaskConfigChange('courseGoal', e.target.value)}
+                className="min-h-[80px] resize-none"
+                data-testid="textarea-course-goal"
+              />
+            </div>
+          </div>
+        );
+
+      case 'DOC_GENERATOR':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Jenis Dokumen</Label>
+              <Select
+                value={taskConfig.docType}
+                onValueChange={(value) => onTaskConfigChange('docType', value)}
+              >
+                <SelectTrigger data-testid="select-doc-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {DOCUMENT_TYPES.map((doc) => (
+                    <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Konteks Spesifik Dokumen</Label>
+              <Textarea
+                placeholder="Jelaskan konteks spesifik dokumen ini. Untuk apa? Siapa yang terlibat?"
+                value={taskConfig.docContext}
+                onChange={(e) => onTaskConfigChange('docContext', e.target.value)}
+                className="min-h-[100px] resize-none"
+                data-testid="textarea-doc-context"
+              />
+            </div>
+          </div>
+        );
+
+      case 'PROMPT_PACK':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Jenis Workflow Pack</Label>
+              <Select
+                value={taskConfig.packType}
+                onValueChange={(value) => onTaskConfigChange('packType', value)}
+              >
+                <SelectTrigger data-testid="select-pack-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PACK_TYPES.map((pack) => (
+                    <SelectItem key={pack} value={pack}>{pack}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Prompt Pack adalah rangkaian prompt berurutan yang memandu Anda menyelesaikan project besar langkah demi langkah.
+            </p>
+          </div>
+        );
+
+      case 'GPT_BUILDER':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nama Bot (Opsional)</Label>
+                <Input
+                  placeholder="Contoh: Mentor Bisnis AI"
+                  value={taskConfig.botName}
+                  onChange={(e) => onTaskConfigChange('botName', e.target.value)}
+                  data-testid="input-bot-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Peran Bot</Label>
+                <Select
+                  value={taskConfig.botRole}
+                  onValueChange={(value) => onTaskConfigChange('botRole', value)}
+                >
+                  <SelectTrigger data-testid="select-bot-role">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Mentor Pribadi">Mentor Pribadi</SelectItem>
+                    <SelectItem value="Konsultan Ahli">Konsultan Ahli</SelectItem>
+                    <SelectItem value="Tutor Pembelajaran">Tutor Pembelajaran</SelectItem>
+                    <SelectItem value="Asisten Produktivitas">Asisten Produktivitas</SelectItem>
+                    <SelectItem value="Coach Bisnis">Coach Bisnis</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Kepribadian Bot</Label>
+              <Input
+                placeholder="Contoh: Ramah, Suportif, dan Berbasis Data"
+                value={taskConfig.botPersonality}
+                onChange={(e) => onTaskConfigChange('botPersonality', e.target.value)}
+                data-testid="input-bot-personality"
+              />
+            </div>
+          </div>
+        );
+
+      case 'MARKETING_KIT':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Jenis Aset Marketing</Label>
+              <Select
+                value={taskConfig.marketingAsset}
+                onValueChange={(value) => onTaskConfigChange('marketingAsset', value)}
+              >
+                <SelectTrigger data-testid="select-marketing-asset">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {MARKETING_ASSETS.map((asset) => (
+                    <SelectItem key={asset} value={asset}>{asset}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Angle/Hook Khusus</Label>
+              <Input
+                placeholder="Contoh: Fokus pada Transformasi, Urgency, FOMO, Social Proof..."
+                value={taskConfig.marketingAngle}
+                onChange={(e) => onTaskConfigChange('marketingAngle', e.target.value)}
+                data-testid="input-marketing-angle"
+              />
+            </div>
+          </div>
+        );
+
+      case 'EXTEND_TEXT':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Teks Awal yang Ingin Dikembangkan</Label>
+              <Textarea
+                placeholder="Paste teks pendek Anda di sini untuk dikembangkan..."
+                value={extendConfig.teksAwal}
+                onChange={(e) => onExtendConfigChange('teksAwal', e.target.value)}
+                className="min-h-[150px] resize-none"
+                data-testid="textarea-teks-awal"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Target Panjang</Label>
+              <Select
+                value={extendConfig.targetPanjang}
+                onValueChange={(value) => onExtendConfigChange('targetPanjang', value)}
+              >
+                <SelectTrigger data-testid="select-target-panjang">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="150-300 kata">150-300 kata (Paragraf)</SelectItem>
+                  <SelectItem value="300-500 kata">300-500 kata (Artikel Pendek)</SelectItem>
+                  <SelectItem value="500-800 kata">500-800 kata (Artikel Medium)</SelectItem>
+                  <SelectItem value="800-1500 kata">800-1500 kata (Artikel Panjang)</SelectItem>
+                  <SelectItem value="1500+ kata">1500+ kata (Deep Content)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      default:
+        return (
+          <p className="text-sm text-muted-foreground">
+            Mode ini menggunakan data proyek utama. Tidak ada konfigurasi tambahan yang diperlukan.
+          </p>
+        );
+    }
+  };
+
+  const getModeDescription = () => {
+    switch (activeMode) {
+      case 'BRAINSTORM': return 'Generate 5 ide ebook berdasarkan topik dan referensi Anda';
+      case 'BIG_IDEA': return 'Pertajam positioning dan konsep unik ebook Anda';
+      case 'OUTLINE': return 'Susun daftar isi lengkap sesuai level ebook';
+      case 'DRAFT_BAB': return 'Tulis konten bab secara lengkap dan terstruktur';
+      case 'VIDEO_SCRIPT': return 'Buat script video/podcast dari materi ebook';
+      case 'ECOURSE_BUILDER': return 'Ubah ebook menjadi kurikulum kursus online';
+      case 'DOC_GENERATOR': return 'Buat dokumen kerja profesional (SOP, Policy, dll)';
+      case 'PROMPT_PACK': return 'Generate rangkaian prompt workflow untuk berbagai kebutuhan';
+      case 'GPT_BUILDER': return 'Buat system prompt untuk chatbot berbasis ebook';
+      case 'MARKETING_KIT': return 'Buat materi marketing untuk promosi ebook';
+      case 'EXTEND_TEXT': return 'Kembangkan teks pendek menjadi konten yang lebih lengkap';
+      default: return 'Konfigurasi mode';
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader className="pb-4">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Settings2 className="h-4 w-4 text-primary" />
+          Konfigurasi Mode
+        </CardTitle>
+        <CardDescription>{getModeDescription()}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {renderContent()}
+      </CardContent>
+    </Card>
+  );
+}

@@ -1,0 +1,321 @@
+import { useState, useMemo } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { ModeSelector } from '@/components/mode-selector';
+import { ProjectForm } from '@/components/project-form';
+import { TaskConfigPanel } from '@/components/task-config-panel';
+import { FileUpload } from '@/components/file-upload';
+import { PromptOutput } from '@/components/prompt-output';
+import { SavedProjects } from '@/components/saved-projects';
+import { ThemeToggle } from '@/components/theme-toggle';
+import { generatePrompt } from '@/lib/prompt-generator';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { queryClient, apiRequest } from '@/lib/queryClient';
+import type { ProjectData, TaskConfig, ExtendConfig, UploadedFile } from '@shared/schema';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet';
+
+const defaultProjectData: ProjectData = {
+  topik: '',
+  judul: '',
+  target: '',
+  language: 'Bahasa Indonesia',
+  outputFormat: 'eBook',
+  tone: 'Authoritative',
+  writingStyle: 'Instructive',
+  aiCharacter: 'Agentic Strategist (Attentive & Proactive)',
+  tujuan: '',
+  painPoint: '',
+  bigIdea: '',
+  hasilRiset: '',
+  produk: '',
+  level: 'Single Ebook',
+};
+
+const defaultTaskConfig: TaskConfig = {
+  selectedEbookId: 1,
+  selectedEbookLabel: '',
+  judulBab: '',
+  manualJudulBab: '',
+  tujuanBab: '',
+  fokusLevel: 'Basic',
+  jenisTemplate: 'SOP',
+  topikModul: '',
+  durasiScript: '5-10 menit',
+  judulScript: '',
+  botName: '',
+  botRole: 'Mentor Pribadi',
+  botPersonality: 'Ramah, Suportif, dan Berbasis Data',
+  docType: 'Standard Operating Procedure (SOP)',
+  docContext: '',
+  packType: 'The Ebook Author Kit (Ide -> Outline -> Bab -> Editing)',
+  courseDuration: '4 Minggu',
+  courseFormat: 'Video + Worksheet',
+  courseGoal: '',
+  marketingAsset: 'Landing Page Copy (Long Form)',
+  marketingAngle: '',
+};
+
+const defaultExtendConfig: ExtendConfig = {
+  teksAwal: '',
+  targetPanjang: '300-500 kata',
+};
+
+export default function Home() {
+  const [projectData, setProjectData] = useState<ProjectData>(defaultProjectData);
+  const [taskConfig, setTaskConfig] = useState<TaskConfig>(defaultTaskConfig);
+  const [extendConfig, setExtendConfig] = useState<ExtendConfig>(defaultExtendConfig);
+  const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [activeMode, setActiveMode] = useState('BRAINSTORM');
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [projectName, setProjectName] = useState('');
+  const { toast } = useToast();
+
+  const handleProjectChange = (name: string, value: string) => {
+    setProjectData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleTaskConfigChange = (name: string, value: string | number) => {
+    setTaskConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleExtendConfigChange = (name: string, value: string) => {
+    setExtendConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleReset = () => {
+    setProjectData(defaultProjectData);
+    setTaskConfig(defaultTaskConfig);
+    setExtendConfig(defaultExtendConfig);
+    setUploadedFiles([]);
+    setActiveMode('BRAINSTORM');
+    setProjectName('');
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const data = {
+        name: projectName || projectData.judul || projectData.topik || 'Proyek Tanpa Judul',
+        projectData,
+        taskConfig,
+      };
+      return await apiRequest('POST', '/api/projects', data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      toast({
+        title: "Proyek tersimpan!",
+        description: "Konfigurasi proyek berhasil disimpan.",
+      });
+      setSaveDialogOpen(false);
+      setProjectName('');
+    },
+    onError: () => {
+      toast({
+        title: "Gagal menyimpan",
+        description: "Terjadi kesalahan saat menyimpan proyek.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleLoadProject = (project: any) => {
+    setProjectData(project.projectData);
+    setTaskConfig(project.taskConfig);
+    setProjectName(project.name);
+    toast({
+      title: "Proyek dimuat",
+      description: `"${project.name}" berhasil dimuat.`,
+    });
+  };
+
+  const generatedPrompt = useMemo(() => {
+    return generatePrompt(activeMode, projectData, taskConfig, extendConfig, uploadedFiles);
+  }, [activeMode, projectData, taskConfig, extendConfig, uploadedFiles, refreshKey]);
+
+  const handleRegenerate = () => {
+    setRefreshKey(prev => prev + 1);
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex items-center justify-between h-14 px-4 mx-auto max-w-screen-2xl">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-9 w-9 rounded-md bg-primary text-primary-foreground">
+              <Book className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold tracking-tight">Ebook Builder Pro</h1>
+              <p className="text-xs text-muted-foreground hidden sm:block">
+                AI Prompt Generator untuk Ekosistem Ebook
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Badge variant="secondary" className="hidden md:flex items-center gap-1">
+              <Sparkles className="h-3 w-3" />
+              Powered by AI
+            </Badge>
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" data-testid="button-open-projects">
+                  <FolderOpen className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Proyek</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent>
+                <SheetHeader>
+                  <SheetTitle>Proyek Tersimpan</SheetTitle>
+                </SheetHeader>
+                <div className="mt-6">
+                  <SavedProjects onLoad={handleLoadProject} />
+                </div>
+              </SheetContent>
+            </Sheet>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setSaveDialogOpen(true)}
+              data-testid="button-save-project"
+            >
+              <Save className="h-4 w-4 mr-2" />
+              <span className="hidden sm:inline">Simpan</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleReset}
+              data-testid="button-reset"
+            >
+              <RotateCcw className="h-4 w-4" />
+            </Button>
+            <ThemeToggle />
+          </div>
+        </div>
+      </header>
+
+      <main className="container px-4 py-6 mx-auto max-w-screen-2xl">
+        <div className="mb-6">
+          <ModeSelector activeMode={activeMode} onModeChange={setActiveMode} />
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6">
+            <Tabs defaultValue="project" className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="project" data-testid="tab-project">
+                  Data Proyek
+                </TabsTrigger>
+                <TabsTrigger value="config" data-testid="tab-config">
+                  Konfigurasi
+                </TabsTrigger>
+                <TabsTrigger value="files" data-testid="tab-files">
+                  File Referensi
+                </TabsTrigger>
+              </TabsList>
+              <TabsContent value="project" className="mt-4">
+                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                  <ProjectForm
+                    projectData={projectData}
+                    onChange={handleProjectChange}
+                  />
+                </ScrollArea>
+              </TabsContent>
+              <TabsContent value="config" className="mt-4">
+                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                  <TaskConfigPanel
+                    activeMode={activeMode}
+                    projectData={projectData}
+                    taskConfig={taskConfig}
+                    extendConfig={extendConfig}
+                    onTaskConfigChange={handleTaskConfigChange}
+                    onExtendConfigChange={handleExtendConfigChange}
+                  />
+                </ScrollArea>
+              </TabsContent>
+              <TabsContent value="files" className="mt-4">
+                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                  <FileUpload
+                    uploadedFiles={uploadedFiles}
+                    onFilesChange={setUploadedFiles}
+                  />
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-120px)]">
+            <PromptOutput
+              prompt={generatedPrompt}
+              onRegenerate={handleRegenerate}
+            />
+          </div>
+        </div>
+      </main>
+
+      <footer className="border-t py-6 mt-8">
+        <div className="container px-4 mx-auto max-w-screen-2xl">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <p>Ebook Builder Pro - Smart Prompt Generator</p>
+            <p>Gunakan prompt yang dihasilkan dengan AI favorit Anda</p>
+          </div>
+        </div>
+      </footer>
+
+      <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Simpan Proyek</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="projectName">Nama Proyek</Label>
+              <Input
+                id="projectName"
+                placeholder="Contoh: Ebook Digital Marketing v1"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                data-testid="input-project-name"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Simpan konfigurasi proyek untuk digunakan kembali nanti.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              data-testid="button-confirm-save"
+            >
+              {saveMutation.isPending ? 'Menyimpan...' : 'Simpan Proyek'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
