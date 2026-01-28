@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { getChaesaResponse } from "./chaesa";
 
 const projectDataSchema = z.object({
   topik: z.string(),
@@ -55,6 +56,14 @@ const promptHistorySchema = z.object({
   projectId: z.string().optional(),
   mode: z.string(),
   prompt: z.string(),
+});
+
+const chatMessageSchema = z.object({
+  message: z.string().min(1),
+  history: z.array(z.object({
+    role: z.enum(['user', 'assistant']),
+    content: z.string()
+  })).optional().default([])
 });
 
 export async function registerRoutes(
@@ -156,6 +165,22 @@ export async function registerRoutes(
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to clear history" });
+    }
+  });
+
+  app.post("/api/chat", isAuthenticated, async (req, res) => {
+    try {
+      const parsed = chatMessageSchema.safeParse(req.body);
+      if (!parsed.success) {
+        return res.status(400).json({ error: "Invalid request", details: parsed.error.issues });
+      }
+      
+      const { message, history } = parsed.data;
+      const response = await getChaesaResponse(message, history);
+      res.json({ response });
+    } catch (error) {
+      console.error("Chat error:", error);
+      res.status(500).json({ error: "Failed to get response from Chaesa" });
     }
   });
 

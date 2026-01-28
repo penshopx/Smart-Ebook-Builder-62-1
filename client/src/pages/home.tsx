@@ -7,6 +7,7 @@ import { FileUpload } from '@/components/file-upload';
 import { PromptOutput } from '@/components/prompt-output';
 import { SavedProjects } from '@/components/saved-projects';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ChaesaChatbot } from '@/components/chaesa-chatbot';
 import { generatePrompt } from '@/lib/prompt-generator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -148,6 +149,21 @@ export default function Home() {
     toast({
       title: "Proyek dimuat",
       description: `"${project.name}" berhasil dimuat.`,
+    });
+  };
+
+  const handleApplyBigIdea = (template: { title: string; target: string; problem: string; solution: string }) => {
+    setProjectData(prev => ({
+      ...prev,
+      judul: template.title,
+      target: template.target,
+      painPoint: template.problem,
+      bigIdea: template.solution,
+    }));
+    setActiveMode('BIG_IDEA');
+    toast({
+      title: "Template diterapkan",
+      description: "Big Idea template telah diisi ke form proyek.",
     });
   };
 
@@ -344,6 +360,8 @@ export default function Home() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ChaesaChatbot onApplyBigIdea={handleApplyBigIdea} />
     </div>
   );
 }
