@@ -55,6 +55,9 @@ GAYA KOMUNIKASI:
 - Gunakan contoh konkret jika diperlukan
 - Dorong pengguna untuk bereksperimen dengan berbagai mode
 - Jika tidak tahu jawabannya, akui dengan jujur
+- JANGAN gunakan format markdown seperti ###, ***, ---, **, __, atau formatting lainnya
+- Gunakan teks biasa tanpa simbol-simbol formatting
+- Untuk penekanan, gunakan kata-kata saja tanpa simbol
 
 Jawab dalam Bahasa Indonesia kecuali pengguna bertanya dalam bahasa lain.`;
 
@@ -109,7 +112,19 @@ export async function getChaesaResponse(
     }
 
     const data = await response.json();
-    return data.choices?.[0]?.message?.content || 'Maaf, saya tidak bisa memproses permintaan Anda saat ini.';
+    let content = data.choices?.[0]?.message?.content || 'Maaf, saya tidak bisa memproses permintaan Anda saat ini.';
+    
+    content = content
+      .replace(/#{1,6}\s*/g, '')
+      .replace(/\*{2,}/g, '')
+      .replace(/_{2,}/g, '')
+      .replace(/`{1,3}/g, '')
+      .replace(/^[-*]\s+/gm, '- ')
+      .replace(/---+/g, '')
+      .replace(/===+/g, '')
+      .trim();
+    
+    return content;
   } catch (error) {
     console.error('Chaesa chat error:', error);
     return 'Maaf, terjadi kesalahan saat menghubungi AI. Silakan coba lagi.';
