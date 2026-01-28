@@ -241,7 +241,7 @@ Silakan tanyakan apa saja, atau lihat tab "Template Big Idea" untuk inspirasi to
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>
           <button
-            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg z-50 bg-primary text-primary-foreground flex items-center justify-center hover-elevate active-elevate-2"
+            className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl z-[9999] bg-primary text-primary-foreground flex items-center justify-center transition-transform hover:scale-105 active:scale-95"
             data-testid="button-open-chaesa"
           >
             <MessageCircle className="h-6 w-6" />

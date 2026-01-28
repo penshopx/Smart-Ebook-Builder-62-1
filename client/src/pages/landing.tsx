@@ -2,6 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { ChaesaChatbot } from '@/components/chaesa-chatbot';
 import { 
   Book, 
   Sparkles, 
@@ -281,6 +282,8 @@ export default function Landing() {
           </div>
         </div>
       </footer>
+
+      <ChaesaChatbot />
     </div>
   );
 }
