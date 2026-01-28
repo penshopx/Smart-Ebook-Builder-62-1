@@ -234,7 +234,7 @@ Silakan tanyakan apa saja, atau lihat tab "Template Big Idea" untuk inspirasi to
     ? BIG_IDEA_TEMPLATES.filter(t => t.niche === selectedNiche)
     : BIG_IDEA_TEMPLATES;
 
-  const niches = [...new Set(BIG_IDEA_TEMPLATES.map(t => t.niche))];
+  const niches = Array.from(new Set(BIG_IDEA_TEMPLATES.map(t => t.niche)));
 
   return (
     <>
