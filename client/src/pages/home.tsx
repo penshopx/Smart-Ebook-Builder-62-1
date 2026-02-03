@@ -7,7 +7,7 @@ import { FileUpload } from '@/components/file-upload';
 import { PromptOutput } from '@/components/prompt-output';
 import { SavedProjects } from '@/components/saved-projects';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { ChaesaChatbot } from '@/components/chaesa-chatbot';
+import { DokumenterChatButton } from '@/components/dokumentender-chat-button';
 import { BookPreview } from '@/components/book-preview';
 import { generatePrompt } from '@/lib/prompt-generator';
 import { Button } from '@/components/ui/button';
@@ -376,7 +376,7 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      <ChaesaChatbot onApplyBigIdea={handleApplyBigIdea} />
+      <DokumenterChatButton />
     </div>
   );
 }
