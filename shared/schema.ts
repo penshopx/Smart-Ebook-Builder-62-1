@@ -138,6 +138,18 @@ export const INDUSTRIES = [
     aiModel: 'chatgpt'
   },
   { 
+    id: 'hobby', 
+    name: 'Hobi & Kreativitas', 
+    icon: 'Palette',
+    color: 'text-cyan-600',
+    bgColor: 'bg-cyan-50 dark:bg-cyan-950',
+    description: 'Hobi, kerajinan, seni, koleksi, DIY',
+    keywords: ['hobi', 'hobby', 'kreativitas', 'seni', 'kerajinan', 'DIY', 'koleksi', 'musik', 'fotografi'],
+    recommendedTone: 'Playful',
+    recommendedStyle: 'Conversational',
+    aiModel: 'chatgpt'
+  },
+  { 
     id: 'general', 
     name: 'Umum / Lainnya', 
     icon: 'Sparkles',
@@ -338,6 +350,16 @@ export const INDUSTRY_DOCUMENT_TEMPLATES: Record<string, string[]> = {
     'Mental Health Checklist',
     'Sleep Optimization Guide',
     'Wellness Assessment Template',
+  ],
+  hobby: [
+    'Panduan Memulai Hobi Baru',
+    'Project Tracker Template',
+    'Panduan DIY Step-by-Step',
+    'Collection Catalog Template',
+    'Skill Progress Tracker',
+    'Creative Journal Template',
+    'Hobby Budget Planner',
+    'Community Building Guide',
   ],
   general: [],
 };
