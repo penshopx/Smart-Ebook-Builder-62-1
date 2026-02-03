@@ -85,7 +85,7 @@ Silakan tanyakan apa saja!`
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <button
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-2xl z-[9999] bg-gradient-to-br from-purple-600 to-pink-500 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:shadow-purple-500/30"
+          className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-2xl z-[9999] bg-gradient-to-br from-purple-600 to-pink-500 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:shadow-purple-500/30"
           data-testid="button-open-chaesa"
         >
           <MessageCircle className="h-6 w-6" />

@@ -21,7 +21,7 @@ export function DokumenterChatButton() {
     <>
       <button
         onClick={() => setShowDialog(true)}
-        className="fixed bottom-6 left-6 h-14 w-14 rounded-full shadow-2xl z-[9999] bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:shadow-blue-500/30"
+        className="fixed bottom-24 sm:bottom-6 left-4 sm:left-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-2xl z-[9999] bg-gradient-to-br from-blue-600 to-cyan-500 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:shadow-blue-500/30"
         data-testid="button-open-dokumentender"
         aria-label="Buka DokumenTender AI"
       >

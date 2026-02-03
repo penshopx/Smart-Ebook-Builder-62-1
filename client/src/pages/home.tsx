@@ -182,19 +182,19 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex items-center justify-between h-14 px-4 mx-auto max-w-screen-2xl">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center justify-center h-9 w-9 rounded-md bg-primary text-primary-foreground">
-              <Book className="h-5 w-5" />
+        <div className="container flex items-center justify-between h-14 px-2 sm:px-4 mx-auto max-w-screen-2xl gap-1">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <div className="flex items-center justify-center h-8 w-8 sm:h-9 sm:w-9 rounded-md bg-primary text-primary-foreground shrink-0">
+              <Book className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
-            <div>
-              <h1 className="text-lg font-semibold tracking-tight">Ebook Builder Pro</h1>
+            <div className="min-w-0">
+              <h1 className="text-sm sm:text-lg font-semibold tracking-tight truncate">Ebook Builder Pro</h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
                 AI Prompt Generator untuk Ekosistem Ebook
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <Badge variant="secondary" className="hidden md:flex items-center gap-1">
               <Factory className="h-3 w-3" />
               Industri Ready
@@ -205,9 +205,14 @@ export default function Home() {
             </Badge>
             <Sheet>
               <SheetTrigger asChild>
-                <Button variant="outline" size="sm" data-testid="button-open-projects">
+                <Button variant="outline" size="icon" className="sm:hidden" data-testid="button-open-projects-mobile">
+                  <FolderOpen className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden sm:flex" data-testid="button-open-projects">
                   <FolderOpen className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Proyek</span>
+                  <span>Proyek</span>
                 </Button>
               </SheetTrigger>
               <SheetContent>
@@ -221,39 +226,44 @@ export default function Home() {
             </Sheet>
             <Button
               variant="outline"
+              size="icon"
+              className="sm:hidden"
+              onClick={() => setSaveDialogOpen(true)}
+              data-testid="button-save-project-mobile"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
               size="sm"
+              className="hidden sm:flex"
               onClick={() => setSaveDialogOpen(true)}
               data-testid="button-save-project"
             >
               <Save className="h-4 w-4 mr-2" />
-              <span className="hidden sm:inline">Simpan</span>
+              <span>Simpan</span>
             </Button>
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={handleReset}
               data-testid="button-reset"
             >
               <RotateCcw className="h-4 w-4" />
             </Button>
             <ThemeToggle />
-            <div className="flex items-center gap-2 ml-2 pl-2 border-l">
+            <div className="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-2 pl-1 sm:pl-2 border-l">
               {user && (
-                <>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
-                    <AvatarFallback>
-                      {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm font-medium hidden lg:block">
-                    {user.firstName || user.email?.split('@')[0]}
-                  </span>
-                </>
+                <Avatar className="h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex">
+                  <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
+                  <AvatarFallback>
+                    {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
               )}
               <Button
                 variant="ghost"
-                size="sm"
+                size="icon"
                 asChild
                 data-testid="button-logout"
               >
@@ -286,15 +296,15 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="project" className="mt-4">
-                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
                   <ProjectForm
                     projectData={projectData}
                     onChange={handleProjectChange}
                   />
-                </ScrollArea>
+                </div>
               </TabsContent>
               <TabsContent value="config" className="mt-4">
-                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
                   <TaskConfigPanel
                     activeMode={activeMode}
                     projectData={projectData}
@@ -303,15 +313,15 @@ export default function Home() {
                     onTaskConfigChange={handleTaskConfigChange}
                     onExtendConfigChange={handleExtendConfigChange}
                   />
-                </ScrollArea>
+                </div>
               </TabsContent>
               <TabsContent value="files" className="mt-4">
-                <ScrollArea className="h-[calc(100vh-280px)] pr-4">
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
                   <FileUpload
                     uploadedFiles={uploadedFiles}
                     onFilesChange={setUploadedFiles}
                   />
-                </ScrollArea>
+                </div>
               </TabsContent>
             </Tabs>
           </div>
