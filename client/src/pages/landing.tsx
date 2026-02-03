@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Badge } from '@/components/ui/badge';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DokumenterChatButton } from '@/components/dokumentender-chat-button';
+import { ChaesaChatbot } from '@/components/chaesa-chatbot';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { 
   Book, 
@@ -907,8 +908,9 @@ export default function Landing() {
         </div>
       </footer>
 
-      {/* DokumenTender Chat Button */}
+      {/* Chat Buttons: Left = DokumenTender (eksekusi prompt), Right = Chaesa (knowledge base) */}
       <DokumenterChatButton />
+      <ChaesaChatbot />
     </div>
   );
 }
