@@ -111,9 +111,9 @@ export async function getChaesaResponse(
 
   try {
     const response = await openai.chat.completions.create({
-      model: "gpt-5-mini",
+      model: "gpt-4o-mini",
       messages,
-      max_tokens: 1024,
+      max_completion_tokens: 1024,
       temperature: 0.7,
     });
 
