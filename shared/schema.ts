@@ -481,27 +481,27 @@ export const MARKETING_ASSETS = [
   "Prompt Video (Untuk Runway/Sora)"
 ] as const;
 
-export const EBOOK_LEVELS = ["Single Ebook", "3 Ebook (Trilogi Simple)", "9 Ebook (Trilogi Lengkap)"] as const;
+export const EBOOK_LEVELS = ["Single Ebook", "Trilogi Simple (3 Ebook)", "Modul Kompleks (3 Trilogi = 9 Ebook)"] as const;
 
-export const EBOOK_SERIES_DATA: Record<string, Array<{ id: number; label: string }>> = {
+export const EBOOK_SERIES_DATA: Record<string, Array<{ id: number; label: string; level?: string }>> = {
   "Single Ebook": [
     { id: 1, label: "Ebook Utama (Single)" }
   ],
-  "3 Ebook (Trilogi Simple)": [
-    { id: 1, label: "Buku 1: Fundamental (Mindset & Konsep)" },
-    { id: 2, label: "Buku 2: Strategi & Implementasi (Teknis)" },
-    { id: 3, label: "Buku 3: Advanced & Scaling (Pengembangan)" }
+  "Trilogi Simple (3 Ebook)": [
+    { id: 1, label: "Buku 1: Basic (Dasar & Fondasi)", level: "Basic" },
+    { id: 2, label: "Buku 2: Intermediate (Strategi & Implementasi)", level: "Intermediate" },
+    { id: 3, label: "Buku 3: Advance (Pengembangan & Scaling)", level: "Advance" }
   ],
-  "9 Ebook (Trilogi Lengkap)": [
-    { id: 1, label: "Ebook 1: Mindset & Dasar (Basic)" },
-    { id: 2, label: "Ebook 2: Validasi Market (Basic)" },
-    { id: 3, label: "Ebook 3: Persiapan Produk (Basic)" },
-    { id: 4, label: "Ebook 4: Strategi Marketing (Inter)" },
-    { id: 5, label: "Ebook 5: Funnel & Sales (Inter)" },
-    { id: 6, label: "Ebook 6: Operasional (Inter)" },
-    { id: 7, label: "Ebook 7: Tim & Delegasi (Adv)" },
-    { id: 8, label: "Ebook 8: Automasi Sistem (Adv)" },
-    { id: 9, label: "Ebook 9: Ekspansi & Exit (Adv)" }
+  "Modul Kompleks (3 Trilogi = 9 Ebook)": [
+    { id: 1, label: "Trilogi 1 - Buku 1: Mindset & Dasar", level: "Basic" },
+    { id: 2, label: "Trilogi 1 - Buku 2: Validasi Market", level: "Basic" },
+    { id: 3, label: "Trilogi 1 - Buku 3: Persiapan Produk", level: "Basic" },
+    { id: 4, label: "Trilogi 2 - Buku 1: Strategi Marketing", level: "Intermediate" },
+    { id: 5, label: "Trilogi 2 - Buku 2: Funnel & Sales", level: "Intermediate" },
+    { id: 6, label: "Trilogi 2 - Buku 3: Operasional", level: "Intermediate" },
+    { id: 7, label: "Trilogi 3 - Buku 1: Tim & Delegasi", level: "Advance" },
+    { id: 8, label: "Trilogi 3 - Buku 2: Automasi Sistem", level: "Advance" },
+    { id: 9, label: "Trilogi 3 - Buku 3: Ekspansi & Exit", level: "Advance" }
   ]
 };
 
