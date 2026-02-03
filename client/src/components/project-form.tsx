@@ -4,10 +4,15 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { 
-  LANGUAGES, OUTPUT_FORMATS, TONES, WRITING_STYLES, AI_CHARACTERS, EBOOK_LEVELS 
+  LANGUAGES, OUTPUT_FORMATS, TONES, WRITING_STYLES, AI_CHARACTERS, EBOOK_LEVELS, INDUSTRIES 
 } from '@shared/schema';
 import type { ProjectData } from '@shared/schema';
-import { Book, Target, Settings, BrainCircuit } from 'lucide-react';
+import { Book, Target, Settings, BrainCircuit, Factory, Wrench, Building2, Mountain, Flame, Zap, Store, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const industryIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Wrench, Building2, Mountain, Flame, Zap, Factory, Store, Sparkles,
+};
 
 interface ProjectFormProps {
   projectData: ProjectData;
@@ -17,6 +22,59 @@ interface ProjectFormProps {
 export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
   return (
     <div className="space-y-6">
+      <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Factory className="h-4 w-4 text-primary" />
+            Pilih Industri / Sektor
+          </CardTitle>
+          <p className="text-xs text-muted-foreground">
+            Pilih sektor untuk mendapatkan template dan rekomendasi AI yang optimal
+          </p>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            {INDUSTRIES.map((industry) => {
+              const Icon = industryIconMap[industry.icon] || Sparkles;
+              const isSelected = projectData.industry === industry.id;
+              
+              return (
+                <button
+                  key={industry.id}
+                  onClick={() => onChange('industry', industry.id)}
+                  data-testid={`button-industry-${industry.id}`}
+                  className={cn(
+                    "relative flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-all text-center",
+                    "hover-elevate active-elevate-2",
+                    isSelected 
+                      ? "border-primary bg-primary/10 ring-2 ring-primary/20" 
+                      : "border-border bg-card hover:border-primary/50"
+                  )}
+                >
+                  {isSelected && (
+                    <div className="absolute top-1 right-1">
+                      <div className="h-2 w-2 rounded-full bg-primary animate-pulse" />
+                    </div>
+                  )}
+                  <div className={cn(
+                    "flex items-center justify-center h-8 w-8 rounded-md",
+                    industry.bgColor
+                  )}>
+                    <Icon className={cn("h-4 w-4", industry.color)} />
+                  </div>
+                  <p className={cn(
+                    "text-[10px] font-medium leading-tight",
+                    isSelected ? "text-primary" : "text-foreground"
+                  )}>
+                    {industry.name}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader className="pb-4">
           <CardTitle className="flex items-center gap-2 text-base">

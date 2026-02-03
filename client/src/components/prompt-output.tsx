@@ -2,9 +2,11 @@ import { useState, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket } from 'lucide-react';
-import { AI_MODELS } from '@shared/schema';
+import { Badge } from '@/components/ui/badge';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search } from 'lucide-react';
+import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 import {
   Dialog,
   DialogContent,
@@ -12,16 +14,24 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 
+const aiIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+  Bot, MessageCircle, Brain, Sparkles, Search, Globe,
+};
+
 interface PromptOutputProps {
   prompt: string;
   onRegenerate?: () => void;
+  selectedAiModel?: string;
+  onAiModelChange?: (modelId: string) => void;
 }
 
-export function PromptOutput({ prompt, onRegenerate }: PromptOutputProps) {
+export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokumentender', onAiModelChange }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
+  
+  const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
 
   const handleCopy = async () => {
     try {
@@ -114,30 +124,91 @@ export function PromptOutput({ prompt, onRegenerate }: PromptOutputProps) {
             </div>
           </div>
 
-          <div className="pt-4 border-t">
-            <p className="text-xs text-muted-foreground mb-3">
-              Eksekusi prompt ke AI:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {AI_MODELS.map((model) => (
-                <Button
-                  key={model.name}
-                  size="lg"
+          <div className="pt-4 border-t space-y-3">
+            <div className="p-3 rounded-lg bg-gradient-to-r from-primary to-purple-600 text-white">
+              <div className="flex items-center gap-2 mb-2">
+                <Star className="h-4 w-4 fill-yellow-300 text-yellow-300" />
+                <span className="text-sm font-semibold">Rekomendasi Utama</span>
+              </div>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-white/20">
+                    <Bot className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm">DokumenTender AI</p>
+                    <p className="text-[10px] opacity-90">Whitelabel LLM untuk Industri Indonesia</p>
+                  </div>
+                </div>
+                <Button 
+                  size="sm" 
+                  variant="secondary"
                   asChild
-                  className="flex-1 gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500"
                 >
                   <a
-                    href={model.url}
+                    href="https://chat.dokumentender.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    data-testid={`link-ai-${model.name.toLowerCase().replace(/\s+/g, '-')}`}
+                    data-testid="link-dokumentender-ai"
                   >
-                    <Rocket className="h-5 w-5" />
-                    Eksekusi ke {model.name}
-                    <ExternalLink className="h-4 w-4" />
+                    <Rocket className="h-3 w-3 mr-1" />
+                    Eksekusi
                   </a>
                 </Button>
-              ))}
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Zap className="h-3 w-3" />
+              Atau pilih AI lainnya:
+            </p>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {AI_MODEL_RECOMMENDATIONS.filter(m => m.id !== 'dokumentender').map((model) => {
+                const Icon = aiIconMap[model.icon] || Bot;
+                const isSelected = selectedAiModel === model.id;
+                
+                return (
+                  <div
+                    key={model.id}
+                    className={cn(
+                      "flex items-center gap-2 p-2 rounded-lg border transition-all",
+                      "hover-elevate active-elevate-2 cursor-pointer",
+                      isSelected 
+                        ? "border-primary bg-primary/10 ring-2 ring-primary/20" 
+                        : "border-border bg-card hover:border-primary/50"
+                    )}
+                    onClick={() => onAiModelChange?.(model.id)}
+                    data-testid={`button-select-ai-${model.id}`}
+                  >
+                    <div className={cn(
+                      "flex items-center justify-center h-7 w-7 rounded shrink-0",
+                      model.color, model.textColor
+                    )}>
+                      <Icon className="h-3.5 w-3.5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-xs font-medium truncate",
+                        isSelected ? "text-primary" : "text-foreground"
+                      )}>{model.name}</p>
+                      <p className="text-[9px] text-muted-foreground truncate">{model.strengths[0]}</p>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      variant="ghost"
+                      className="shrink-0 h-7 w-7 p-0"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window.open(model.url, '_blank');
+                      }}
+                      data-testid={`link-ai-${model.id}`}
+                    >
+                      <ExternalLink className="h-3 w-3" />
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
           </div>
         </CardContent>

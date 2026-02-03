@@ -1,5 +1,29 @@
 import type { ProjectData, TaskConfig, ExtendConfig, UploadedFile } from '@shared/schema';
-import { EBOOK_SERIES_DATA } from '@shared/schema';
+import { EBOOK_SERIES_DATA, INDUSTRIES, INDUSTRY_DOCUMENT_TEMPLATES } from '@shared/schema';
+
+function getIndustryContext(industryId: string): string {
+  const industry = INDUSTRIES.find(i => i.id === industryId);
+  if (!industry || industryId === 'general') {
+    return '';
+  }
+  
+  const templates = INDUSTRY_DOCUMENT_TEMPLATES[industryId] || [];
+  const templatesText = templates.length > 0 
+    ? `\n   Dokumen industri yang relevan: ${templates.slice(0, 5).join(', ')}`
+    : '';
+  
+  return `
+=== KONTEKS INDUSTRI SPESIFIK ===
+Ebook ini ditujukan untuk industri: **${industry.name}**
+- Deskripsi: ${industry.description}
+- Kata kunci industri: ${industry.keywords.join(', ')}
+- Tone yang disarankan: ${industry.recommendedTone}
+- Gaya penulisan yang disarankan: ${industry.recommendedStyle}${templatesText}
+
+PENTING: Sesuaikan terminologi, contoh kasus, dan referensi dengan standar industri ${industry.name}.
+Gunakan istilah teknis yang umum digunakan di sektor ini.
+`;
+}
 
 export function generatePrompt(
   activeMode: string,
@@ -22,18 +46,21 @@ Anda adalah **Agentic AI yang Cerdas & Attentive**. Sebelum memberikan jawaban a
 Berperanlah sebagai: **${projectData.aiCharacter}**.
 `;
 
+  const industryContext = getIndustryContext(projectData.industry || 'general');
+
   const systemPrompt = `
 Anda adalah "Ebook Builder Pro AI", mesin pembuat ekosistem ebook profesional yang dirancang untuk menangani **BERBAGAI TOPIK (Generik)**.
 Aplikasi ini fleksibel dan tidak terbatas pada satu industri tertentu.
 
 ${agenticLogic}
-
+${industryContext}
 === DATA UTAMA DARI FORM ===
 - Topik/Kata Kunci: ${projectData.topik || '[Belum diisi]'}
 - Judul Ebook (Utama): ${projectData.judul || '[Belum diisi]'}
 - Target Pembaca: ${projectData.target || '[Belum diisi]'}
 - Level Ebook: ${projectData.level}
 - Pain Point/Masalah: ${projectData.painPoint || '[Belum diisi]'}
+- Industri/Sektor: ${INDUSTRIES.find(i => i.id === projectData.industry)?.name || 'Umum'}
 
 === PENGATURAN GAYA & FORMAT (WAJIB DIIKUTI) ===
 Instruksi di bawah ini bersifat MANDATORI:
@@ -41,6 +68,10 @@ Instruksi di bawah ini bersifat MANDATORI:
 2. FORMAT STRUKTUR: **${projectData.outputFormat}**.
 3. NADA BICARA (TONE): **${projectData.tone}**.
 4. GAYA PENULISAN (STYLE): **${projectData.writingStyle}**.
+
+=== REKOMENDASI EKSEKUSI ===
+Setelah prompt ini selesai, disarankan untuk mengeksekusi di **chat.dokumentender.com** 
+untuk hasil optimal dalam Bahasa Indonesia dan dokumen teknis industri.
 
 === INSTRUKSI UMUM ===
 Kerjakan tugas di bawah ini dengan output yang TERSTRUKTUR, MENDALAM, dan SIAP PAKAI.

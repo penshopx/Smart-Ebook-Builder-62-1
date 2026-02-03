@@ -8,6 +8,7 @@ import { PromptOutput } from '@/components/prompt-output';
 import { SavedProjects } from '@/components/saved-projects';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { ChaesaChatbot } from '@/components/chaesa-chatbot';
+import { BookPreview } from '@/components/book-preview';
 import { generatePrompt } from '@/lib/prompt-generator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -16,7 +17,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut } from 'lucide-react';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -51,6 +52,8 @@ const defaultProjectData: ProjectData = {
   hasilRiset: '',
   produk: '',
   level: 'Single Ebook',
+  industry: 'general',
+  selectedAiModel: 'dokumentender',
 };
 
 const defaultTaskConfig: TaskConfig = {
@@ -192,6 +195,10 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-2">
             <Badge variant="secondary" className="hidden md:flex items-center gap-1">
+              <Factory className="h-3 w-3" />
+              Industri Ready
+            </Badge>
+            <Badge variant="outline" className="hidden lg:flex items-center gap-1">
               <Sparkles className="h-3 w-3" />
               Powered by AI
             </Badge>
@@ -308,11 +315,19 @@ export default function Home() {
             </Tabs>
           </div>
 
-          <div className="lg:sticky lg:top-20 lg:h-[calc(100vh-120px)]">
-            <PromptOutput
-              prompt={generatedPrompt}
-              onRegenerate={handleRegenerate}
+          <div className="space-y-4">
+            <BookPreview 
+              projectData={projectData} 
+              activeMode={activeMode} 
             />
+            <div className="lg:sticky lg:top-20">
+              <PromptOutput
+                prompt={generatedPrompt}
+                onRegenerate={handleRegenerate}
+                selectedAiModel={projectData.selectedAiModel}
+                onAiModelChange={(model) => handleProjectChange('selectedAiModel', model)}
+              />
+            </div>
           </div>
         </div>
       </main>

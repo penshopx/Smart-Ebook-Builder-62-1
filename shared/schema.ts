@@ -3,6 +3,257 @@ import { z } from "zod";
 // Re-export auth models
 export * from "./models/auth";
 
+// --- INDUSTRY TEMPLATES (Fokus: Teknik, Konstruksi, Migas, Pertambangan, Kelistrikan, Manufaktur, UMKM) ---
+export const INDUSTRIES = [
+  { 
+    id: 'engineering', 
+    name: 'Keteknikan & Engineering', 
+    icon: 'Wrench',
+    color: 'text-blue-600',
+    bgColor: 'bg-blue-50 dark:bg-blue-950',
+    description: 'Teknik sipil, mesin, elektro, industri',
+    keywords: ['teknik', 'engineering', 'desain', 'kalkulasi', 'spesifikasi'],
+    recommendedTone: 'Technical',
+    recommendedStyle: 'Technical',
+    aiModel: 'claude'
+  },
+  { 
+    id: 'construction', 
+    name: 'Konstruksi & Infrastruktur', 
+    icon: 'Building2',
+    color: 'text-orange-600',
+    bgColor: 'bg-orange-50 dark:bg-orange-950',
+    description: 'Pembangunan, kontraktor, manajemen proyek',
+    keywords: ['konstruksi', 'proyek', 'pembangunan', 'infrastruktur', 'kontraktor'],
+    recommendedTone: 'Professional',
+    recommendedStyle: 'Process-Oriented',
+    aiModel: 'chatgpt'
+  },
+  { 
+    id: 'mining', 
+    name: 'Pertambangan & Mineral', 
+    icon: 'Mountain',
+    color: 'text-amber-700',
+    bgColor: 'bg-amber-50 dark:bg-amber-950',
+    description: 'Eksplorasi, eksploitasi, pengolahan mineral',
+    keywords: ['tambang', 'mineral', 'eksplorasi', 'eksploitasi', 'geologi'],
+    recommendedTone: 'Authoritative',
+    recommendedStyle: 'Technical',
+    aiModel: 'claude'
+  },
+  { 
+    id: 'oil_gas', 
+    name: 'Minyak & Gas (Migas)', 
+    icon: 'Flame',
+    color: 'text-red-600',
+    bgColor: 'bg-red-50 dark:bg-red-950',
+    description: 'Upstream, midstream, downstream, HSE',
+    keywords: ['migas', 'oil', 'gas', 'petroleum', 'HSE', 'upstream', 'downstream'],
+    recommendedTone: 'Authoritative',
+    recommendedStyle: 'Technical',
+    aiModel: 'claude'
+  },
+  { 
+    id: 'electricity', 
+    name: 'Ketenagalistrikan & Energi', 
+    icon: 'Zap',
+    color: 'text-yellow-600',
+    bgColor: 'bg-yellow-50 dark:bg-yellow-950',
+    description: 'Pembangkit, transmisi, distribusi, renewable',
+    keywords: ['listrik', 'energi', 'power', 'renewable', 'solar', 'pembangkit'],
+    recommendedTone: 'Professional',
+    recommendedStyle: 'Technical',
+    aiModel: 'chatgpt'
+  },
+  { 
+    id: 'manufacturing', 
+    name: 'Manufaktur & Produksi', 
+    icon: 'Factory',
+    color: 'text-slate-600',
+    bgColor: 'bg-slate-50 dark:bg-slate-800',
+    description: 'Proses produksi, quality control, lean manufacturing',
+    keywords: ['manufaktur', 'produksi', 'pabrik', 'quality', 'lean', 'six sigma'],
+    recommendedTone: 'Professional',
+    recommendedStyle: 'Process-Oriented',
+    aiModel: 'chatgpt'
+  },
+  { 
+    id: 'umkm', 
+    name: 'UMKM & Bisnis Kecil', 
+    icon: 'Store',
+    color: 'text-green-600',
+    bgColor: 'bg-green-50 dark:bg-green-950',
+    description: 'Usaha mikro, kecil, menengah',
+    keywords: ['umkm', 'bisnis', 'usaha kecil', 'wirausaha', 'entrepreneur'],
+    recommendedTone: 'Friendly',
+    recommendedStyle: 'Conversational',
+    aiModel: 'chatgpt'
+  },
+  { 
+    id: 'general', 
+    name: 'Umum / Lainnya', 
+    icon: 'Sparkles',
+    color: 'text-purple-600',
+    bgColor: 'bg-purple-50 dark:bg-purple-950',
+    description: 'Topik umum dan fleksibel',
+    keywords: [],
+    recommendedTone: 'Default',
+    recommendedStyle: 'Default',
+    aiModel: 'dokumentender'
+  },
+] as const;
+
+// --- AI MODEL RECOMMENDATIONS ---
+export const AI_MODEL_RECOMMENDATIONS = [
+  { 
+    id: 'dokumentender', 
+    name: 'DokumenTender AI', 
+    url: 'https://chat.dokumentender.com',
+    icon: 'Bot',
+    color: 'bg-gradient-to-r from-primary to-purple-600',
+    textColor: 'text-white',
+    description: 'Whitelabel LLM terbaik untuk eksekusi prompt. Dioptimalkan untuk industri Indonesia.',
+    recommended: true,
+    strengths: ['Bahasa Indonesia', 'Dokumen Teknis', 'Industri Lokal', 'Tender & Proposal'],
+    bestFor: ['Semua topik', 'Dokumen formal', 'Industri teknik', 'Proposal tender']
+  },
+  { 
+    id: 'chatgpt', 
+    name: 'ChatGPT (OpenAI)', 
+    url: 'https://chatgpt.com',
+    icon: 'MessageCircle',
+    color: 'bg-emerald-500',
+    textColor: 'text-white',
+    description: 'Model versatile dengan kemampuan reasoning yang kuat.',
+    recommended: false,
+    strengths: ['Versatile', 'Reasoning', 'Coding', 'Kreativitas'],
+    bestFor: ['Brainstorming', 'Content marketing', 'Scripting', 'Kursus online']
+  },
+  { 
+    id: 'claude', 
+    name: 'Claude (Anthropic)', 
+    url: 'https://claude.ai',
+    icon: 'Brain',
+    color: 'bg-orange-500',
+    textColor: 'text-white',
+    description: 'Unggul dalam analisis mendalam dan dokumen teknis panjang.',
+    recommended: false,
+    strengths: ['Long-form', 'Analisis', 'Teknis', 'Akurasi'],
+    bestFor: ['Dokumen teknis', 'SOP kompleks', 'Analisis mendalam', 'Engineering']
+  },
+  { 
+    id: 'gemini', 
+    name: 'Gemini (Google)', 
+    url: 'https://gemini.google.com',
+    icon: 'Sparkles',
+    color: 'bg-blue-500',
+    textColor: 'text-white',
+    description: 'Multimodal dengan akses data terkini.',
+    recommended: false,
+    strengths: ['Multimodal', 'Data terkini', 'Research', 'Faktual'],
+    bestFor: ['Riset pasar', 'Data statistik', 'Konten berbasis fakta']
+  },
+  { 
+    id: 'deepseek', 
+    name: 'DeepSeek', 
+    url: 'https://chat.deepseek.com',
+    icon: 'Search',
+    color: 'bg-cyan-600',
+    textColor: 'text-white',
+    description: 'Model efisien dengan kemampuan teknis tinggi.',
+    recommended: false,
+    strengths: ['Efisien', 'Teknis', 'Coding', 'Matematis'],
+    bestFor: ['Kalkulasi teknis', 'Coding', 'Dokumen matematis']
+  },
+  { 
+    id: 'perplexity', 
+    name: 'Perplexity AI', 
+    url: 'https://www.perplexity.ai',
+    icon: 'Globe',
+    color: 'bg-teal-500',
+    textColor: 'text-white',
+    description: 'Search-powered AI dengan sumber referensi.',
+    recommended: false,
+    strengths: ['Search', 'Referensi', 'Akurat', 'Up-to-date'],
+    bestFor: ['Research', 'Fact-checking', 'Sitasi sumber']
+  },
+] as const;
+
+// --- INDUSTRY-SPECIFIC DOCUMENT TEMPLATES ---
+export const INDUSTRY_DOCUMENT_TEMPLATES: Record<string, string[]> = {
+  engineering: [
+    'Technical Specification Document',
+    'Design Calculation Report',
+    'Engineering Drawing Index',
+    'Material Take-Off (MTO)',
+    'Method Statement',
+    'Technical Proposal',
+    'Inspection Test Plan (ITP)',
+    'Commissioning Procedure',
+  ],
+  construction: [
+    'Construction Method Statement',
+    'Project Execution Plan (PEP)',
+    'Quality Assurance Plan',
+    'HSE Plan',
+    'Progress Report',
+    'Variation Order Request',
+    'Site Instruction',
+    'Work Breakdown Structure (WBS)',
+  ],
+  mining: [
+    'Mining Plan Document',
+    'Feasibility Study Report',
+    'Environmental Impact Assessment',
+    'Ore Reserve Statement',
+    'Mine Closure Plan',
+    'Blasting Procedure',
+    'Reclamation Plan',
+    'Geotechnical Report',
+  ],
+  oil_gas: [
+    'Process Flow Diagram (PFD) Description',
+    'P&ID Legend Document',
+    'HSE Management Plan',
+    'Emergency Response Plan',
+    'Work Permit Procedure',
+    'PTW (Permit to Work) SOP',
+    'HAZOP Study Report',
+    'Management of Change (MOC)',
+  ],
+  electricity: [
+    'Power System Study Report',
+    'Load Flow Analysis',
+    'Protection Coordination Study',
+    'Electrical Single Line Diagram Spec',
+    'Cable Schedule',
+    'Grounding System Design',
+    'Maintenance Schedule',
+    'Energy Audit Report',
+  ],
+  manufacturing: [
+    'Standard Operating Procedure (SOP)',
+    'Work Instruction (WI)',
+    'Quality Control Plan',
+    'Process Flow Chart',
+    'FMEA Document',
+    'Preventive Maintenance Schedule',
+    'OEE Calculation Template',
+    'Lean Manufacturing Guide',
+  ],
+  umkm: [
+    'Business Plan Sederhana',
+    'Proposal Pengajuan Modal',
+    'SOP Operasional Usaha',
+    'Katalog Produk',
+    'Price List Template',
+    'Laporan Keuangan Sederhana',
+    'Panduan Customer Service',
+    'Marketing Plan UMKM',
+  ],
+  general: [],
+};
+
 // --- CONSTANTS FOR DROPDOWNS ---
 export const LANGUAGES = ["Bahasa Indonesia", "English"] as const;
 
@@ -158,6 +409,8 @@ export const projectDataSchema = z.object({
   hasilRiset: z.string(),
   produk: z.string(),
   level: z.string().default('Single Ebook'),
+  industry: z.string().default('general'),
+  selectedAiModel: z.string().default('dokumentender'),
 });
 
 export const taskConfigSchema = z.object({
