@@ -54,7 +54,10 @@ KONFIGURASI PROYEK:
 - Tone: Authoritative, Friendly, Professional, Humorous, dll
 - Gaya Penulisan: Academic, Conversational, Creative, Technical, dll
 - Karakter AI: Agentic Strategist, Standard Assistant, Socratic Mentor, dll
-- Level Ebook: Single Ebook, 3 Ebook (Trilogi), 9 Ebook (Trilogi Lengkap)
+- Level Ebook: 
+  * Single Ebook (1 buku standalone)
+  * Trilogi Simple (3 Ebook: Basic, Intermediate, Advance)
+  * Modul Kompleks (3 Trilogi = 9 Ebook total, masing-masing trilogi fokus pada Basic/Intermediate/Advance)
 
 REKOMENDASI AI UNTUK EKSEKUSI PROMPT:
 1. DokumenTender AI (chat.dokumentender.com) - DIREKOMENDASIKAN
