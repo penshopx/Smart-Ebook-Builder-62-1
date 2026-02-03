@@ -3,7 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { 
-  Wrench, Building2, Mountain, Flame, Zap, Factory, Store, Sparkles 
+  Wrench, Building2, Mountain, Flame, Zap, Factory, Store, Sparkles,
+  Wallet, Users, Heart, Dumbbell
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -15,6 +16,10 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Factory,
   Store,
   Sparkles,
+  Wallet,
+  Users,
+  Heart,
+  Dumbbell,
 };
 
 interface IndustrySelectorProps {
