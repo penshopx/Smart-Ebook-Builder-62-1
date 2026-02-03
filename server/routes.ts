@@ -168,7 +168,7 @@ export async function registerRoutes(
     }
   });
 
-  app.post("/api/chat", isAuthenticated, async (req, res) => {
+  app.post("/api/chat", async (req, res) => {
     try {
       const parsed = chatMessageSchema.safeParse(req.body);
       if (!parsed.success) {
