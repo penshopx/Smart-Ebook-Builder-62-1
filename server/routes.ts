@@ -217,26 +217,75 @@ export async function registerRoutes(
       const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
       const colorDesc = colorDescriptions[colorScheme] || colorDescriptions.biru;
 
-      const imagePrompt = `${styleDesc} ebook cover design background. ${colorDesc}. Abstract visual elements representing "${topik || title}". ${industry && industry !== 'general' ? `Industry: ${industry}.` : ''} High quality, digital art, book cover composition, no text, no letters, no words, professional publishing quality, 2:3 aspect ratio portrait.`;
+      const basePrompt = `Abstract visual background for ebook cover representing "${topik || title}". ${industry && industry !== 'general' ? `Industry theme: ${industry}.` : ''} No text, no letters, no words. Professional publishing quality, portrait 2:3 ratio.`;
 
-      const response = await openai.images.generate({
-        model: "dall-e-3",
-        prompt: imagePrompt,
-        size: "1024x1792",
-        quality: "standard",
-        n: 1,
-      });
+      const variantPrompts = [
+        `${styleDesc} ${colorDesc}. ${basePrompt} Variant: geometric patterns.`,
+        `${styleDesc} ${colorDesc}. ${basePrompt} Variant: flowing organic shapes.`,
+        `${styleDesc} ${colorDesc}. ${basePrompt} Variant: abstract light and shadow.`,
+        `${styleDesc} ${colorDesc}. ${basePrompt} Variant: bold minimal composition.`,
+      ];
 
-      const imageUrl = response.data[0]?.url;
-      if (!imageUrl) {
+      const results = await Promise.allSettled(
+        variantPrompts.map(p =>
+          openai.images.generate({ model: "dall-e-3", prompt: p, size: "1024x1792", quality: "standard", n: 1 })
+        )
+      );
+
+      const imageUrls = results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+        .map(r => r.value.data[0]?.url)
+        .filter(Boolean);
+
+      if (imageUrls.length === 0) {
         return res.status(500).json({ error: "Gagal menghasilkan gambar" });
       }
 
-      res.json({ imageUrl, revisedPrompt: response.data[0]?.revised_prompt });
+      res.json({ imageUrls });
     } catch (error: any) {
       console.error("Generate cover error:", error);
       res.status(500).json({ 
         error: "Gagal membuat cover. " + (error?.message || "Silakan coba lagi.") 
+      });
+    }
+  });
+
+  app.post("/api/generate-images", isAuthenticated, async (req, res) => {
+    try {
+      const { context } = req.body;
+      if (!context) {
+        return res.status(400).json({ error: "Context is required" });
+      }
+
+      const cleanContext = context.trim().slice(0, 300);
+
+      const variantPrompts = [
+        `Photorealistic illustration depicting: "${cleanContext}". Style: professional, editorial photography style. No text.`,
+        `Digital art illustration depicting: "${cleanContext}". Style: modern flat design, vibrant colors. No text.`,
+        `Conceptual artwork depicting: "${cleanContext}". Style: abstract, symbolic, artistic. No text.`,
+        `Infographic-style visual depicting: "${cleanContext}". Style: clean, minimal, professional business. No text.`,
+      ];
+
+      const results = await Promise.allSettled(
+        variantPrompts.map(p =>
+          openai.images.generate({ model: "dall-e-3", prompt: p, size: "1024x1024", quality: "standard", n: 1 })
+        )
+      );
+
+      const imageUrls = results
+        .filter((r): r is PromiseFulfilledResult<any> => r.status === 'fulfilled')
+        .map(r => r.value.data[0]?.url)
+        .filter(Boolean);
+
+      if (imageUrls.length === 0) {
+        return res.status(500).json({ error: "Gagal menghasilkan gambar" });
+      }
+
+      res.json({ imageUrls });
+    } catch (error: any) {
+      console.error("Generate images error:", error);
+      res.status(500).json({
+        error: "Gagal membuat gambar. " + (error?.message || "Silakan coba lagi.")
       });
     }
   });

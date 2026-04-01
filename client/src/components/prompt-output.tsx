@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X } from 'lucide-react';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { apiRequest } from '@/lib/queryClient';
 import {
   Dialog,
   DialogContent,
@@ -49,6 +50,11 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [docContent, setDocContent] = useState('');
   const [docError, setDocError] = useState('');
   const [isDocCopied, setIsDocCopied] = useState(false);
+  const [imageInserts, setImageInserts] = useState<Record<number, string>>({});
+  const [imgPickerOpen, setImgPickerOpen] = useState(false);
+  const [imgPickerIdx, setImgPickerIdx] = useState(-1);
+  const [imgPickerLoading, setImgPickerLoading] = useState(false);
+  const [pickerImages, setPickerImages] = useState<string[]>([]);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -176,6 +182,7 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
 
     setDocContent('');
     setDocError('');
+    setImageInserts({});
     setIsGenerating(true);
     setIsDocDialogOpen(true);
 
@@ -250,6 +257,32 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
     abortRef.current?.abort();
     setIsDocDialogOpen(false);
   };
+
+  const handleOpenImagePicker = useCallback(async (paragraphIdx: number, context: string) => {
+    setImgPickerIdx(paragraphIdx);
+    setImgPickerOpen(true);
+    setPickerImages([]);
+    setImgPickerLoading(true);
+    try {
+      const response = await apiRequest('POST', '/api/generate-images', { context: context.slice(0, 300) });
+      const data = await response.json();
+      setPickerImages(data.imageUrls || []);
+    } catch {
+      toast({ title: 'Gagal generate gambar', variant: 'destructive' });
+    } finally {
+      setImgPickerLoading(false);
+    }
+  }, [toast]);
+
+  const handlePickImage = useCallback((url: string) => {
+    setImageInserts(prev => ({ ...prev, [imgPickerIdx]: url }));
+    setImgPickerOpen(false);
+    toast({ title: 'Gambar berhasil disisipkan!', description: 'Gambar ditambahkan ke dokumen.' });
+  }, [imgPickerIdx, toast]);
+
+  const handleRemoveImage = useCallback((idx: number) => {
+    setImageInserts(prev => { const n = { ...prev }; delete n[idx]; return n; });
+  }, []);
 
   const wordCount = prompt.split(/\s+/).filter(Boolean).length;
   const charCount = prompt.length;
@@ -549,11 +582,59 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
               </div>
             ) : (
               <ScrollArea className="h-full">
-                <div
-                  className="p-4 text-sm leading-relaxed whitespace-pre-wrap font-sans"
-                  data-testid="text-document-output"
-                >
-                  {docContent}
+                <div className="p-4 space-y-1" data-testid="text-document-output">
+                  {docContent.split(/\n/).map((line, idx) => {
+                    const hasImage = imageInserts[idx] !== undefined;
+                    const isHeader = line.trim().length > 0 && line.trim().length < 80 && (
+                      /^(BAB|BAGIAN|PENDAHULUAN|KESIMPULAN|PENUTUP|DAFTAR|[IVX]+\.|[0-9]+\.)/i.test(line.trim()) ||
+                      line.trim() === line.trim().toUpperCase()
+                    );
+                    return (
+                      <div key={idx} className="group/line">
+                        {hasImage && (
+                          <div className="relative my-3">
+                            <img
+                              src={imageInserts[idx]}
+                              alt={`Ilustrasi paragraf ${idx + 1}`}
+                              className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover"
+                              data-testid={`img-doc-insert-${idx}`}
+                            />
+                            <button
+                              onClick={() => handleRemoveImage(idx)}
+                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
+                              title="Hapus gambar"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        )}
+                        {line.trim() === '' ? (
+                          <div className="h-2" />
+                        ) : (
+                          <p className={cn(
+                            "text-sm leading-relaxed",
+                            isHeader ? "font-bold text-primary mt-4 mb-1 text-base" : "text-foreground"
+                          )}>
+                            {line}
+                          </p>
+                        )}
+                        {!isGenerating && line.trim() !== '' && (
+                          <div className="flex items-center gap-1 my-1 opacity-0 group-hover/line:opacity-100 transition-opacity">
+                            <div className="flex-1 h-px bg-border/50" />
+                            <button
+                              onClick={() => handleOpenImagePicker(idx, line)}
+                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-primary hover:bg-primary/10 border border-dashed border-border hover:border-primary transition-all"
+                              data-testid={`button-add-image-${idx}`}
+                            >
+                              <ImagePlus className="h-2.5 w-2.5" />
+                              Tambah Gambar AI
+                            </button>
+                            <div className="flex-1 h-px bg-border/50" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                   {isGenerating && (
                     <span className="inline-block w-2 h-4 bg-emerald-600 ml-0.5 animate-pulse rounded-sm" />
                   )}
@@ -610,6 +691,67 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
                   Ulang
                 </Button>
               </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Image picker dialog */}
+      <Dialog open={imgPickerOpen} onOpenChange={setImgPickerOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ImagePlus className="h-4 w-4 text-primary" />
+              Pilih Gambar AI untuk Disisipkan
+              <Badge variant="secondary" className="ml-1 text-xs">4 Varian · DALL-E 3</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {imgPickerLoading ? (
+            <div className="flex flex-col items-center justify-center gap-4 py-12">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-xl bg-gradient-to-br from-primary/30 to-purple-400/30 animate-pulse" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                </div>
+              </div>
+              <div className="text-center">
+                <p className="font-medium text-sm">AI sedang membuat 4 gambar...</p>
+                <p className="text-xs text-muted-foreground mt-1">Ini mungkin membutuhkan 30-60 detik</p>
+              </div>
+              <div className="flex gap-1.5">
+                {[0,1,2,3].map(i => (
+                  <div key={i} className="h-1.5 w-1.5 rounded-full bg-primary animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                ))}
+              </div>
+            </div>
+          ) : pickerImages.length > 0 ? (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">Klik gambar untuk menyisipkannya ke dalam dokumen</p>
+              <div className="grid grid-cols-2 gap-3">
+                {pickerImages.map((url, i) => (
+                  <button
+                    key={i}
+                    onClick={() => handlePickImage(url)}
+                    className="relative rounded-lg overflow-hidden border-2 border-border hover:border-primary transition-all hover:shadow-lg group"
+                    data-testid={`picker-image-${i}`}
+                  >
+                    <img
+                      src={url}
+                      alt={`Varian gambar ${i + 1}`}
+                      className="w-full aspect-square object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                      <span className="opacity-0 group-hover:opacity-100 bg-primary text-white text-xs px-3 py-1.5 rounded-full font-medium transition-opacity">
+                        Pilih Varian {i + 1}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-8 text-muted-foreground text-sm">
+              Tidak ada gambar yang dihasilkan. Silakan coba lagi.
             </div>
           )}
         </DialogContent>
