@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -55,6 +55,8 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [imgPickerIdx, setImgPickerIdx] = useState(-1);
   const [imgPickerLoading, setImgPickerLoading] = useState(false);
   const [pickerImages, setPickerImages] = useState<string[]>([]);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+  const [slideIndex, setSlideIndex] = useState(0);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -284,6 +286,40 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
     setImageInserts(prev => { const n = { ...prev }; delete n[idx]; return n; });
   }, []);
 
+  const parseSlides = useCallback((content: string) => {
+    const lines = content.split('\n');
+    const slides: { title: string; bullets: string[]; imageUrl?: string }[] = [];
+    let current: { title: string; bullets: string[] } | null = null;
+
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line) continue;
+
+      const isHeader = line.length < 100 && (
+        /^(BAB|BAGIAN|PENDAHULUAN|KESIMPULAN|PENUTUP|DAFTAR|[IVX]+\.|[0-9]+\.|#{1,3}\s)/i.test(line) ||
+        (line === line.toUpperCase() && line.length > 3)
+      );
+
+      if (isHeader) {
+        if (current) slides.push(current);
+        current = { title: line.replace(/^#{1,3}\s/, ''), bullets: [] };
+      } else if (current) {
+        if (line.startsWith('-') || line.startsWith('•') || line.startsWith('*')) {
+          current.bullets.push(line.replace(/^[-•*]\s*/, ''));
+        } else {
+          current.bullets.push(line);
+        }
+      } else {
+        current = { title: 'Pendahuluan', bullets: [line] };
+      }
+    }
+    if (current) slides.push(current);
+    return slides.length > 0 ? slides : [{ title: 'Dokumen', bullets: content.split('\n').filter(Boolean).slice(0, 10) }];
+  }, []);
+
+  const slides = parseSlides(docContent);
+  const currentSlide = slides[slideIndex] || slides[0];
+
   const wordCount = prompt.split(/\s+/).filter(Boolean).length;
   const charCount = prompt.length;
 
@@ -359,10 +395,14 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
                   Membuat Dokumen...
                 </>
               ) : (
-                <>
-                  <FileText className="h-5 w-5 mr-2" />
-                  Generate Dokumen Langsung
-                </>
+                <span className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Generate Dokumen
+                  <span className="ml-1 flex items-center gap-1 text-xs bg-white/20 rounded px-1.5 py-0.5">
+                    <Monitor className="h-3 w-3" />
+                    + Presentasi
+                  </span>
+                </span>
               )}
             </Button>
 
@@ -525,38 +565,148 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
 
       {/* Document generation dialog */}
       <Dialog open={isDocDialogOpen} onOpenChange={handleCloseDocDialog}>
-        <DialogContent className="max-w-4xl h-[90vh] flex flex-col">
-          <DialogHeader className="flex-shrink-0">
+        <DialogContent className={cn("flex flex-col", isPresentationMode ? "max-w-5xl h-[95vh] p-0 overflow-hidden" : "max-w-4xl h-[90vh]")}>
+          <DialogHeader className={cn("flex-shrink-0", isPresentationMode && "px-6 pt-5 pb-3 bg-gray-950 border-b border-gray-800")}>
             <div className="flex items-center justify-between gap-4">
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-600 text-white">
-                  <FileText className="h-4 w-4" />
+                <div className={cn("flex items-center justify-center h-8 w-8 rounded-lg text-white", isPresentationMode ? "bg-indigo-600" : "bg-emerald-600")}>
+                  {isPresentationMode ? <Monitor className="h-4 w-4" /> : <FileText className="h-4 w-4" />}
                 </div>
                 <div>
-                  <DialogTitle>Dokumen yang Dihasilkan</DialogTitle>
+                  <DialogTitle className={isPresentationMode ? "text-white" : ""}>
+                    {isPresentationMode ? `Mode Presentasi — Slide ${slideIndex + 1} / ${slides.length}` : 'Dokumen yang Dihasilkan'}
+                  </DialogTitle>
                   {isGenerating && (
                     <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                       <Loader2 className="h-3 w-3 animate-spin" />
                       AI sedang menulis dokumen...
                     </p>
                   )}
-                  {!isGenerating && docContent && (
-                    <p className="text-xs text-emerald-600 mt-0.5">
-                      Dokumen selesai dibuat
-                    </p>
+                  {!isGenerating && docContent && !isPresentationMode && (
+                    <p className="text-xs text-emerald-600 mt-0.5">Dokumen selesai dibuat</p>
                   )}
                 </div>
               </div>
-              {!isGenerating && docContent && (
-                <Badge variant="secondary" className="shrink-0">
-                  {docContent.split(/\s+/).filter(Boolean).length} kata
-                </Badge>
-              )}
+              <div className="flex items-center gap-2 shrink-0">
+                {!isGenerating && docContent && (
+                  <div className="flex rounded-lg border overflow-hidden">
+                    <button
+                      onClick={() => { setIsPresentationMode(false); }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors",
+                        !isPresentationMode ? "bg-primary text-primary-foreground" : "hover:bg-muted text-muted-foreground"
+                      )}
+                      data-testid="button-mode-dokumen"
+                    >
+                      <FileText className="h-3 w-3" />
+                      Dokumen
+                    </button>
+                    <button
+                      onClick={() => { setIsPresentationMode(true); setSlideIndex(0); }}
+                      className={cn(
+                        "flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors",
+                        isPresentationMode ? "bg-indigo-600 text-white" : "hover:bg-muted text-muted-foreground"
+                      )}
+                      data-testid="button-mode-presentasi"
+                    >
+                      <Monitor className="h-3 w-3" />
+                      Presentasi
+                    </button>
+                  </div>
+                )}
+                {!isGenerating && docContent && !isPresentationMode && (
+                  <Badge variant="secondary" className="shrink-0">
+                    {docContent.split(/\s+/).filter(Boolean).length} kata
+                  </Badge>
+                )}
+              </div>
             </div>
           </DialogHeader>
 
-          <div className="flex-1 min-h-0 overflow-hidden">
-            {docError ? (
+          <div className={cn("flex-1 min-h-0 overflow-hidden", isPresentationMode && "bg-gray-950")}>
+            {isPresentationMode && docContent && !isGenerating ? (
+              <div className="h-full flex flex-col">
+                <div className="flex-1 flex items-center justify-center p-8 relative">
+                  <div className="w-full max-w-3xl">
+                    <div className="rounded-2xl overflow-hidden shadow-2xl bg-gradient-to-br from-indigo-900 via-slate-900 to-purple-900 border border-indigo-500/20 min-h-[380px] flex flex-col p-10 relative">
+                      <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                      <div className="absolute top-4 right-6 text-indigo-400/50 text-xs font-mono">
+                        {slideIndex + 1} / {slides.length}
+                      </div>
+                      <div className="flex-1">
+                        <h2 className="text-2xl font-bold text-white mb-6 leading-tight">
+                          {currentSlide?.title}
+                        </h2>
+                        <ul className="space-y-3">
+                          {currentSlide?.bullets.slice(0, 8).map((bullet, i) => (
+                            <li key={i} className="flex items-start gap-3 text-slate-200 text-sm leading-relaxed">
+                              <span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0" />
+                              {bullet}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div className="mt-6 pt-4 border-t border-white/10 flex items-center justify-between">
+                        <span className="text-indigo-400/60 text-xs">{projectTitle || 'Ebook Builder Pro'}</span>
+                        <div className="flex gap-1">
+                          {slides.map((_, i) => (
+                            <button
+                              key={i}
+                              onClick={() => setSlideIndex(i)}
+                              className={cn(
+                                "h-1 rounded-full transition-all",
+                                i === slideIndex ? "w-6 bg-indigo-400" : "w-1.5 bg-white/20 hover:bg-white/40"
+                              )}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center gap-4 py-4 border-t border-gray-800">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSlideIndex(i => Math.max(0, i - 1))}
+                    disabled={slideIndex === 0}
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                    data-testid="button-slide-prev"
+                  >
+                    <ChevronLeft className="h-4 w-4 mr-1" />
+                    Sebelumnya
+                  </Button>
+                  <div className="flex gap-1 max-w-xs overflow-hidden">
+                    {slides.slice(Math.max(0, slideIndex - 3), slideIndex + 4).map((s, i) => {
+                      const realIdx = Math.max(0, slideIndex - 3) + i;
+                      return (
+                        <button
+                          key={realIdx}
+                          onClick={() => setSlideIndex(realIdx)}
+                          className={cn(
+                            "shrink-0 w-8 h-8 text-xs rounded-md transition-colors",
+                            realIdx === slideIndex ? "bg-indigo-600 text-white font-bold" : "bg-gray-800 text-gray-400 hover:bg-gray-700"
+                          )}
+                        >
+                          {realIdx + 1}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSlideIndex(i => Math.min(slides.length - 1, i + 1))}
+                    disabled={slideIndex === slides.length - 1}
+                    className="border-gray-700 text-gray-300 hover:bg-gray-800"
+                    data-testid="button-slide-next"
+                  >
+                    Berikutnya
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
+              </div>
+            ) : docError ? (
               <div className="h-full flex flex-col items-center justify-center gap-3 text-center p-6">
                 <div className="flex items-center justify-center h-12 w-12 rounded-full bg-destructive/10">
                   <AlertCircle className="h-6 w-6 text-destructive" />
@@ -643,7 +793,7 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
             )}
           </div>
 
-          {!isGenerating && docContent && (
+          {!isGenerating && docContent && !isPresentationMode && (
             <div className="space-y-2 pt-4 border-t flex-shrink-0">
               <div className="flex items-center gap-2">
                 <Button
