@@ -4,7 +4,9 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { 
   Wrench, Building2, Mountain, Flame, Zap, Factory, Store, Sparkles,
-  Wallet, Users, Heart, Dumbbell, Palette
+  Wallet, Users, Heart, Dumbbell, Palette,
+  FileCheck, ClipboardList, Award, GraduationCap, Kanban, Database,
+  Box, Leaf, BookOpen, ShieldCheck, Scale
 } from 'lucide-react';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -21,6 +23,17 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Heart,
   Dumbbell,
   Palette,
+  FileCheck,
+  ClipboardList,
+  Award,
+  GraduationCap,
+  Kanban,
+  Database,
+  Box,
+  Leaf,
+  BookOpen,
+  ShieldCheck,
+  Scale,
 };
 
 interface IndustrySelectorProps {

@@ -105,7 +105,7 @@ const STATS = [
   { value: "10,000+", label: "Prompt Generated", icon: Sparkles },
   { value: "2,500+", label: "Ebook Created", icon: Book },
   { value: "500+", label: "Active Users", icon: Users },
-  { value: "13", label: "Industry Themes", icon: Building2 }
+  { value: "24", label: "Industry Themes", icon: Building2 }
 ];
 
 const INDUSTRIES = [
@@ -153,7 +153,7 @@ const FAQ_DATA = [
   },
   {
     question: "Industri apa saja yang didukung?",
-    answer: "Kami mendukung 13 kategori industri: Engineering, Konstruksi, Pertambangan, Oil & Gas, Kelistrikan, Manufaktur, UMKM, Teknologi, serta tema lifestyle seperti Kekayaan, Keluarga, Spiritualitas, Kesehatan, dan Hobi."
+    answer: "Kami mendukung 24 kategori industri: Engineering, Konstruksi, Pertambangan, Oil & Gas, Kelistrikan, Manufaktur, UMKM, Teknologi, Perijinan Usaha, Tender & Pengadaan, Sertifikasi SBU & SKK, Manajemen Proyek, ERP, BIM, PUB, PKB, ISO, Pancek KPK, serta tema lifestyle seperti Kekayaan, Keluarga, Spiritualitas, Kesehatan, dan Hobi."
   },
   {
     question: "Apakah ada batasan penggunaan di paket gratis?",
@@ -206,7 +206,7 @@ function ComparisonTable() {
     { name: "Mode generasi", free: "3", pro: "11", enterprise: "11 + Custom" },
     { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
     { name: "Export format", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
-    { name: "Industry themes", free: "3", pro: "13", enterprise: "13 + Custom" },
+    { name: "Industry themes", free: "3", pro: "24", enterprise: "24 + Custom" },
     { name: "AI Character modes", free: false, pro: true, enterprise: true },
     { name: "Priority support", free: false, pro: true, enterprise: true },
     { name: "Team collaboration", free: false, pro: false, enterprise: true },
@@ -338,7 +338,7 @@ export default function Landing() {
 
               <Badge variant="secondary" className="mb-6 px-4 py-2">
                 <Sparkles className="h-3 w-3 mr-2" />
-                AI-Powered Prompt Generator untuk 13 Industri
+                AI-Powered Prompt Generator untuk 24 Industri
               </Badge>
               
               {/* Pain Point Headline */}
@@ -467,7 +467,7 @@ export default function Landing() {
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">Multi-Industry</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Cocok untuk 13 Industri & Tema</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Cocok untuk 24 Industri & Tema</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Dari industri berat hingga lifestyle, prompt kami disesuaikan dengan terminologi dan konteks spesifik masing-masing bidang.
               </p>
@@ -691,7 +691,7 @@ export default function Landing() {
                       'Semua 11 mode generasi',
                       'Unlimited proyek',
                       'Export semua format',
-                      '13 industry themes',
+                      '24 industry themes',
                       'AI Character modes',
                       'Priority support',
                     ].map((feature) => (

@@ -23,7 +23,8 @@ FITUR-FITUR UTAMA (11 MODE GENERASI):
 10. MARKETING KIT - Membuat materi marketing dan promosi
 11. EXTEND TEXT - Mengembangkan/memperluas teks pendek
 
-13 TEMA INDUSTRI:
+24 TEMA INDUSTRI:
+INDUSTRI TEKNIS:
 - Keteknikan & Engineering (teknik sipil, mesin, elektro)
 - Konstruksi & Infrastruktur
 - Pertambangan & Mineral
@@ -31,7 +32,23 @@ FITUR-FITUR UTAMA (11 MODE GENERASI):
 - Ketenagalistrikan & Energi
 - Manufaktur & Produksi
 - UMKM & Bisnis Kecil
-- Teknologi & IT
+
+TEMA REGULASI & SERTIFIKASI:
+- Perijinan Usaha (NIB, SIUP, OSS, PTSP, izin lingkungan)
+- Tender & Pengadaan (LPSE, pengadaan barang/jasa, RKS, BQ)
+- Sertifikasi (SBU) - Sertifikat Badan Usaha, klasifikasi, kualifikasi
+- Sertifikasi (SKK) - Sertifikat Kompetensi Kerja, portofolio profesi
+- Sertifikasi Sistem Manajemen (ISO 9001, 14001, 45001, SMK3)
+- Pancek KPK (pencegahan korupsi, gratifikasi, WBS, integritas, GCG)
+
+TEMA MANAJEMEN & DIGITAL:
+- Manajemen Proyek (PMP, PMBOK, WBS, Gantt Chart)
+- ERP & Sistem Informasi (SAP, Oracle, Odoo, digitalisasi)
+- BIM & Desain Digital (Building Information Modeling, Revit, AutoCAD)
+- Pengembangan Usaha Berkelanjutan / PUB (ESG, CSR, sustainability, SDGs)
+- Pengembangan Keprofesian Berkelanjutan / PKB (CPD, portofolio, pelatihan)
+
+TEMA LIFESTYLE:
 - Kekayaan & Kebebasan Finansial (lifestyle)
 - Keluarga & Keharmonisan Rumah Tangga (lifestyle)
 - Spiritualitas & Kerohanian (lifestyle)
