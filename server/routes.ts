@@ -296,6 +296,141 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/generate-marketing-kit", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, industry, docSummary } = req.body;
+      if (!title && !topik) return res.status(400).json({ error: "Title or topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const systemPrompt = `Kamu adalah copywriter dan marketing strategist profesional Indonesia yang ahli dalam membuat materi pemasaran produk digital (ebook, e-course, info produk). Tulis dengan gaya yang meyakinkan, emosional, dan persuasif khas market Indonesia. Gunakan bahasa yang hangat dan natural.`;
+
+      const userPrompt = `Buat Marketing Kit lengkap untuk ebook/produk digital berikut:
+
+Judul: ${title || topik}
+Topik: ${topik}
+Target Pembaca: ${target || 'umum'}
+Industri/Niche: ${industry || 'umum'}
+${docSummary ? `Ringkasan konten: ${docSummary.slice(0, 500)}` : ''}
+
+Buat SEMUA bagian berikut secara lengkap (JANGAN dipersingkat):
+
+===== SALES PAGE COPY =====
+Headline utama (powerful, problem-aware)
+Sub-headline (promise + timeframe)
+3 Pain Points yang dirasakan target pembaca
+5 Benefit utama ebook ini (dengan format: BENEFIT → PENJELASAN 1 kalimat)
+Social proof placeholder (format testimoni)
+Call to Action (CTA utama + urgency)
+
+===== POSTINGAN INSTAGRAM =====
+Caption panjang (hook + cerita + value + CTA + hashtag)
+Ide 5 konten carousel (judul slide 1-5)
+
+===== POSTINGAN LINKEDIN =====
+Post profesional (hook + problem + solusi + value + CTA)
+
+===== EMAIL MARKETING =====
+Subject line (5 variasi A/B test)
+Email nurturing sequence #1: "Perkenalan" (subjek + body lengkap)
+Email nurturing sequence #2: "Value/Tips" (subjek + body lengkap)
+Email nurturing sequence #3: "Hard Sell" (subjek + body lengkap)
+
+===== BROADCAST WHATSAPP =====
+Pesan WA broadcast pendek (maks 200 kata, personal, CTA jelas)
+Pesan WA follow-up (maks 150 kata)
+
+Tulis semuanya dalam Bahasa Indonesia yang natural dan menjual.`;
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        stream: true,
+        max_completion_tokens: 4096,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      console.error("Marketing kit error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal membuat marketing kit" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate marketing kit" });
+      }
+    }
+  });
+
+  app.post("/api/generate-script", isAuthenticated, async (req, res) => {
+    try {
+      const { title, docContent, duration } = req.body;
+      if (!docContent) return res.status(400).json({ error: "Document content required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const systemPrompt = `Kamu adalah scriptwriter profesional yang ahli mengubah konten ebook menjadi script narasi video/podcast yang enak didengar. Gaya penulisannya: conversational, mengalir, mudah dipahami saat dibacakan keras. Seperti gaya dosen atau trainer yang asyik ngobrol dengan peserta.`;
+
+      const userPrompt = `Ubah konten ebook berikut menjadi Script Presentasi Video/Voice-Over yang profesional.
+
+Judul Ebook: ${title || 'Ebook'}
+Durasi target: ${duration || '10-15 menit'}
+
+KONTEN EBOOK:
+${docContent.slice(0, 3500)}
+
+INSTRUKSI:
+- Mulai dengan INTRO yang menarik (sapa penonton, perkenalkan topik, jelaskan apa yang akan dipelajari)
+- Ubah setiap bab/bagian menjadi segmen script dengan [SEGMEN X] header
+- Gunakan transisi antar segmen yang natural ("Nah, sekarang kita masuk ke bagian berikutnya...", "Menarik bukan? Sekarang...")
+- Tambahkan [JEDA] untuk tanda berhenti sejenak
+- Tambahkan [PENEKANAN] untuk kata/kalimat yang perlu ditekankan
+- Akhiri dengan OUTRO yang kuat (rangkuman + ajakan action + closing)
+- Gaya bahasa: santai tapi profesional, seperti ngobrol langsung dengan penonton
+- Tulis LENGKAP, bukan ringkasan
+
+Format setiap segmen:
+[SEGMEN N: JUDUL SEGMEN]
+(Teks script lengkap yang siap dibacakan...)`;
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        stream: true,
+        max_completion_tokens: 4096,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      console.error("Script gen error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal membuat script" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate script" });
+      }
+    }
+  });
+
   app.post("/api/generate-document", async (req, res) => {
     try {
       const { prompt, mode } = req.body;

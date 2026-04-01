@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin } from 'lucide-react';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -61,6 +61,13 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [editedContent, setEditedContent] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
   const [imgPickerType, setImgPickerType] = useState<'illustration' | 'infographic'>('illustration');
+  const [mktOpen, setMktOpen] = useState(false);
+  const [mktContent, setMktContent] = useState('');
+  const [mktLoading, setMktLoading] = useState(false);
+  const [mktActiveSection, setMktActiveSection] = useState('sales');
+  const [scriptOpen, setScriptOpen] = useState(false);
+  const [scriptContent, setScriptContent] = useState('');
+  const [scriptLoading, setScriptLoading] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -269,6 +276,83 @@ ${bodyHtml}
     doc.save(`${filename}.pdf`);
     toast({ title: 'PDF berhasil didownload!' });
   }, [docContent, projectTitle, projectTopik, toast]);
+
+  const streamSSE = async (
+    url: string,
+    body: object,
+    onChunk: (text: string) => void,
+    onDone: () => void,
+    onError: (msg: string) => void
+  ) => {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!response.ok) { onError('Gagal menghubungi server'); return; }
+    const reader = response.body?.getReader();
+    if (!reader) { onError('Tidak ada response'); return; }
+    const decoder = new TextDecoder();
+    let buf = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buf += decoder.decode(value, { stream: true });
+      const lines = buf.split('\n');
+      buf = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        try {
+          const data = JSON.parse(line.slice(5).trim());
+          if (data.error) { onError(data.error); return; }
+          if (data.done) { onDone(); return; }
+          if (data.content) onChunk(data.content);
+        } catch { /* ignore */ }
+      }
+    }
+    onDone();
+  };
+
+  const handleGenerateMarketingKit = useCallback(async () => {
+    setMktOpen(true);
+    setMktContent('');
+    setMktLoading(true);
+    try {
+      await streamSSE(
+        '/api/generate-marketing-kit',
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          docSummary: docContent.slice(0, 600),
+        },
+        (chunk) => setMktContent(prev => prev + chunk),
+        () => setMktLoading(false),
+        (err) => { setMktLoading(false); toast({ title: err, variant: 'destructive' }); }
+      );
+    } catch {
+      setMktLoading(false);
+      toast({ title: 'Gagal membuat Marketing Kit', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, docContent, toast]);
+
+  const handleGenerateScript = useCallback(async () => {
+    if (!docContent) return;
+    setScriptOpen(true);
+    setScriptContent('');
+    setScriptLoading(true);
+    try {
+      await streamSSE(
+        '/api/generate-script',
+        { title: projectTitle || projectTopik, docContent },
+        (chunk) => setScriptContent(prev => prev + chunk),
+        () => setScriptLoading(false),
+        (err) => { setScriptLoading(false); toast({ title: err, variant: 'destructive' }); }
+      );
+    } catch {
+      setScriptLoading(false);
+      toast({ title: 'Gagal membuat Script', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, docContent, toast]);
 
   const handleGenerateDocument = useCallback(async () => {
     if (!prompt.trim()) {
@@ -1088,6 +1172,198 @@ ${bodyHtml}
                 >
                   <Sparkles className="h-4 w-4 mr-2" />
                   Ulang
+                </Button>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">AI Kit:</div>
+                <Button
+                  onClick={handleGenerateMarketingKit}
+                  className="flex-1 bg-gradient-to-r from-pink-600 to-rose-500 hover:from-pink-700 hover:to-rose-600 text-white text-xs h-8"
+                  data-testid="button-marketing-kit"
+                >
+                  <Megaphone className="h-3.5 w-3.5 mr-1.5" />
+                  Marketing Kit
+                </Button>
+                <Button
+                  onClick={handleGenerateScript}
+                  className="flex-1 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-700 hover:to-indigo-700 text-white text-xs h-8"
+                  data-testid="button-script-video"
+                >
+                  <Mic className="h-3.5 w-3.5 mr-1.5" />
+                  Script Video
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Marketing Kit Dialog */}
+      <Dialog open={mktOpen} onOpenChange={setMktOpen}>
+        <DialogContent className="max-w-3xl h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-pink-600 to-rose-500 text-white">
+                <Megaphone className="h-3.5 w-3.5" />
+              </div>
+              Marketing Kit AI
+              <Badge variant="secondary" className="ml-1 text-xs">Sales · Social Media · Email · WA</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {mktLoading && !mktContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-pink-500" />
+              <p className="text-sm text-muted-foreground">AI sedang membuat marketing kit...</p>
+            </div>
+          )}
+          {(mktContent || mktLoading) && (
+            <div className="flex-1 min-h-0 flex flex-col gap-3">
+              <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                {[
+                  { key: 'sales', label: 'Sales Page', icon: <ShoppingBag className="h-3.5 w-3.5" /> },
+                  { key: 'instagram', label: 'Instagram', icon: <Camera className="h-3.5 w-3.5" /> },
+                  { key: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-3.5 w-3.5" /> },
+                  { key: 'email', label: 'Email', icon: <Mail className="h-3.5 w-3.5" /> },
+                  { key: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+                ].map(tab => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setMktActiveSection(tab.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                      mktActiveSection === tab.key
+                        ? "bg-pink-600 text-white border-pink-600"
+                        : "border-border hover:border-pink-300 hover:text-pink-700"
+                    )}
+                  >{tab.icon}{tab.label}</button>
+                ))}
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="text-sm whitespace-pre-wrap leading-relaxed font-mono p-2">
+                  {(() => {
+                    const sections: Record<string, string> = {
+                      sales: 'SALES PAGE COPY',
+                      instagram: 'POSTINGAN INSTAGRAM',
+                      linkedin: 'POSTINGAN LINKEDIN',
+                      email: 'EMAIL MARKETING',
+                      whatsapp: 'BROADCAST WHATSAPP',
+                    };
+                    const sectionKeys = Object.keys(sections);
+                    const sectionStart = `===== ${sections[mktActiveSection]} =====`;
+                    const nextIdx = sectionKeys.indexOf(mktActiveSection) + 1;
+                    const nextSection = nextIdx < sectionKeys.length ? `===== ${sections[sectionKeys[nextIdx]]} =====` : null;
+                    const startIdx = mktContent.indexOf(sectionStart);
+                    if (startIdx === -1) return mktContent;
+                    const endIdx = nextSection ? mktContent.indexOf(nextSection) : mktContent.length;
+                    return mktContent.slice(startIdx, endIdx === -1 ? mktContent.length : endIdx);
+                  })()}
+                  {mktLoading && <span className="inline-block w-2 h-4 bg-pink-500 animate-pulse ml-1" />}
+                </div>
+              </ScrollArea>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(mktContent);
+                    toast({ title: 'Marketing Kit disalin!' });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Salin Semua
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const blob = new Blob([mktContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url;
+                    a.download = `marketing-kit-${(projectTitle || projectTopik || 'ebook').slice(0, 30).replace(/\s+/g, '-')}.txt`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download .txt
+                </Button>
+                <Button
+                  disabled={mktLoading}
+                  onClick={handleGenerateMarketingKit}
+                  className="bg-gradient-to-r from-pink-600 to-rose-500 text-white hover:from-pink-700 hover:to-rose-600"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Buat Ulang
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Script Video Dialog */}
+      <Dialog open={scriptOpen} onOpenChange={setScriptOpen}>
+        <DialogContent className="max-w-3xl h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white">
+                <Mic className="h-3.5 w-3.5" />
+              </div>
+              Script Presentasi Video
+              <Badge variant="secondary" className="ml-1 text-xs">Narasi · Voice-Over · Podcast</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {scriptLoading && !scriptContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-violet-500" />
+              <p className="text-sm text-muted-foreground">AI sedang mengubah ebook menjadi script video...</p>
+            </div>
+          )}
+          {(scriptContent || scriptLoading) && (
+            <div className="flex-1 min-h-0 flex flex-col gap-3">
+              <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-lg p-3 flex-shrink-0 text-xs text-violet-700 dark:text-violet-300">
+                <strong>Tips:</strong> Gunakan script ini sebagai narasi untuk rekam video layar / podcast. Tanda <code>[JEDA]</code> = berhenti sejenak, <code>[PENEKANAN]</code> = tekan dengan nada lebih kuat.
+              </div>
+              <ScrollArea className="flex-1">
+                <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
+                  {scriptContent.split(/(\[.*?\])/g).map((part, i) =>
+                    /^\[.*\]$/.test(part)
+                      ? <span key={i} className="text-violet-600 font-bold text-xs bg-violet-100 dark:bg-violet-900/40 px-1.5 py-0.5 rounded mx-0.5">{part}</span>
+                      : <span key={i}>{part}</span>
+                  )}
+                  {scriptLoading && <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1" />}
+                </div>
+              </ScrollArea>
+              <div className="flex gap-2 flex-shrink-0">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(scriptContent);
+                    toast({ title: 'Script disalin!' });
+                  }}
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Salin Script
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const blob = new Blob([scriptContent], { type: 'text/plain;charset=utf-8' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a'); a.href = url;
+                    a.download = `script-video-${(projectTitle || projectTopik || 'ebook').slice(0, 30).replace(/\s+/g, '-')}.txt`;
+                    a.click(); URL.revokeObjectURL(url);
+                  }}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Download
+                </Button>
+                <Button
+                  disabled={scriptLoading}
+                  onClick={handleGenerateScript}
+                  className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700"
+                >
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Buat Ulang
                 </Button>
               </div>
             </div>
