@@ -47,7 +47,15 @@ import {
   Flame,
   Globe,
   Lock,
-  RefreshCw
+  RefreshCw,
+  Smartphone,
+  ClipboardList,
+  Image,
+  DollarSign,
+  Volume2,
+  Search,
+  Layers,
+  Workflow
 } from 'lucide-react';
 
 const TESTIMONIALS = [
@@ -63,7 +71,7 @@ const TESTIMONIALS = [
     name: "Siti Rahayu",
     role: "Content Creator & Coach",
     avatar: "SR",
-    content: "Fitur E-Course Builder luar biasa! Saya bisa mengubah ebook saya jadi kursus online lengkap dengan materi yang terstruktur. ROI-nya 10x lipat!",
+    content: "Fitur E-Course Builder luar biasa! Saya bisa mengubah ebook saya jadi kursus online lengkap dengan materi yang terstruktur. Pipeline 9-langkah ini game-changer banget!",
     rating: 5,
     industry: "Coaching"
   },
@@ -87,7 +95,7 @@ const TESTIMONIALS = [
     name: "Reza Pratama",
     role: "Electrical Engineer & Author",
     avatar: "RP",
-    content: "Sebagai engineer yang juga penulis, tool ini sempurna. Prompt-nya sangat teknis dan paham konteks industri kelistrikan.",
+    content: "Sebagai engineer yang juga penulis, tool ini sempurna. Mini App Blueprint dan Chatbot Demo langsung bisa saya pakai untuk klien. Hemat waktu luar biasa!",
     rating: 5,
     industry: "Kelistrikan"
   },
@@ -95,7 +103,7 @@ const TESTIMONIALS = [
     name: "Maya Indah",
     role: "Family Coach & Therapist",
     avatar: "MI",
-    content: "Tema lifestyle sangat membantu! Saya sudah publish 5 ebook tentang keharmonisan rumah tangga yang laris di marketplace.",
+    content: "Tema lifestyle sangat membantu! Quiz Generator dan Silabus Kursus dari ebook saya sudah menghasilkan ratusan leads baru. ROI-nya fantastis!",
     rating: 5,
     industry: "Lifestyle"
   }
@@ -125,27 +133,45 @@ const INDUSTRIES = [
 ];
 
 const FEATURES = [
-  { icon: Lightbulb, title: 'Brainstorm Ide', desc: 'Eksplorasi ide-ide kreatif untuk ebook Anda dengan AI', benefit: 'Hemat 5+ jam riset' },
-  { icon: Sparkles, title: 'Big Idea', desc: 'Pertajam positioning dan konsep unik yang menjual', benefit: '3x lebih menarik' },
-  { icon: FileText, title: 'Outline', desc: 'Susun kerangka dan daftar isi lengkap otomatis', benefit: 'Struktur profesional' },
-  { icon: FileText, title: 'Draft Bab', desc: 'Tulis konten bab per bab dengan mudah dan cepat', benefit: '10x lebih cepat' },
-  { icon: Video, title: 'Video Script', desc: 'Buat script video dan podcast dari konten ebook', benefit: 'Multi-format content' },
-  { icon: GraduationCap, title: 'E-Course Builder', desc: 'Ubah ebook jadi kurikulum kursus online', benefit: 'Monetisasi 10x lipat' },
-  { icon: FileText, title: 'Document Generator', desc: 'Buat SOP, Policy, dan dokumen profesional', benefit: 'Standarisasi bisnis' },
-  { icon: Zap, title: 'Prompt Pack', desc: 'Generate rangkaian prompt untuk workflow lengkap', benefit: 'Automasi proses' },
-  { icon: Bot, title: 'GPT Builder', desc: 'Buat system prompt untuk chatbot custom', benefit: 'AI Assistant pribadi' },
-  { icon: Megaphone, title: 'Marketing Kit', desc: 'Buat materi marketing dan promosi lengkap', benefit: 'Konversi naik 200%' },
-  { icon: FileText, title: 'Extend Text', desc: 'Kembangkan teks pendek jadi konten lengkap', benefit: 'Efisiensi maksimal' }
+  { icon: Lightbulb, title: 'Brainstorm Ide', desc: 'Eksplorasi ide-ide kreatif untuk ebook Anda dengan AI yang memahami konteks industri Anda', benefit: 'Hemat 5+ jam riset' },
+  { icon: Sparkles, title: 'Big Idea', desc: 'Pertajam positioning dan konsep unik yang menjual dengan analisis kompetitor otomatis', benefit: '3x lebih menarik' },
+  { icon: FileText, title: 'Outline', desc: 'Susun kerangka dan daftar isi lengkap secara otomatis sesuai standar penerbitan profesional', benefit: 'Struktur profesional' },
+  { icon: Book, title: 'Draft Bab', desc: 'Tulis konten bab per bab dengan mudah — termasuk studi kasus dan contoh industri spesifik', benefit: '10x lebih cepat' },
+  { icon: Video, title: 'Video Script', desc: 'Buat script video dan podcast dari konten ebook, lengkap dengan panduan TTS & narasi', benefit: 'Multi-format content' },
+  { icon: GraduationCap, title: 'E-Course Builder', desc: 'Ubah ebook jadi silabus kursus online lengkap — durasi, format, materi, dan modul assessment', benefit: 'Monetisasi 10x lipat' },
+  { icon: FileText, title: 'Document Generator', desc: 'Buat SOP, Policy, Kontrak, dan dokumen profesional terstandar untuk berbagai kebutuhan bisnis', benefit: 'Standarisasi bisnis' },
+  { icon: Bot, title: 'GPT Builder', desc: 'Buat system prompt untuk chatbot AI custom yang siap di-deploy sebagai asisten virtual bisnis', benefit: 'AI Assistant pribadi' },
+  { icon: Megaphone, title: 'Marketing Kit', desc: 'Buat caption, email blast, iklan, dan materi promosi yang terkonversi tinggi dari konten ebook', benefit: 'Konversi naik 200%' },
+  { icon: Smartphone, title: 'Mini App Builder', desc: 'Rancang blueprint mini-app dari topik ebook Anda, lengkap dengan deep-link ke Lovable, Bolt, Cursor, Replit', benefit: 'Deploy lebih cepat' },
+  { icon: ClipboardList, title: 'Quiz Maker', desc: 'Generate soal kuis asesmen berlevel dari konten ebook — pilihan ganda, esai, dan kasus studi', benefit: 'Engagement naik 3x' },
+  { icon: FileText, title: 'Extend Text', desc: 'Kembangkan teks pendek atau poin-poin menjadi konten panjang yang kaya dan terstruktur', benefit: 'Efisiensi maksimal' },
+  { icon: Zap, title: 'Prompt Pack', desc: 'Generate rangkaian prompt lengkap untuk seluruh workflow produksi konten sekaligus', benefit: 'Automasi proses' },
+];
+
+const ECOSYSTEM_STEPS = [
+  { step: 1, icon: Book, title: 'Ebook', desc: 'Konten utama', color: 'from-blue-500 to-cyan-500', phase: 'Foundation' },
+  { step: 2, icon: Bot, title: 'Chatbot Demo', desc: 'Demo interaktif berisi konten', color: 'from-violet-500 to-purple-600', phase: 'Konversi' },
+  { step: 3, icon: GraduationCap, title: 'Silabus E-Course', desc: 'Kurikulum dari ebook', color: 'from-emerald-500 to-green-600', phase: 'Monetisasi' },
+  { step: 4, icon: Smartphone, title: 'Mini App Blueprint', desc: 'Rancangan aplikasi', color: 'from-orange-500 to-amber-500', phase: 'Produk' },
+  { step: 5, icon: ClipboardList, title: 'Quiz Generator', desc: 'Soal asesmen', color: 'from-pink-500 to-rose-500', phase: 'Engagement' },
+  { step: 6, icon: Megaphone, title: 'Marketing Kit', desc: 'Materi promosi', color: 'from-red-500 to-orange-500', phase: 'Growth' },
+  { step: 7, icon: Volume2, title: 'Script + TTS', desc: 'Narasi & audio', color: 'from-indigo-500 to-blue-600', phase: 'Distribusi' },
+  { step: 8, icon: Image, title: 'Thumbnail AI', desc: 'Cover DALL-E 3', color: 'from-teal-500 to-cyan-600', phase: 'Visual' },
+  { step: 9, icon: DollarSign, title: 'Monetisasi', desc: 'Strategi revenue', color: 'from-amber-500 to-yellow-500', phase: 'Revenue' },
 ];
 
 const FAQ_DATA = [
   {
     question: "Apakah Ebook Builder Pro cocok untuk pemula?",
-    answer: "Ya! Tool ini dirancang untuk semua level. Interface yang intuitif dan panduan langkah demi langkah memudahkan siapa saja untuk mulai membuat ebook profesional, bahkan tanpa pengalaman sebelumnya."
+    answer: "Ya! Tool ini dirancang untuk semua level. Interface yang intuitif, pipeline workflow yang terstruktur, dan panduan langkah demi langkah memudahkan siapa saja untuk mulai membuat ekosistem konten profesional, bahkan tanpa pengalaman sebelumnya."
+  },
+  {
+    question: "Apa itu Ekosistem 9-Langkah?",
+    answer: "Ekosistem 9-Langkah adalah pipeline produksi konten lengkap yang membantu Anda mengubah satu ebook menjadi 9 output berbeda: Chatbot Demo interaktif, Silabus E-Course, Mini App Blueprint, Kuis Asesmen, Marketing Kit, Script + TTS audio, Thumbnail AI (DALL-E 3), Strategi Monetisasi, dan AI Quality Review. Satu sumber, sembilan produk!"
   },
   {
     question: "Bagaimana cara kerja generator prompt?",
-    answer: "Anda cukup mengisi form dengan informasi proyek ebook Anda (topik, target audiens, gaya penulisan, dll), lalu sistem akan menghasilkan prompt yang dioptimasi untuk AI seperti ChatGPT, Claude, atau DokumenTender AI."
+    answer: "Anda cukup mengisi form dengan informasi proyek ebook Anda (topik, target audiens, gaya penulisan, industri, dll), lalu sistem akan menghasilkan prompt yang dioptimasi untuk AI seperti ChatGPT, Claude, atau DokumenTender AI. Pipeline workflow memandu Anda dari brainstorm hingga ekosistem konten lengkap."
   },
   {
     question: "Apakah prompt yang dihasilkan bisa digunakan di AI manapun?",
@@ -156,23 +182,18 @@ const FAQ_DATA = [
     answer: "Kami mendukung 24 kategori industri: Engineering, Konstruksi, Pertambangan, Oil & Gas, Kelistrikan, Manufaktur, UMKM, Teknologi, Perijinan Usaha, Tender & Pengadaan, Sertifikasi SBU & SKK, Manajemen Proyek, ERP, BIM, PUB, PKB, ISO, Pancek KPK, serta tema lifestyle seperti Kekayaan, Keluarga, Spiritualitas, Kesehatan, dan Hobi."
   },
   {
-    question: "Apakah ada batasan penggunaan di paket gratis?",
-    answer: "Paket gratis memberikan 5 prompt per hari dan akses ke 3 mode generasi. Untuk penggunaan unlimited dan semua 11 mode, upgrade ke paket Pro."
+    question: "Berapa banyak mode generasi yang tersedia?",
+    answer: "Tersedia 13 mode generasi lengkap: Brainstorm, Big Idea, Outline, Draft Bab, Video Script, E-Course Builder, Document Generator, GPT Builder, Marketing Kit, Mini App Builder, Quiz Maker, Extend Text, dan Prompt Pack. Ditambah Ekosistem 9-Langkah untuk produksi konten menyeluruh."
+  },
+  {
+    question: "Bagaimana dengan Mini App Builder dan Quiz Maker?",
+    answer: "Mini App Builder membantu Anda merancang blueprint aplikasi dari topik ebook, lengkap dengan struktur fitur, tech stack, dan deep-link ke platform seperti Lovable, Bolt.new, Cursor, dan Replit untuk langsung memulai pengembangan. Quiz Maker menghasilkan soal kuis berlevel (Beginner hingga Advanced) yang bisa langsung digunakan untuk kursus online atau lead magnet."
   },
   {
     question: "Bagaimana dengan keamanan data saya?",
     answer: "Keamanan adalah prioritas kami. Semua data dienkripsi, dan kami menggunakan autentikasi Replit yang aman. Proyek Anda hanya bisa diakses oleh Anda."
   }
 ];
-
-function AnimatedCounter({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="text-center">
-      <div className="text-3xl md:text-4xl font-bold text-primary mb-1">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
-    </div>
-  );
-}
 
 function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] }) {
   return (
@@ -203,10 +224,14 @@ function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] 
 function ComparisonTable() {
   const features = [
     { name: "Prompt per hari", free: "5", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Mode generasi", free: "3", pro: "11", enterprise: "11 + Custom" },
+    { name: "Mode generasi", free: "3", pro: "13", enterprise: "13 + Custom" },
+    { name: "Ekosistem 9-Langkah", free: false, pro: true, enterprise: true },
     { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Export format", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
+    { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
     { name: "Industry themes", free: "3", pro: "24", enterprise: "24 + Custom" },
+    { name: "AI Image (DALL-E 3) cover & thumbnail", free: false, pro: true, enterprise: true },
+    { name: "Text-to-Speech (TTS) script", free: false, pro: true, enterprise: true },
+    { name: "Mini App Blueprint + deep-link", free: false, pro: true, enterprise: true },
     { name: "AI Character modes", free: false, pro: true, enterprise: true },
     { name: "Priority support", free: false, pro: true, enterprise: true },
     { name: "Team collaboration", free: false, pro: false, enterprise: true },
@@ -298,7 +323,7 @@ function CountdownTimer() {
 export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
-      {/* ATTENTION: Sticky Header */}
+      {/* Sticky Header */}
       <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex items-center justify-between h-16 px-4 mx-auto max-w-screen-xl">
           <div className="flex items-center gap-3">
@@ -307,6 +332,7 @@ export default function Landing() {
             </div>
             <div>
               <h1 className="text-xl font-bold tracking-tight">Ebook Builder Pro</h1>
+              <p className="text-[10px] text-muted-foreground leading-none">AI Prompt Generator · 24 Industri</p>
             </div>
           </div>
           <div className="flex items-center gap-3">
@@ -322,7 +348,7 @@ export default function Landing() {
       </header>
 
       <main>
-        {/* ATTENTION: Hero Section with Pain Point */}
+        {/* Hero Section */}
         <section className="relative py-20 md:py-32 overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10" />
           <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
@@ -338,25 +364,22 @@ export default function Landing() {
 
               <Badge variant="secondary" className="mb-6 px-4 py-2">
                 <Sparkles className="h-3 w-3 mr-2" />
-                AI-Powered Prompt Generator untuk 24 Industri
+                AI-Powered Prompt Generator · 13 Mode · Ekosistem 9-Langkah
               </Badge>
               
-              {/* Pain Point Headline */}
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-                Berhenti Buang Waktu
-                <span className="text-primary block mt-2">Buat Ebook dalam Hitungan Menit</span>
+                Satu Ebook,
+                <span className="text-primary block mt-2">Sembilan Output Konten</span>
               </h1>
               
-              {/* Agitate - Show the pain */}
               <p className="text-xl text-muted-foreground mb-4 max-w-3xl mx-auto">
-                Menulis ebook butuh berbulan-bulan? Bingung struktur konten? 
-                Tidak tahu cara membuat prompt yang efektif?
+                Dari brainstorm hingga ekosistem konten lengkap — ebook, chatbot, e-course, mini app, kuis, 
+                marketing kit, TTS audio, thumbnail AI, dan strategi monetisasi.
               </p>
               
-              {/* Solution - Show the way out */}
               <p className="text-lg font-medium mb-8 max-w-2xl mx-auto">
-                <span className="text-primary">Ebook Builder Pro</span> menghasilkan prompt AI yang terstruktur untuk membuat ebook, 
-                video script, e-course, dan materi marketing - dalam hitungan detik.
+                <span className="text-primary">Ebook Builder Pro</span> menghasilkan prompt AI terstruktur untuk 
+                membangun ekosistem konten profesional lengkap — dalam hitungan menit.
               </p>
               
               {/* CTA Buttons */}
@@ -410,8 +433,63 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* INTEREST: Problem-Solution */}
-        <section className="py-20">
+        {/* NEW: Ekosistem 9-Langkah Pipeline */}
+        <section className="py-20 border-b">
+          <div className="container px-4 mx-auto max-w-screen-xl">
+            <div className="text-center mb-12">
+              <Badge variant="outline" className="mb-4">
+                <Workflow className="h-3 w-3 mr-2" />
+                Ekosistem Konten
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Pipeline 9-Langkah — Satu Sumber, Sembilan Produk
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Setelah membuat ebook, lanjutkan pipeline untuk membangun ekosistem konten lengkap 
+                yang menghasilkan berbagai revenue stream secara otomatis.
+              </p>
+            </div>
+
+            {/* Central Ebook → 9 outputs visual */}
+            <div className="max-w-5xl mx-auto">
+              {/* Top row label */}
+              <div className="flex items-center justify-center mb-6">
+                <div className="flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-primary to-purple-600 text-white font-semibold shadow-lg">
+                  <Book className="h-5 w-5" />
+                  Ebook Anda (Sumber Utama)
+                  <ArrowRight className="h-5 w-5" />
+                  9 Output Otomatis
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-9 gap-3">
+                {ECOSYSTEM_STEPS.filter(s => s.step > 1).map((step, idx) => (
+                  <div key={idx} className="group text-center" data-testid={`card-ecosystem-step-${step.step}`}>
+                    <div className={`inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br ${step.color} text-white mb-3 group-hover:scale-110 transition-transform shadow-md mx-auto`}>
+                      <step.icon className="h-7 w-7" />
+                    </div>
+                    <p className="text-xs font-semibold leading-tight">{step.title}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{step.desc}</p>
+                    <Badge variant="outline" className="text-[9px] mt-1 px-1.5">{step.phase}</Badge>
+                  </div>
+                ))}
+              </div>
+
+              {/* Export formats bar */}
+              <div className="mt-8 p-4 rounded-xl bg-muted/50 border flex flex-wrap items-center justify-center gap-3 text-sm">
+                <span className="font-medium text-muted-foreground">Export semua output ke:</span>
+                {['TXT', 'PDF', 'DOCX', 'Markdown', 'HTML'].map(fmt => (
+                  <Badge key={fmt} variant="secondary" className="font-mono">{fmt}</Badge>
+                ))}
+                <span className="text-muted-foreground">·</span>
+                <span className="text-xs text-muted-foreground">AI Image via DALL-E 3 · Audio via TTS-1</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Problem-Solution */}
+        <section className="py-20 bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-16">
               <Badge variant="outline" className="mb-4">Masalah Umum</Badge>
@@ -427,10 +505,10 @@ export default function Landing() {
                 </h3>
                 {[
                   "Menghabiskan berminggu-minggu untuk menulis satu ebook",
-                  "Bingung struktur dan outline yang tepat",
-                  "Prompt AI asal-asalan dengan hasil tidak konsisten",
-                  "Tidak tahu cara membuat konten multi-format",
-                  "Kesulitan menyesuaikan gaya untuk industri spesifik"
+                  "Bingung struktur konten dan tidak tahu harus mulai dari mana",
+                  "Prompt AI asal-asalan dengan hasil yang tidak konsisten",
+                  "Ebook hanya jadi PDF — tidak ada ekosistem konten turunan",
+                  "Kehilangan peluang monetisasi dari konten yang sudah ada"
                 ].map((problem, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/10">
                     <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
@@ -446,11 +524,11 @@ export default function Landing() {
                   Dengan Ebook Builder Pro
                 </h3>
                 {[
-                  "Generate prompt lengkap dalam hitungan detik",
-                  "Outline terstruktur otomatis untuk setiap topik",
-                  "Prompt profesional yang dioptimasi untuk hasil terbaik",
-                  "Ubah satu konten jadi ebook, video, course, marketing",
-                  "13 tema industri dengan terminologi spesifik"
+                  "Generate prompt lengkap dalam hitungan detik, 13 mode pilihan",
+                  "Pipeline workflow terstruktur dari brainstorm hingga ekosistem",
+                  "Prompt profesional dioptimasi per industri — hasil konsisten",
+                  "Satu ebook → 9 output: chatbot, kursus, app, kuis, marketing...",
+                  "Strategi monetisasi lengkap built-in untuk setiap output"
                 ].map((solution, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
@@ -462,8 +540,8 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* INTEREST: Industries Supported */}
-        <section className="py-20 border-t bg-muted/30">
+        {/* Industries Supported */}
+        <section className="py-20 border-t">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">Multi-Industry</Badge>
@@ -482,18 +560,29 @@ export default function Landing() {
                   <p className="text-sm font-medium">{industry.name}</p>
                 </Card>
               ))}
+              {/* "+11 more" card */}
+              <Card className="text-center p-4 hover-elevate cursor-pointer group bg-gradient-to-br from-muted to-muted/50">
+                <div className="inline-flex items-center justify-center h-12 w-12 rounded-xl bg-primary/10 mb-3 group-hover:scale-110 transition-transform">
+                  <span className="text-lg font-bold text-primary">+11</span>
+                </div>
+                <p className="text-sm font-medium text-muted-foreground">Industri lainnya</p>
+              </Card>
             </div>
           </div>
         </section>
 
-        {/* INTEREST: 11 Features */}
-        <section className="py-20 border-t">
+        {/* 13 Mode Features */}
+        <section className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
-              <Badge variant="outline" className="mb-4">Fitur Lengkap</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">11 Mode Generasi Prompt</h2>
+              <Badge variant="outline" className="mb-4">
+                <Layers className="h-3 w-3 mr-2" />
+                Fitur Lengkap
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">13 Mode Generasi Prompt</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Dari brainstorming ide hingga materi marketing, semua yang Anda butuhkan untuk membangun ekosistem konten profesional.
+                Dari brainstorming ide hingga blueprint mini app dan kuis asesmen — semua yang Anda butuhkan 
+                untuk membangun ekosistem konten profesional dalam satu platform.
               </p>
             </div>
             
@@ -520,30 +609,31 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* INTEREST: How It Works */}
-        <section className="py-20 border-t bg-muted/30">
+        {/* How It Works */}
+        <section className="py-20 border-t">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">Mudah Digunakan</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">3 Langkah Sederhana</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Cara Kerja — 4 Langkah Mudah</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Tidak perlu keahlian teknis. Siapapun bisa membuat prompt profesional dalam hitungan menit.
+                Tidak perlu keahlian teknis. Siapapun bisa membangun ekosistem konten profesional dalam hitungan menit.
               </p>
             </div>
             
-            <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
               {[
-                { step: 1, title: "Isi Form Proyek", desc: "Masukkan informasi ebook Anda: topik, target audiens, industri, dan preferensi gaya.", icon: FileText },
-                { step: 2, title: "Pilih Mode Generasi", desc: "Pilih dari 11 mode: brainstorm, outline, draft bab, video script, dan lainnya.", icon: Target },
-                { step: 3, title: "Eksekusi di AI", desc: "Copy prompt yang dihasilkan dan jalankan di DokumenTender AI atau AI favorit Anda.", icon: Rocket }
+                { step: 1, title: "Isi Form Proyek", desc: "Masukkan topik, target audiens, industri, dan preferensi gaya ebook Anda.", icon: FileText },
+                { step: 2, title: "Pilih Mode Generasi", desc: "Pilih dari 13 mode: brainstorm, outline, draft bab, GPT Builder, Mini App, Quiz, dan lainnya.", icon: Target },
+                { step: 3, title: "Eksekusi di AI", desc: "Copy prompt dan jalankan di DokumenTender AI, ChatGPT, atau AI favorit Anda.", icon: Rocket },
+                { step: 4, title: "Bangun Ekosistem", desc: "Ikuti pipeline 9-langkah: dari ebook ke chatbot, kursus, mini app, kuis, dan revenue stream.", icon: Workflow }
               ].map((item, idx) => (
                 <div key={idx} className="relative text-center group">
                   <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary text-white text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">
                     {item.step}
                   </div>
-                  <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+                  <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
                   <p className="text-muted-foreground text-sm">{item.desc}</p>
-                  {idx < 2 && (
+                  {idx < 3 && (
                     <ChevronRight className="hidden md:block absolute top-8 -right-4 h-8 w-8 text-muted-foreground/30" />
                   )}
                 </div>
@@ -552,14 +642,14 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* DESIRE: AI Partner - DokumenTender */}
-        <section className="py-20 border-t">
+        {/* AI Partner - DokumenTender */}
+        <section className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="max-w-4xl mx-auto">
               <Card className="overflow-hidden border-2 border-primary/20">
                 <div className="grid md:grid-cols-2">
                   <div className="p-8 md:p-12 flex flex-col justify-center">
-                    <Badge className="w-fit mb-4 bg-primary/10 text-primary">Rekomendasi</Badge>
+                    <Badge className="w-fit mb-4 bg-primary/10 text-primary">Rekomendasi Partner AI</Badge>
                     <h2 className="text-2xl md:text-3xl font-bold mb-4">
                       Eksekusi Prompt dengan <span className="text-primary">DokumenTender AI</span>
                     </h2>
@@ -568,7 +658,7 @@ export default function Landing() {
                       Hasil lebih akurat dalam Bahasa Indonesia.
                     </p>
                     <ul className="space-y-3 mb-6">
-                      {["Gratis untuk akses dasar", "Optimized Bahasa Indonesia", "Spesialis dokumen teknis", "Integrasi seamless"].map((item, idx) => (
+                      {["Gratis untuk akses dasar", "Optimized Bahasa Indonesia", "Spesialis dokumen teknis", "Integrasi seamless dengan prompt kami"].map((item, idx) => (
                         <li key={idx} className="flex items-center gap-2 text-sm">
                           <CheckCircle2 className="h-4 w-4 text-green-500" />
                           <span>{item}</span>
@@ -596,8 +686,8 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* DESIRE: Testimonials */}
-        <section className="py-20 border-t bg-muted/30">
+        {/* Testimonials */}
+        <section className="py-20 border-t">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">Testimoni</Badge>
@@ -615,8 +705,8 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ACTION: Pricing with Urgency */}
-        <section className="py-20 border-t">
+        {/* Pricing with Urgency */}
+        <section className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-6">
               <Badge variant="outline" className="mb-4">Pricing</Badge>
@@ -649,7 +739,7 @@ export default function Landing() {
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
-                    {['5 prompt per hari', '3 mode generasi', 'Simpan 1 proyek', 'Export teks'].map((feature) => (
+                    {['5 prompt per hari', '3 mode generasi', 'Simpan 1 proyek', 'Export format teks', '3 industry themes'].map((feature) => (
                       <li key={feature} className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
                         <span className="text-sm">{feature}</span>
@@ -688,10 +778,14 @@ export default function Landing() {
                   <ul className="space-y-3">
                     {[
                       'Unlimited prompt',
-                      'Semua 11 mode generasi',
+                      'Semua 13 mode generasi',
+                      'Ekosistem 9-Langkah penuh',
                       'Unlimited proyek',
-                      'Export semua format',
+                      'Export TXT/PDF/DOCX/MD/HTML',
                       '24 industry themes',
+                      'AI Image via DALL-E 3',
+                      'Text-to-Speech (TTS)',
+                      'Mini App Blueprint + deep-link',
                       'AI Character modes',
                       'Priority support',
                     ].map((feature) => (
@@ -809,16 +903,18 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* ACTION: Final CTA */}
+        {/* Final CTA */}
         <section className="py-20 border-t bg-gradient-to-br from-primary/10 via-transparent to-purple-500/10">
           <div className="container px-4 mx-auto max-w-screen-xl text-center">
             <div className="max-w-3xl mx-auto">
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Siap Membangun Ekosistem Ebook Anda?
+                Siap Membangun Ekosistem Konten Anda?
               </h2>
-              <p className="text-xl text-muted-foreground mb-8">
+              <p className="text-xl text-muted-foreground mb-4">
+                Dari satu ebook → 9 output konten profesional. Chatbot, kursus, mini app, kuis, marketing kit, TTS audio, thumbnail AI, dan strategi monetisasi — semua dalam satu pipeline.
+              </p>
+              <p className="text-base text-muted-foreground mb-8">
                 Bergabung dengan 500+ content creator yang sudah menggunakan Ebook Builder Pro.
-                Mulai gratis hari ini dan rasakan perbedaannya.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -862,42 +958,45 @@ export default function Landing() {
                 <span className="font-bold">Ebook Builder Pro</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered prompt generator untuk membuat ekosistem ebook profesional.
+                AI-powered prompt generator untuk membangun ekosistem konten profesional dari satu ebook — 9 output, 13 mode, 24 industri.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Produk</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-foreground cursor-pointer">Fitur</li>
+                <li className="hover:text-foreground cursor-pointer">13 Mode Generasi</li>
+                <li className="hover:text-foreground cursor-pointer">Ekosistem 9-Langkah</li>
                 <li className="hover:text-foreground cursor-pointer">Pricing</li>
-                <li className="hover:text-foreground cursor-pointer">Demo</li>
                 <li className="hover:text-foreground cursor-pointer">FAQ</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Industri</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-foreground cursor-pointer">Engineering</li>
-                <li className="hover:text-foreground cursor-pointer">Konstruksi</li>
-                <li className="hover:text-foreground cursor-pointer">UMKM</li>
-                <li className="hover:text-foreground cursor-pointer">Lifestyle</li>
+                <li className="hover:text-foreground cursor-pointer">Engineering & Konstruksi</li>
+                <li className="hover:text-foreground cursor-pointer">Pertambangan & Oil Gas</li>
+                <li className="hover:text-foreground cursor-pointer">UMKM & Teknologi</li>
+                <li className="hover:text-foreground cursor-pointer">Lifestyle & Coaching</li>
               </ul>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Partner AI</h4>
               <Button 
                 variant="outline" 
-                className="w-full"
+                className="w-full mb-3"
                 onClick={() => window.open('https://chat.dokumentender.com', '_blank')}
               >
                 <Bot className="mr-2 h-4 w-4" />
                 DokumenTender AI
               </Button>
+              <p className="text-xs text-muted-foreground">
+                AI partner untuk eksekusi prompt dalam Bahasa Indonesia
+              </p>
             </div>
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2024 Ebook Builder Pro. All rights reserved.
+              © 2025 Ebook Builder Pro. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="hover:text-foreground cursor-pointer">Terms</span>
