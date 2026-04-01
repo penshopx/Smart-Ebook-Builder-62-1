@@ -966,6 +966,61 @@ ${bodyHtml}
             </div>
           </div>
 
+          {/* Ekosistem Section — always visible */}
+          <div className="pt-4 border-t space-y-2">
+            <div className="flex items-center gap-2">
+              <div className="h-px flex-1 bg-gradient-to-r from-indigo-300/50 via-cyan-300/50 to-purple-300/50" />
+              <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest px-1">Ekosistem Ebook</span>
+              <div className="h-px flex-1 bg-gradient-to-r from-purple-300/50 via-cyan-300/50 to-indigo-300/50" />
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={handleChatDemo}
+                className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs h-9 justify-start"
+                data-testid="button-chat-demo-main"
+              >
+                <Bot className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Chatbot Demo</span>
+                  <span className="text-[10px] opacity-80">AI dari ebook kamu</span>
+                </span>
+              </Button>
+              <Button
+                onClick={handleGenerateSyllabus}
+                className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs h-9 justify-start"
+                data-testid="button-syllabus-main"
+              >
+                <GraduationCap className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Silabus Kursus</span>
+                  <span className="text-[10px] opacity-80">8 modul + worksheet</span>
+                </span>
+              </Button>
+              <Button
+                onClick={handleGenerateMiniApp}
+                className="bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white text-xs h-9 justify-start"
+                data-testid="button-mini-app-main"
+              >
+                <Smartphone className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Blueprint App</span>
+                  <span className="text-[10px] opacity-80">Rancang mini app-nya</span>
+                </span>
+              </Button>
+              <Button
+                onClick={handleGenerateQuiz}
+                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-xs h-9 justify-start"
+                data-testid="button-quiz-main"
+              >
+                <ClipboardList className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Generator Kuis</span>
+                  <span className="text-[10px] opacity-80">19 soal MCQ/esai/kasus</span>
+                </span>
+              </Button>
+            </div>
+          </div>
+
           <div className="pt-4 border-t space-y-3">
             <div className="p-3 rounded-lg bg-gradient-to-r from-primary to-purple-600 text-white">
               <div className="flex items-center gap-2 mb-2">
