@@ -4,6 +4,12 @@ import { storage } from "./storage";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
 import { getChaesaResponse } from "./chaesa";
+import OpenAI from "openai";
+
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 const projectDataSchema = z.object({
   topik: z.string(),
@@ -181,6 +187,50 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Chat error:", error);
       res.status(500).json({ error: "Failed to get response from Chaesa" });
+    }
+  });
+
+  app.post("/api/generate-document", async (req, res) => {
+    try {
+      const { prompt, mode } = req.body;
+      if (!prompt) {
+        return res.status(400).json({ error: "Prompt is required" });
+      }
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah AI writing assistant yang ahli membuat konten ebook dan dokumen profesional dalam Bahasa Indonesia. Buat konten yang lengkap, terstruktur, dan berkualitas tinggi sesuai instruksi. Gunakan format yang rapi dengan paragraf yang jelas. Jangan gunakan markdown symbols seperti ### atau ** - gunakan teks biasa yang terstruktur dengan baik.",
+          },
+          { role: "user", content: prompt },
+        ],
+        stream: true,
+        max_completion_tokens: 4096,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) {
+          res.write(`data: ${JSON.stringify({ content })}\n\n`);
+        }
+      }
+
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error) {
+      console.error("Generate document error:", error);
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal membuat dokumen" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate document" });
+      }
     }
   });
 
