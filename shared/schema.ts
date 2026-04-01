@@ -825,6 +825,11 @@ export const taskConfigSchema = z.object({
   appType: z.string().default('web'),
   appComplexity: z.string().default('simple'),
   quizFocus: z.string().default('komprehensif'),
+  jumlahIde: z.string().default('5'),
+  brainstormAngle: z.string().default('Problem-Solution'),
+  bigIdeaAngle: z.string().default('Unik & Berbeda'),
+  jumlahBab: z.string().default('7'),
+  outlineDepth: z.string().default('Standard'),
 });
 
 export const extendConfigSchema = z.object({

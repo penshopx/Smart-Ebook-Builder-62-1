@@ -90,6 +90,14 @@ const defaultTaskConfig: TaskConfig = {
   courseGoal: '',
   marketingAsset: 'Landing Page Copy (Long Form)',
   marketingAngle: '',
+  appType: 'web',
+  appComplexity: 'simple',
+  quizFocus: 'komprehensif',
+  jumlahIde: '5',
+  brainstormAngle: 'Problem-Solution',
+  bigIdeaAngle: 'Unik & Berbeda',
+  jumlahBab: '7',
+  outlineDepth: 'Standard',
 };
 
 const defaultExtendConfig: ExtendConfig = {

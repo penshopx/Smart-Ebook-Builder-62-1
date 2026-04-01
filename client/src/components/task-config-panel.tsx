@@ -30,6 +30,171 @@ export function TaskConfigPanel({
 
   const renderContent = () => {
     switch (activeMode) {
+      case 'BRAINSTORM':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Jumlah Ide yang Dihasilkan</Label>
+                <Select
+                  value={taskConfig.jumlahIde}
+                  onValueChange={(value) => onTaskConfigChange('jumlahIde', value)}
+                >
+                  <SelectTrigger data-testid="select-jumlah-ide">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="3">3 Ide (Fokus)</SelectItem>
+                    <SelectItem value="5">5 Ide (Standard)</SelectItem>
+                    <SelectItem value="7">7 Ide (Lebih Banyak Pilihan)</SelectItem>
+                    <SelectItem value="10">10 Ide (Eksplorasi Penuh)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Angle / Pendekatan Utama</Label>
+                <Select
+                  value={taskConfig.brainstormAngle}
+                  onValueChange={(value) => onTaskConfigChange('brainstormAngle', value)}
+                >
+                  <SelectTrigger data-testid="select-brainstorm-angle">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Problem-Solution">Problem-Solution (Masalah → Solusi)</SelectItem>
+                    <SelectItem value="How-To Guide">How-To Guide (Panduan Langkah)</SelectItem>
+                    <SelectItem value="Case Study">Case Study (Studi Kasus Nyata)</SelectItem>
+                    <SelectItem value="Inspirational">Inspirational (Kisah Motivasi)</SelectItem>
+                    <SelectItem value="Reference">Reference (Ensiklopedia / Acuan)</SelectItem>
+                    <SelectItem value="Workbook">Workbook (Latihan & Praktik)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Level Kedalaman Ebook</Label>
+              <Select
+                value={taskConfig.fokusLevel}
+                onValueChange={(value) => onTaskConfigChange('fokusLevel', value)}
+              >
+                <SelectTrigger data-testid="select-brainstorm-level">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Beginner">Beginner — untuk pemula total</SelectItem>
+                  <SelectItem value="Intermediate">Intermediate — untuk yang sudah paham dasar</SelectItem>
+                  <SelectItem value="Advanced">Advanced — untuk praktisi berpengalaman</SelectItem>
+                  <SelectItem value="Expert">Expert — untuk profesional/spesialis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'BIG_IDEA':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Angle Positioning Utama</Label>
+              <Select
+                value={taskConfig.bigIdeaAngle}
+                onValueChange={(value) => onTaskConfigChange('bigIdeaAngle', value)}
+              >
+                <SelectTrigger data-testid="select-big-idea-angle">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Unik & Berbeda">Unik & Berbeda dari buku sejenis</SelectItem>
+                  <SelectItem value="Otoritas">Otoritas — posisikan sebagai referensi terpercaya</SelectItem>
+                  <SelectItem value="Transformasi">Transformasi — hasil nyata yang dijanjikan</SelectItem>
+                  <SelectItem value="Niche Spesifik">Niche Spesifik — untuk segmen sangat sempit</SelectItem>
+                  <SelectItem value="Anti-Mainstream">Anti-Mainstream — melawan anggapan umum</SelectItem>
+                  <SelectItem value="Sistem/Framework">Sistem/Framework — metode eksklusif milik saya</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Kompetitor / Buku Sejenis (Opsional)</Label>
+              <Input
+                placeholder="Contoh: Rich Dad Poor Dad, Atomic Habits, dll..."
+                value={taskConfig.judulScript}
+                onChange={(e) => onTaskConfigChange('judulScript', e.target.value)}
+                data-testid="input-kompetitor"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Keunikan / USP yang Ingin Ditonjolkan</Label>
+              <Textarea
+                placeholder="Apa yang benar-benar membedakan ebook Anda? Keahlian unik, pengalaman, data eksklusif..."
+                value={taskConfig.tujuanBab}
+                onChange={(e) => onTaskConfigChange('tujuanBab', e.target.value)}
+                className="min-h-[80px] resize-none"
+                data-testid="textarea-usp"
+              />
+            </div>
+          </div>
+        );
+
+      case 'OUTLINE':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Jumlah Bab</Label>
+                <Select
+                  value={taskConfig.jumlahBab}
+                  onValueChange={(value) => onTaskConfigChange('jumlahBab', value)}
+                >
+                  <SelectTrigger data-testid="select-jumlah-bab">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5">5 Bab (Compact)</SelectItem>
+                    <SelectItem value="7">7 Bab (Standard)</SelectItem>
+                    <SelectItem value="10">10 Bab (Komprehensif)</SelectItem>
+                    <SelectItem value="12">12 Bab (Extended)</SelectItem>
+                    <SelectItem value="15">15 Bab (Masterclass)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Kedalaman Outline</Label>
+                <Select
+                  value={taskConfig.outlineDepth}
+                  onValueChange={(value) => onTaskConfigChange('outlineDepth', value)}
+                >
+                  <SelectTrigger data-testid="select-outline-depth">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Simple">Simple (Judul Bab saja)</SelectItem>
+                    <SelectItem value="Standard">Standard (Bab + Sub-bab)</SelectItem>
+                    <SelectItem value="Detailed">Detailed (Bab + Sub-bab + Poin Kunci)</SelectItem>
+                    <SelectItem value="Full">Full (Bab + Sub-bab + Poin + Latihan)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Struktur Alur</Label>
+              <Select
+                value={taskConfig.fokusLevel}
+                onValueChange={(value) => onTaskConfigChange('fokusLevel', value)}
+              >
+                <SelectTrigger data-testid="select-outline-struktur">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Linear">Linear (Bertahap dari awal ke akhir)</SelectItem>
+                  <SelectItem value="Modular">Modular (Tiap bab berdiri sendiri)</SelectItem>
+                  <SelectItem value="Progressive">Progressive (Skill building — simpel ke kompleks)</SelectItem>
+                  <SelectItem value="Problem-Solution">Problem-Solution (Masalah → Solusi per bab)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
       case 'DRAFT_BAB':
         return (
           <div className="space-y-4">
@@ -454,9 +619,9 @@ export function TaskConfigPanel({
 
   const getModeDescription = () => {
     switch (activeMode) {
-      case 'BRAINSTORM': return 'Generate 5 ide ebook berdasarkan topik dan referensi Anda';
-      case 'BIG_IDEA': return 'Pertajam positioning dan konsep unik ebook Anda';
-      case 'OUTLINE': return 'Susun daftar isi lengkap sesuai level ebook';
+      case 'BRAINSTORM': return `Generate ${taskConfig.jumlahIde} ide ebook dengan pendekatan ${taskConfig.brainstormAngle}`;
+      case 'BIG_IDEA': return `Pertajam positioning dengan angle "${taskConfig.bigIdeaAngle}"`;
+      case 'OUTLINE': return `Susun daftar isi ${taskConfig.jumlahBab} bab dengan kedalaman ${taskConfig.outlineDepth}`;
       case 'DRAFT_BAB': return 'Tulis konten bab secara lengkap dan terstruktur';
       case 'VIDEO_SCRIPT': return 'Buat script video/podcast dari materi ebook';
       case 'ECOURSE_BUILDER': return 'Ubah ebook menjadi kurikulum kursus online';

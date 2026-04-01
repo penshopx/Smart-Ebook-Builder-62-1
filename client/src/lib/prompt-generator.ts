@@ -101,14 +101,16 @@ Saya ingin mencari ide ebook yang kuat.
 
 DATA INPUT:
 1. Topik/Kata Kunci Utama: **"${projectData.topik || '[Isi Topik Anda]'}"**
+2. Angle/Pendekatan: **${taskConfig.brainstormAngle || 'Problem-Solution'}**
+3. Level Kedalaman: **${taskConfig.fokusLevel || 'Intermediate'}**
 ${hasFiles ? `
-2. FILE REFERENSI YANG DILAMPIRKAN:
+4. FILE REFERENSI YANG DILAMPIRKAN:
    (Saya telah mengupload file ke dalam chat ini. Tolong baca dan analisis kontennya)
    Daftar File:
    ${uploadedFiles.map(f => `- [${f.name}]`).join('\n   ')}
 ` : ''}
 ${!isAutoGenerate ? `
-3. Data Tambahan User:
+5. Data Tambahan User:
    - Masalah: ${projectData.painPoint}
    - Konsep Awal: ${projectData.bigIdea}
    - Data Riset: ${projectData.hasilRiset}
@@ -123,10 +125,10 @@ ${hasFiles ? `
 1. Lakukan riset pasar simulasi berdasarkan topik "${projectData.topik}".
 `}
 
-OUTPUT YANG DIMINTA (5 OPSI IDE EBOOK):
+OUTPUT YANG DIMINTA (${taskConfig.jumlahIde || '5'} OPSI IDE EBOOK dengan pendekatan ${taskConfig.brainstormAngle || 'Problem-Solution'}):
 Untuk setiap opsi, berikan:
 - **Judul Ebook yang Menjual**
-- **Target Spesifik & Niche**
+- **Target Spesifik & Niche** (Level: ${taskConfig.fokusLevel || 'Intermediate'})
 - **Analisis Masalah (Pain Point):** (Jika ada file, tunjukkan bagaimana file tersebut memvalidasi masalah ini).
 - **Big Idea & Positioning:** (Jelaskan "Why" ebook ini berbeda berdasarkan referensi yang ada).
 - **Data Pendukung:** (Kutip poin penting dari file referensi atau pengetahuan umum).
@@ -295,9 +297,12 @@ Saya sudah memiliki topik/ide awal. Tolong pertajam menjadi **Positioning yang k
 - Judul Sementara: ${projectData.judul || '[Belum ditentukan]'}
 - Target Pembaca: ${projectData.target || '[Belum ditentukan]'}
 - Pain Point Awal: ${projectData.painPoint || '[Belum ditentukan]'}
+- Angle Positioning: **${taskConfig.bigIdeaAngle || 'Unik & Berbeda'}**
+${taskConfig.judulScript ? `- Kompetitor/Buku Sejenis: ${taskConfig.judulScript}` : ''}
+${taskConfig.tujuanBab ? `- Keunikan/USP yang ingin ditonjolkan: ${taskConfig.tujuanBab}` : ''}
 
 === TUGAS ANDA ===
-Buatkan **Framework Positioning** lengkap yang mencakup:
+Buatkan **Framework Positioning** dengan angle "${taskConfig.bigIdeaAngle || 'Unik & Berbeda'}" yang mencakup:
 
 1. **Definisi Niche yang Tajam:** Siapa EXACTLY target pembaca? (Demografis + Psikografis)
 2. **Problem Statement:** Rumuskan masalah utama dalam 1-2 kalimat yang MENGGIGIT.
@@ -321,19 +326,24 @@ Saya ingin menyusun **Daftar Isi / Outline** lengkap untuk project ebook saya.
 - Judul Ebook: ${projectData.judul || '[Belum ditentukan]'}
 - Topik: ${projectData.topik}
 - Target Pembaca: ${projectData.target}
+- Jumlah Bab: **${taskConfig.jumlahBab || '7'}**
+- Kedalaman Outline: **${taskConfig.outlineDepth || 'Standard'}**
+- Alur Struktur: **${taskConfig.fokusLevel || 'Linear'}**
 
 === TUGAS ANDA ===
 ${projectData.level === 'Single Ebook' ? `
-Buatkan Outline untuk 1 ebook lengkap dengan struktur:
+Buatkan Outline untuk 1 ebook lengkap dengan **${taskConfig.jumlahBab || '7'} bab** dan kedalaman **${taskConfig.outlineDepth || 'Standard'}**:
 - **Prakata / Pendahuluan**
-- **Bab 1 sampai Bab 9** (atau lebih sesuai kebutuhan)
+- **Bab 1 sampai Bab ${taskConfig.jumlahBab || '7'}** (alur: ${taskConfig.fokusLevel || 'Linear'})
 - **Penutup & Kesimpulan**
 - **Bonus / Lampiran (Opsional)**
 
 Untuk SETIAP bab, berikan:
 1. Judul Bab
 2. Deskripsi Singkat (1-2 kalimat tentang apa yang dibahas)
-3. Sub-bab (3-5 poin utama yang akan dicover)
+${taskConfig.outlineDepth === 'Simple' ? '' : `3. Sub-bab (3-5 poin utama yang akan dicover)`}
+${taskConfig.outlineDepth === 'Detailed' || taskConfig.outlineDepth === 'Full' ? `4. Poin Kunci / Insight penting di setiap sub-bab` : ''}
+${taskConfig.outlineDepth === 'Full' ? `5. Latihan/Exercise untuk pembaca di akhir bab` : ''}
 ` : projectData.level === '3 Ebook (Trilogi Simple)' ? `
 Buatkan Outline untuk TRILOGI (3 Ebook) dengan pembagian:
 - **Buku 1: Fundamental** (Mindset & Konsep Dasar)
