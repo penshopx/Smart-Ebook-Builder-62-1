@@ -779,6 +779,7 @@ export const MODES = [
   { id: 'MINI_APP_BUILDER', label: 'Mini App Builder', icon: 'Smartphone', description: 'Rancang blueprint mini app dari konten ebook' },
   { id: 'QUIZ_MAKER', label: 'Quiz Maker', icon: 'ClipboardList', description: 'Buat soal kuis & asesmen dari ebook' },
   { id: 'PODCAST_GENERATOR', label: 'Podcast Generator', icon: 'Mic2', description: 'Generate script podcast 2 orang (Host + Guest)' },
+  { id: 'AUDIOBOOK_SCRIPT', label: 'Audiobook Script', icon: 'Headphones', description: 'Narasi solo siap rekam — bab per bab dengan pacing & cue' },
 ] as const;
 
 // Project data schema
@@ -836,6 +837,11 @@ export const taskConfigSchema = z.object({
   podcastStyle: z.string().default('interview'),
   podcastEpisodeLength: z.string().default('15-20 menit'),
   podcastSegments: z.string().default('5'),
+  audiobookNarrator: z.string().default(''),
+  audiobookTone: z.string().default('conversational'),
+  audiobookPace: z.string().default('medium'),
+  audiobookChapterFocus: z.string().default('full'),
+  audiobookEmphasis: z.string().default('moderate'),
 });
 
 export const extendConfigSchema = z.object({

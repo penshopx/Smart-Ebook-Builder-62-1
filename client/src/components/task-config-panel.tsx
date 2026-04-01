@@ -688,6 +688,102 @@ export function TaskConfigPanel({
           </div>
         );
 
+      case 'AUDIOBOOK_SCRIPT':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nama Narator (opsional)</Label>
+              <Input
+                placeholder="Contoh: Budi Santoso, Sarah Wijaya... (kosongkan jika tidak perlu)"
+                value={taskConfig.audiobookNarrator || ''}
+                onChange={(e) => onTaskConfigChange('audiobookNarrator', e.target.value)}
+                data-testid="input-audiobook-narrator"
+              />
+              <p className="text-xs text-muted-foreground">Nama narator digunakan dalam pembukaan/penutup setiap bab</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Gaya Narasi</Label>
+                <Select
+                  value={taskConfig.audiobookTone || 'conversational'}
+                  onValueChange={(value) => onTaskConfigChange('audiobookTone', value)}
+                >
+                  <SelectTrigger data-testid="select-audiobook-tone">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="conversational">Conversational — Santai, seperti ngobrol</SelectItem>
+                    <SelectItem value="authoritative">Authoritative — Tegas, seperti ahli</SelectItem>
+                    <SelectItem value="warm">Warm & Friendly — Hangat, suportif</SelectItem>
+                    <SelectItem value="dramatic">Dramatic — Dramatis, penuh penghayatan</SelectItem>
+                    <SelectItem value="academic">Academic — Formal, ilmiah</SelectItem>
+                    <SelectItem value="motivational">Motivational — Semangat, inspiratif</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Kecepatan Pacing</Label>
+                <Select
+                  value={taskConfig.audiobookPace || 'medium'}
+                  onValueChange={(value) => onTaskConfigChange('audiobookPace', value)}
+                >
+                  <SelectTrigger data-testid="select-audiobook-pace">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="slow">Lambat — Pendengar santai, banyak jeda</SelectItem>
+                    <SelectItem value="medium">Sedang — Standar audiobook profesional</SelectItem>
+                    <SelectItem value="fast">Cepat — Ringkas, langsung ke inti</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Fokus Output</Label>
+                <Select
+                  value={taskConfig.audiobookChapterFocus || 'full'}
+                  onValueChange={(value) => onTaskConfigChange('audiobookChapterFocus', value)}
+                >
+                  <SelectTrigger data-testid="select-audiobook-chapter">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="full">Seluruh Buku — Narasi lengkap semua bab</SelectItem>
+                    <SelectItem value="intro">Intro + Bab 1 — Preview menarik untuk promosi</SelectItem>
+                    <SelectItem value="summary">Ringkasan Per Bab — Poin utama saja</SelectItem>
+                    <SelectItem value="highlights">Highlight — Kutipan & insight terbaik</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Penekanan Emosi</Label>
+                <Select
+                  value={taskConfig.audiobookEmphasis || 'moderate'}
+                  onValueChange={(value) => onTaskConfigChange('audiobookEmphasis', value)}
+                >
+                  <SelectTrigger data-testid="select-audiobook-emphasis">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="minimal">Minimal — Netral, informatif</SelectItem>
+                    <SelectItem value="moderate">Moderate — Seimbang antara fakta & emosi</SelectItem>
+                    <SelectItem value="strong">Kuat — Penuh penghayatan & ekspresi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+              <p className="text-xs text-muted-foreground">
+                💡 <strong>Tip:</strong> Script yang dihasilkan menyertakan cue narasi seperti{' '}
+                <code className="bg-muted px-1 rounded text-xs">[JEDA PANJANG]</code>,{' '}
+                <code className="bg-muted px-1 rounded text-xs">[PENEKANAN]</code>, dan{' '}
+                <code className="bg-muted px-1 rounded text-xs">[MUSIK LATAR]</code> untuk membantu narasi.
+              </p>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <p className="text-sm text-muted-foreground">
@@ -713,6 +809,7 @@ export function TaskConfigPanel({
       case 'MINI_APP_BUILDER': return 'Rancang blueprint mini app interaktif dari konten ebook';
       case 'QUIZ_MAKER': return 'Buat soal kuis & asesmen lengkap dari materi ebook';
       case 'PODCAST_GENERATOR': return `Script podcast ${taskConfig.podcastStyle || 'interview'} antara ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} — ${taskConfig.podcastEpisodeLength || '15-20 menit'}`;
+      case 'AUDIOBOOK_SCRIPT': return `Narasi ${taskConfig.audiobookTone || 'conversational'}, pace ${taskConfig.audiobookPace || 'medium'} — ${taskConfig.audiobookChapterFocus === 'full' ? 'seluruh bab' : 'per bab'}`;
       default: return 'Konfigurasi mode';
     }
   };

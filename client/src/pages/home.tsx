@@ -104,6 +104,11 @@ const defaultTaskConfig: TaskConfig = {
   podcastStyle: 'interview',
   podcastEpisodeLength: '15-20 menit',
   podcastSegments: '5',
+  audiobookNarrator: '',
+  audiobookTone: 'conversational',
+  audiobookPace: 'medium',
+  audiobookChapterFocus: 'full',
+  audiobookEmphasis: 'moderate',
 };
 
 const defaultExtendConfig: ExtendConfig = {

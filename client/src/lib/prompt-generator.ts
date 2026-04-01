@@ -624,6 +624,93 @@ ${podcastStyle === 'storytelling' ? '- Narasi pengalaman nyata dengan detail emo
       break;
     }
 
+    case 'AUDIOBOOK_SCRIPT': {
+      const abTone = taskConfig.audiobookTone || 'conversational';
+      const abToneDesc: Record<string, string> = {
+        conversational: 'santai dan hangat, seperti berbicara langsung kepada pendengar',
+        authoritative: 'tegas dan meyakinkan, seperti seorang pakar di bidangnya',
+        warm: 'penuh kehangatan dan empati, suportif dan menginspirasi',
+        dramatic: 'dramatis dan penuh penghayatan emosional',
+        academic: 'formal dan ilmiah, dengan terminologi yang tepat',
+        motivational: 'penuh semangat dan energi, mendorong pendengar untuk bertindak',
+      };
+      const abPaceDesc: Record<string, string> = {
+        slow: 'lambat dan tenang — banyak jeda, beri ruang untuk pendengar meresapi',
+        medium: 'sedang — standar audiobook profesional',
+        fast: 'cepat dan ringkas — langsung ke poin utama tanpa banyak elaborasi',
+      };
+      const abFocusDesc: Record<string, string> = {
+        full: 'narasi lengkap seluruh buku dari bab pertama hingga terakhir',
+        intro: 'hanya pendahuluan dan bab pertama — cocok untuk preview/promosi',
+        summary: 'ringkasan setiap bab: poin-poin utama saja',
+        highlights: 'highlight terbaik: kutipan, insight, dan momen paling impactful',
+      };
+      const abEmphasisDesc: Record<string, string> = {
+        minimal: 'netral dan informatif, tanpa banyak penekanan emosional',
+        moderate: 'seimbang antara fakta dan emosi',
+        strong: 'penuh penghayatan, ekspresi kuat pada poin-poin penting',
+      };
+
+      const narratorLine = taskConfig.audiobookNarrator
+        ? `\nNarator: **${taskConfig.audiobookNarrator}**`
+        : '';
+
+      taskInstruction = `
+MODE TUGAS: AUDIOBOOK SCRIPT GENERATOR — NARASI SOLO
+${styleReminder}
+
+Buatkan script audiobook profesional dan siap rekam untuk buku bertema "${projectData.topik}".
+${narratorLine}
+
+=== DETAIL PRODUKSI ===
+- Judul Buku: ${projectData.judul || projectData.topik}
+- Target Pendengar: ${projectData.target || 'Umum'}
+- Gaya Narasi: **${abTone}** — ${abToneDesc[abTone]}
+- Pacing: **${taskConfig.audiobookPace || 'medium'}** — ${abPaceDesc[taskConfig.audiobookPace || 'medium']}
+- Fokus: **${abFocusDesc[taskConfig.audiobookChapterFocus || 'full']}**
+- Penekanan Emosi: **${abEmphasisDesc[taskConfig.audiobookEmphasis || 'moderate']}**
+
+=== NOTASI PRODUKSI ===
+Gunakan notasi berikut dalam skrip untuk memandu perekaman:
+- [JEDA PENDEK] → jeda 1-2 detik
+- [JEDA PANJANG] → jeda 3-5 detik (antar bab/seksi)
+- [PENEKANAN] → kata/frasa berikutnya dibaca lebih pelan dan berat
+- [NADA NAIK] / [NADA TURUN] → variasi intonasi
+- [MUSIK INTRO] / [MUSIK OUTRO] → untuk transisi bab
+- [NAPAS] → saat narator butuh jeda natural
+- *kata* → huruf miring = bacaan ditebalkan/diperlambat
+- **frasa** → bold = poin paling penting, baca dengan penekanan penuh
+
+=== FORMAT SETIAP BAB ===
+
+**[MUSIK INTRO — FADE IN 5 DETIK]**
+
+**PEMBUKAAN BAB [nomor]: [judul bab]**
+[Kalimat pembuka yang menarik dan langsung masuk ke inti]
+[JEDA PANJANG]
+
+**ISI UTAMA:**
+[Narasi bab dengan pacing ${taskConfig.audiobookPace || 'medium'}]
+[Gunakan notasi produksi sesuai konteks]
+
+**PENUTUP BAB [nomor]:**
+"Di bab ini kita telah belajar: [3 poin ringkasan]"
+[JEDA PANJANG]
+"Selanjutnya, di bab berikutnya, kita akan membahas..."
+[JEDA PENDEK]
+
+**[MUSIK OUTRO — FADE OUT]**
+
+=== INSTRUKSI KHUSUS ===
+- Tulis dalam bahasa Indonesia yang mengalir natural untuk didengarkan, bukan dibaca
+- Hindari kalimat terlalu panjang — maks 20-25 kata per kalimat
+- Gunakan "Anda" (bukan "kamu") untuk tone profesional
+- Setiap bab dimulai dengan hook yang menarik perhatian pendengar
+- Sertakan estimasi durasi baca di awal setiap bab: "(Bab ini ± X menit)"
+`;
+      break;
+    }
+
     default:
       taskInstruction = `
 MODE TUGAS: GENERAL ASSISTANT
