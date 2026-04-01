@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause } from 'lucide-react';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -74,6 +74,14 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [thumbOpen, setThumbOpen] = useState(false);
   const [thumbImages, setThumbImages] = useState<string[]>([]);
   const [thumbLoading, setThumbLoading] = useState(false);
+  const [reviewOpen, setReviewOpen] = useState(false);
+  const [reviewContent, setReviewContent] = useState('');
+  const [reviewLoading, setReviewLoading] = useState(false);
+  const [ttsLoading, setTtsLoading] = useState(false);
+  const [ttsAudioUrl, setTtsAudioUrl] = useState('');
+  const [ttsVoice, setTtsVoice] = useState<'nova' | 'alloy' | 'shimmer' | 'onyx' | 'echo'>('nova');
+  const [ttsPlaying, setTtsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -395,6 +403,72 @@ ${bodyHtml}
       setThumbLoading(false);
     }
   }, [projectTitle, projectTopik, toast]);
+
+  const handleReviewDocument = useCallback(async () => {
+    if (!docContent) { toast({ title: 'Generate dokumen dulu sebelum review', variant: 'destructive' }); return; }
+    setReviewOpen(true);
+    setReviewContent('');
+    setReviewLoading(true);
+    try {
+      const response = await fetch('/api/review-document', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: projectTitle || projectTopik, docContent }),
+      });
+      if (!response.ok) throw new Error('Server error');
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          try {
+            const d = JSON.parse(line.slice(5).trim());
+            if (d.content) setReviewContent(prev => prev + d.content);
+            if (d.done) setReviewLoading(false);
+          } catch {}
+        }
+      }
+    } catch {
+      toast({ title: 'Gagal melakukan review dokumen', variant: 'destructive' });
+    } finally {
+      setReviewLoading(false);
+    }
+  }, [docContent, projectTitle, projectTopik, toast]);
+
+  const handleTextToSpeech = useCallback(async () => {
+    if (!scriptContent) { toast({ title: 'Buat script narasi dulu', variant: 'destructive' }); return; }
+    setTtsLoading(true);
+    if (ttsAudioUrl) { URL.revokeObjectURL(ttsAudioUrl); setTtsAudioUrl(''); }
+    try {
+      // Strip [JEDA] and [PENEKANAN] tags for clean TTS
+      const cleanText = scriptContent.replace(/\[.*?\]/g, ' ').replace(/\s+/g, ' ').trim();
+      const res = await fetch('/api/text-to-speech', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: cleanText, voice: ttsVoice }),
+      });
+      if (!res.ok) throw new Error('TTS failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      setTtsAudioUrl(url);
+      if (audioRef.current) {
+        audioRef.current.src = url;
+        audioRef.current.play();
+        setTtsPlaying(true);
+      }
+    } catch {
+      toast({ title: 'Gagal membuat audio narasi', variant: 'destructive' });
+    } finally {
+      setTtsLoading(false);
+    }
+  }, [scriptContent, ttsVoice, ttsAudioUrl, toast]);
 
   const handleGenerateDocument = useCallback(async () => {
     if (!prompt.trim()) {
@@ -1242,6 +1316,14 @@ ${bodyHtml}
                   <Video className="h-3.5 w-3.5 mr-1.5" />
                   Thumbnail YT
                 </Button>
+                <Button
+                  onClick={handleReviewDocument}
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white text-xs h-8"
+                  data-testid="button-review-ai"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
+                  Review AI
+                </Button>
               </div>
             </div>
           )}
@@ -1396,15 +1478,69 @@ ${bodyHtml}
                       {scriptLoading && <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1" />}
                     </div>
                   </ScrollArea>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(scriptContent); toast({ title: 'Script disalin!' }); }}>
-                      <Copy className="h-4 w-4 mr-2" />Salin
+                  {ttsAudioUrl && (
+                    <div className="flex-shrink-0 bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-lg px-3 py-2 flex items-center gap-3">
+                      <audio
+                        ref={audioRef}
+                        src={ttsAudioUrl}
+                        onEnded={() => setTtsPlaying(false)}
+                        onPlay={() => setTtsPlaying(true)}
+                        onPause={() => setTtsPlaying(false)}
+                      />
+                      <Volume2 className="h-4 w-4 text-violet-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-medium text-violet-700 dark:text-violet-300">Audio Narasi Siap</p>
+                        <p className="text-[10px] text-muted-foreground">Suara: {ttsVoice} · klik ▶ untuk putar</p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (!audioRef.current) return;
+                          if (ttsPlaying) { audioRef.current.pause(); setTtsPlaying(false); }
+                          else { audioRef.current.play(); setTtsPlaying(true); }
+                        }}
+                        className="h-8 w-8 rounded-full bg-violet-600 text-white flex items-center justify-center hover:bg-violet-700 transition-colors"
+                      >
+                        {ttsPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5 ml-0.5" />}
+                      </button>
+                      <a href={ttsAudioUrl} download="narasi.mp3" className="h-8 w-8 rounded-full border border-violet-300 text-violet-700 flex items-center justify-center hover:bg-violet-100 transition-colors">
+                        <Download className="h-3.5 w-3.5" />
+                      </a>
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-shrink-0 flex-wrap">
+                    <Button variant="outline" size="sm" className="flex-1" onClick={() => { navigator.clipboard.writeText(scriptContent); toast({ title: 'Script disalin!' }); }}>
+                      <Copy className="h-3.5 w-3.5 mr-1.5" />Salin
                     </Button>
-                    <Button variant="outline" onClick={() => { const b = new Blob([scriptContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=`script-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}>
-                      <Download className="h-4 w-4 mr-2" />Download
+                    <Button variant="outline" size="sm" onClick={() => { const b = new Blob([scriptContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=`script-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}>
+                      <Download className="h-3.5 w-3.5 mr-1.5" />Download
                     </Button>
-                    <Button disabled={scriptLoading} onClick={handleGenerateScript} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
-                      <Sparkles className="h-4 w-4 mr-2" />Buat Ulang
+                    <div className="flex items-center gap-1 border border-border rounded-md px-2">
+                      <Volume2 className="h-3.5 w-3.5 text-muted-foreground" />
+                      <select
+                        value={ttsVoice}
+                        onChange={e => setTtsVoice(e.target.value as typeof ttsVoice)}
+                        className="text-xs bg-transparent outline-none py-1 pr-1"
+                        title="Pilih suara TTS"
+                      >
+                        <option value="nova">Nova (Wanita)</option>
+                        <option value="shimmer">Shimmer (Wanita)</option>
+                        <option value="alloy">Alloy (Netral)</option>
+                        <option value="echo">Echo (Pria)</option>
+                        <option value="onyx">Onyx (Pria)</option>
+                      </select>
+                    </div>
+                    <Button
+                      size="sm"
+                      disabled={ttsLoading || scriptLoading}
+                      onClick={handleTextToSpeech}
+                      className="bg-gradient-to-r from-violet-500 to-purple-600 text-white"
+                      data-testid="button-tts"
+                    >
+                      {ttsLoading ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Volume2 className="h-3.5 w-3.5 mr-1.5" />}
+                      Dengarkan
+                    </Button>
+                    <Button size="sm" disabled={scriptLoading} onClick={handleGenerateScript} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                      <Sparkles className="h-3.5 w-3.5 mr-1.5" />Buat Ulang
                     </Button>
                   </div>
                 </div>
@@ -1504,6 +1640,144 @@ ${bodyHtml}
               <p className="text-sm">Klik Generate untuk membuat thumbnail</p>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Review AI Dialog */}
+      <Dialog open={reviewOpen} onOpenChange={setReviewOpen}>
+        <DialogContent className="max-w-2xl h-[88vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white">
+                <ShieldCheck className="h-3.5 w-3.5" />
+              </div>
+              AI Quality Review
+              <Badge variant="secondary" className="ml-1 text-xs">5 Dimensi · ARQS™</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {reviewLoading && !reviewContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-emerald-200 border-t-emerald-500 animate-spin" />
+                <ShieldCheck className="absolute inset-0 m-auto h-6 w-6 text-emerald-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang menganalisis kualitas dokumen...</p>
+              <p className="text-xs text-muted-foreground/60">~10-20 detik</p>
+            </div>
+          )}
+          {reviewContent && (() => {
+            const getSection = (tag: string) => {
+              const m = reviewContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : '';
+            };
+            const scorePart = getSection('SKOR');
+            const scores: Record<string, number> = {};
+            if (scorePart) {
+              const lines = scorePart.split('\n');
+              lines.forEach(l => {
+                const m = l.match(/^(\w+):\s*(\d+)/);
+                if (m) scores[m[1]] = parseInt(m[2]);
+              });
+            }
+            const total = scores['TOTAL'] || Math.round(Object.entries(scores).filter(([k]) => k !== 'TOTAL').reduce((s, [,v]) => s + v, 0) / 5);
+            const getColor = (v: number) => v >= 80 ? 'bg-emerald-500' : v >= 60 ? 'bg-yellow-400' : 'bg-red-400';
+            const getTextColor = (v: number) => v >= 80 ? 'text-emerald-600' : v >= 60 ? 'text-yellow-600' : 'text-red-500';
+            const dimensionLabels: Record<string, string> = {
+              STRUKTUR: 'Struktur', KEDALAMAN: 'Kedalaman Konten', KETERBACAAN: 'Keterbacaan', KELENGKAPAN: 'Kelengkapan', NILAI_JUAL: 'Nilai Jual'
+            };
+            return (
+              <ScrollArea className="flex-1">
+                <div className="space-y-4 p-1 pb-4">
+                  {/* Score Ring */}
+                  <div className="flex items-center gap-6 bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border border-emerald-200 dark:border-emerald-700 rounded-xl p-4">
+                    <div className="flex-shrink-0 text-center">
+                      <div className={`text-4xl font-black ${getTextColor(total)}`}>{total}</div>
+                      <div className="text-xs text-muted-foreground font-medium">/ 100</div>
+                      <div className={`text-xs font-bold mt-0.5 ${getTextColor(total)}`}>
+                        {total >= 85 ? 'SANGAT BAIK' : total >= 70 ? 'BAIK' : total >= 55 ? 'CUKUP' : 'PERLU PERBAIKAN'}
+                      </div>
+                    </div>
+                    <div className="flex-1 space-y-2">
+                      {['STRUKTUR','KEDALAMAN','KETERBACAAN','KELENGKAPAN','NILAI_JUAL'].map(key => {
+                        const val = scores[key] ?? 0;
+                        return (
+                          <div key={key} className="flex items-center gap-2">
+                            <span className="text-[10px] text-muted-foreground w-28 shrink-0">{dimensionLabels[key]}</span>
+                            <div className="flex-1 bg-muted rounded-full h-1.5 overflow-hidden">
+                              <div className={`h-full rounded-full ${getColor(val)} transition-all`} style={{ width: `${val}%` }} />
+                            </div>
+                            <span className={`text-xs font-bold w-7 text-right ${getTextColor(val)}`}>{val}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  {getSection('RINGKASAN') && (
+                    <div className="bg-muted/40 rounded-lg p-3 text-sm leading-relaxed text-muted-foreground italic">
+                      "{getSection('RINGKASAN')}"
+                    </div>
+                  )}
+
+                  {/* Strengths */}
+                  {getSection('KELEBIHAN') && (
+                    <div>
+                      <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400 mb-2 uppercase tracking-wide">✅ Kelebihan Dokumen</p>
+                      <div className="space-y-1">
+                        {getSection('KELEBIHAN').split('\n').filter(l => l.trim()).map((l, i) => (
+                          <div key={i} className="flex items-start gap-2 text-sm bg-emerald-50 dark:bg-emerald-900/20 rounded-lg px-3 py-2">
+                            <span>{l.replace(/^✅\s*/, '')}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Improvements */}
+                  {getSection('PERBAIKAN') && (
+                    <div>
+                      <p className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-2 uppercase tracking-wide">🔧 Area Perbaikan</p>
+                      <div className="space-y-2">
+                        {getSection('PERBAIKAN').split('\n').filter(l => l.trim()).map((l, i) => {
+                          const parts = l.replace(/^🔧\s*/, '').split('→');
+                          return (
+                            <div key={i} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-lg px-3 py-2 text-xs">
+                              {parts[0] && <p className="font-medium text-amber-800 dark:text-amber-300">{parts[0].trim()}</p>}
+                              {parts[1] && <p className="text-amber-700 dark:text-amber-400 mt-0.5">→ {parts[1].trim()}</p>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recommendation */}
+                  {getSection('REKOMENDASI') && (
+                    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-xl p-3">
+                      <p className="text-xs font-semibold text-blue-700 dark:text-blue-400 mb-1.5">💡 Rekomendasi Langkah Selanjutnya</p>
+                      <p className="text-sm text-blue-800 dark:text-blue-300 leading-relaxed">{getSection('REKOMENDASI')}</p>
+                    </div>
+                  )}
+
+                  {/* Raw if no structure parsed */}
+                  {!scorePart && reviewContent && (
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed">{reviewContent}</div>
+                  )}
+
+                  {reviewLoading && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />Menganalisis...</div>}
+                </div>
+              </ScrollArea>
+            );
+          })()}
+          <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-border">
+            <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(reviewContent); toast({ title: 'Hasil review disalin!' }); }}>
+              <Copy className="h-4 w-4 mr-2" />Salin Hasil
+            </Button>
+            <Button disabled={reviewLoading} onClick={handleReviewDocument} className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white">
+              <ShieldCheck className="h-4 w-4 mr-2" />Review Ulang
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -104,6 +104,8 @@ The `shared/` directory contains code used by both frontend and backend:
 9. **GPT Builder** - Create chatbot system prompts
 10. **Marketing Kit** - Create marketing and promotional materials
 11. **Extend Text** - Expand/develop short text
+12. **AI Quality Review** - Score generated ebook on 5 dimensions (Struktur, Kedalaman, Keterbacaan, Kelengkapan, Nilai Jual) with actionable improvement suggestions
+13. **Text-to-Speech** - Convert Script Narasi to MP3 audio using OpenAI TTS (voices: Nova, Shimmer, Alloy, Echo, Onyx); audio player with play/pause + download in Script dialog
 
 ### Key Screens
 - **Landing Page** (`/`) - Marketing page for unauthenticated users with pricing tiers

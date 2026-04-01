@@ -296,6 +296,109 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/review-document", isAuthenticated, async (req, res) => {
+    try {
+      const { title, docContent } = req.body;
+      if (!docContent) return res.status(400).json({ error: "Document content required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah editor dan quality reviewer konten ebook profesional Indonesia. Tugasmu mengevaluasi kualitas dokumen secara objektif dan memberikan skor serta saran perbaikan yang actionable.",
+          },
+          {
+            role: "user",
+            content: `Evaluasi kualitas ebook/dokumen berikut secara komprehensif:
+
+Judul: ${title || 'Dokumen Ebook'}
+
+KONTEN (${docContent.split(/\s+/).length} kata):
+${docContent.slice(0, 4000)}
+
+Berikan evaluasi dalam format PERSIS seperti ini (jangan ubah format):
+
+===SKOR===
+STRUKTUR: [0-100]
+KEDALAMAN: [0-100]
+KETERBACAAN: [0-100]
+KELENGKAPAN: [0-100]
+NILAI_JUAL: [0-100]
+TOTAL: [rata-rata dari 5 dimensi]
+===AKHIR_SKOR===
+
+===RINGKASAN===
+[2-3 kalimat penilaian keseluruhan yang jujur]
+===AKHIR_RINGKASAN===
+
+===KELEBIHAN===
+✅ [kelebihan utama 1]
+✅ [kelebihan utama 2]
+✅ [kelebihan utama 3]
+===AKHIR_KELEBIHAN===
+
+===PERBAIKAN===
+🔧 [masalah spesifik 1] → [saran perbaikan konkret]
+🔧 [masalah spesifik 2] → [saran perbaikan konkret]
+🔧 [masalah spesifik 3] → [saran perbaikan konkret]
+🔧 [masalah spesifik 4] → [saran perbaikan konkret]
+===AKHIR_PERBAIKAN===
+
+===REKOMENDASI===
+[Langkah konkret berikutnya yang harus dilakukan penulis untuk meningkatkan kualitas dokumen ini]
+===AKHIR_REKOMENDASI===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 1500,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal review dokumen" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to review document" });
+      }
+    }
+  });
+
+  app.post("/api/text-to-speech", isAuthenticated, async (req, res) => {
+    try {
+      const { text, voice = "nova" } = req.body;
+      if (!text) return res.status(400).json({ error: "Text required" });
+
+      // Limit text length for TTS (OpenAI max ~4096 chars per request)
+      const truncated = text.slice(0, 4000);
+
+      const mp3 = await openai.audio.speech.create({
+        model: "tts-1",
+        voice: voice as "alloy" | "echo" | "fable" | "onyx" | "nova" | "shimmer",
+        input: truncated,
+        response_format: "mp3",
+      });
+
+      const buffer = Buffer.from(await mp3.arrayBuffer());
+      res.setHeader("Content-Type", "audio/mpeg");
+      res.setHeader("Content-Disposition", "inline; filename=narasi.mp3");
+      res.send(buffer);
+    } catch (error: any) {
+      console.error("TTS error:", error);
+      res.status(500).json({ error: "Gagal membuat audio. " + (error?.message || '') });
+    }
+  });
+
   app.post("/api/generate-thumbnail", isAuthenticated, async (req, res) => {
     try {
       const { title, topik } = req.body;
