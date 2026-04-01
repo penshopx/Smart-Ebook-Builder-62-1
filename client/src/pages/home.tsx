@@ -346,6 +346,8 @@ export default function Home() {
               <PromptOutput
                 prompt={generatedPrompt}
                 onRegenerate={handleRegenerate}
+                onModeChange={setActiveMode}
+                activeMode={activeMode}
                 selectedAiModel={projectData.selectedAiModel}
                 onAiModelChange={(model) => handleProjectChange('selectedAiModel', model)}
                 projectTitle={projectData.judul}

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { jsPDF } from 'jspdf';
 import { Document, Paragraph, TextRun, HeadingLevel, Packer, AlignmentType } from 'docx';
 import { Button } from '@/components/ui/button';
@@ -37,6 +37,8 @@ function addFooter(doc: jsPDF, pageW: number, pageH: number, margin: number) {
 interface PromptOutputProps {
   prompt: string;
   onRegenerate?: () => void;
+  activeMode?: string;
+  onModeChange?: (mode: string) => void;
   selectedAiModel?: string;
   onAiModelChange?: (modelId: string) => void;
   projectTitle?: string;
@@ -45,7 +47,43 @@ interface PromptOutputProps {
   uploadedFiles?: { name: string; type: string; size: string }[];
 }
 
-export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [] }: PromptOutputProps) {
+const WORKFLOW_STEPS = [
+  { id: 'BRAINSTORM', label: 'Brainstorm', phase: 1 },
+  { id: 'BIG_IDEA', label: 'Big Idea', phase: 1 },
+  { id: 'OUTLINE', label: 'Outline', phase: 2 },
+  { id: 'DRAFT_BAB', label: 'Draft Bab', phase: 2 },
+  { id: 'VIDEO_SCRIPT', label: 'Script', phase: 3 },
+  { id: 'MARKETING_KIT', label: 'Marketing', phase: 3 },
+  { id: 'ECOURSE_BUILDER', label: 'E-Course', phase: 4 },
+  { id: 'MINI_APP_BUILDER', label: 'Mini App', phase: 4 },
+  { id: 'QUIZ_MAKER', label: 'Kuis', phase: 4 },
+];
+
+const NEXT_STEP_MAP: Record<string, { next: string; label: string; desc: string; color: string }> = {
+  'BRAINSTORM': { next: 'BIG_IDEA', label: 'Pertajam Big Idea', desc: 'Pilih 1 ide terbaik, perkuat positioning & unique mechanism-nya', color: 'from-orange-500 to-amber-500' },
+  'BIG_IDEA': { next: 'OUTLINE', label: 'Buat Daftar Isi', desc: 'Ubah big idea menjadi outline lengkap yang terstruktur', color: 'from-blue-500 to-cyan-500' },
+  'OUTLINE': { next: 'DRAFT_BAB', label: 'Tulis Bab Pertama', desc: 'Mulai menulis bab dari outline yang sudah kamu buat', color: 'from-violet-500 to-purple-500' },
+  'DRAFT_BAB': { next: 'VIDEO_SCRIPT', label: 'Buat Script Video', desc: 'Ubah bab ini menjadi script YouTube atau Reels', color: 'from-pink-500 to-rose-500' },
+  'VIDEO_SCRIPT': { next: 'MARKETING_KIT', label: 'Buat Marketing Kit', desc: 'Siapkan copy promosi, email, & landing page untuk konten ini', color: 'from-pink-600 to-rose-500' },
+  'MARKETING_KIT': { next: 'MINI_APP_BUILDER', label: 'Rancang Mini App', desc: 'Buat app pendukung ekosistem ebookmu', color: 'from-slate-700 to-gray-800' },
+  'MINI_APP_BUILDER': { next: 'QUIZ_MAKER', label: 'Buat Generator Kuis', desc: 'Buat soal untuk menguji pemahaman pembaca', color: 'from-purple-600 to-fuchsia-600' },
+  'DOC_GENERATOR': { next: 'MARKETING_KIT', label: 'Buat Marketing Kit', desc: 'Promosikan dokumen ini ke target pembeli kamu', color: 'from-pink-600 to-rose-500' },
+  'GPT_BUILDER': { next: 'MINI_APP_BUILDER', label: 'Rancang Mini App', desc: 'Ubah system prompt chatbot ini menjadi mini app yang bisa di-deploy', color: 'from-slate-700 to-gray-800' },
+  'ECOURSE_BUILDER': { next: 'QUIZ_MAKER', label: 'Buat Kuis Asesmen', desc: 'Buat soal untuk mengevaluasi peserta kursus', color: 'from-purple-600 to-fuchsia-600' },
+};
+
+function getSuggestedQuestions(topik: string): string[] {
+  return [
+    `Apa poin terpenting dari topik "${topik}"?`,
+    `Bagaimana cara memulai ${topik} untuk pemula?`,
+    `Apa kesalahan umum yang harus dihindari dalam ${topik}?`,
+    `Berikan contoh praktis penerapan ${topik}`,
+    `Apa strategi terbaik untuk sukses dalam ${topik}?`,
+    `Apa tools atau resources yang dibutuhkan untuk ${topik}?`,
+  ];
+}
+
+export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [] }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
@@ -114,8 +152,29 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+  // Silabus pre-config
+  const [syllabusConfigOpen, setSyllabusConfigOpen] = useState(false);
+  const [syllabusConfigDuration, setSyllabusConfigDuration] = useState('4 Minggu');
+  const [syllabusConfigFormat, setSyllabusConfigFormat] = useState('Video + Worksheet');
+  const [syllabusConfigGoal, setSyllabusConfigGoal] = useState('');
+  // Quiz pre-config
+  const [quizConfigOpen, setQuizConfigOpen] = useState(false);
+  const [quizConfigLevel, setQuizConfigLevel] = useState('Intermediate');
+  const [quizConfigFocus, setQuizConfigFocus] = useState('komprehensif');
+  // Track if next step was dismissed
+  const [nextStepDismissed, setNextStepDismissed] = useState(false);
 
   const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
+
+  // Auto-scroll chat to bottom
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [chatMessages]);
+
+  // Reset next-step dismissal when mode changes
+  useEffect(() => {
+    setNextStepDismissed(false);
+  }, [activeMode]);
 
   const handleCopy = async () => {
     try {
@@ -555,21 +614,29 @@ ${bodyHtml}
     }
   }, [chatInput, chatLoading, chatMessages, chatSystemPrompt, fetchSSE, toast]);
 
-  const handleGenerateSyllabus = useCallback(async () => {
+  const handleGenerateSyllabus = useCallback(async (duration?: string, format?: string, goal?: string) => {
+    setSyllabusConfigOpen(false);
     setSyllabusOpen(true);
     setSyllabusContent('');
     setSyllabusLoading(true);
     setSyllabusTab('overview');
     try {
       await fetchSSE('/api/generate-course-syllabus',
-        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget },
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          courseDuration: duration || syllabusConfigDuration,
+          courseFormat: format || syllabusConfigFormat,
+          courseGoal: goal || syllabusConfigGoal,
+        },
         (chunk) => setSyllabusContent(prev => prev + chunk),
         () => setSyllabusLoading(false)
       );
     } catch {
       toast({ title: 'Gagal generate silabus kursus', variant: 'destructive' });
     } finally { setSyllabusLoading(false); }
-  }, [projectTitle, projectTopik, projectTarget, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, syllabusConfigDuration, syllabusConfigFormat, syllabusConfigGoal, fetchSSE, toast]);
 
   const handleGenerateMiniApp = useCallback(async () => {
     setAppOpen(true);
@@ -587,21 +654,29 @@ ${bodyHtml}
     } finally { setAppLoading(false); }
   }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
 
-  const handleGenerateQuiz = useCallback(async () => {
+  const handleGenerateQuiz = useCallback(async (level?: string, focus?: string) => {
+    setQuizConfigOpen(false);
     setQuizOpen(true);
     setQuizContent('');
     setQuizLoading(true);
     setQuizTab('mcq');
     try {
       await fetchSSE('/api/generate-quiz',
-        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget, docContent: docContent?.slice(0, 2000) },
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          docContent: docContent?.slice(0, 2000),
+          level: level || quizConfigLevel,
+          focus: focus || quizConfigFocus,
+        },
         (chunk) => setQuizContent(prev => prev + chunk),
         () => setQuizLoading(false)
       );
     } catch {
       toast({ title: 'Gagal generate kuis', variant: 'destructive' });
     } finally { setQuizLoading(false); }
-  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, docContent, quizConfigLevel, quizConfigFocus, fetchSSE, toast]);
 
   const handleGenerateMonetization = useCallback(async () => {
     setMonoOpen(true);
@@ -966,7 +1041,63 @@ ${bodyHtml}
             </div>
           </div>
 
-          {/* Ekosistem Section — always visible */}
+          {/* Workflow pipeline + Next Step */}
+          {activeMode && (() => {
+            const currentStep = WORKFLOW_STEPS.find(s => s.id === activeMode);
+            const nextStep = activeMode ? NEXT_STEP_MAP[activeMode] : null;
+            return (
+              <div className="pt-4 border-t space-y-3">
+                {/* Mini pipeline */}
+                <div className="flex items-center gap-1 flex-wrap">
+                  {WORKFLOW_STEPS.map((step, i) => {
+                    const isActive = step.id === activeMode;
+                    const isDone = currentStep && step.phase < currentStep.phase;
+                    return (
+                      <button
+                        key={step.id}
+                        onClick={() => onModeChange?.(step.id)}
+                        title={step.id}
+                        className={cn(
+                          "px-2 py-0.5 rounded-full text-[10px] font-medium transition-all border",
+                          isActive ? "bg-primary text-primary-foreground border-primary scale-105 shadow-sm" :
+                          isDone ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-300 dark:border-green-700" :
+                          "bg-muted text-muted-foreground border-border hover:border-primary/40"
+                        )}
+                      >
+                        {isDone ? '✓ ' : ''}{step.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                {/* Next step card */}
+                {nextStep && onModeChange && !nextStepDismissed && (
+                  <div className={`relative rounded-xl overflow-hidden border border-primary/20`}>
+                    <div className={`absolute inset-0 bg-gradient-to-r ${nextStep.color} opacity-[0.07]`} />
+                    <div className="relative flex items-center gap-3 px-3 py-2.5">
+                      <Rocket className="h-4 w-4 text-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-semibold text-foreground">Langkah Berikutnya: {nextStep.label}</p>
+                        <p className="text-[11px] text-muted-foreground leading-tight">{nextStep.desc}</p>
+                      </div>
+                      <Button
+                        size="sm"
+                        className={`bg-gradient-to-r ${nextStep.color} text-white text-xs h-7 px-3 shrink-0`}
+                        onClick={() => onModeChange(nextStep.next)}
+                        data-testid={`button-next-step-${nextStep.next.toLowerCase()}`}
+                      >
+                        Lanjut →
+                      </Button>
+                      <button onClick={() => setNextStepDismissed(true)} className="text-muted-foreground hover:text-foreground shrink-0">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* Ekosistem Section */}
           <div className="pt-4 border-t space-y-2">
             <div className="flex items-center gap-2">
               <div className="h-px flex-1 bg-gradient-to-r from-indigo-300/50 via-cyan-300/50 to-purple-300/50" />
@@ -976,18 +1107,19 @@ ${bodyHtml}
             <div className="grid grid-cols-2 gap-2">
               <Button
                 onClick={handleChatDemo}
-                className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs h-9 justify-start"
+                className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-chat-demo-main"
               >
                 <Bot className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Chatbot Demo</span>
-                  <span className="text-[10px] opacity-80">AI dari ebook kamu</span>
+                  <span className="text-[10px] opacity-80">{docContent ? '✓ Pakai konten ebook' : 'AI asisten topik'}</span>
                 </span>
+                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
-                onClick={handleGenerateSyllabus}
-                className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs h-9 justify-start"
+                onClick={() => setSyllabusConfigOpen(true)}
+                className="bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-syllabus-main"
               >
                 <GraduationCap className="h-4 w-4 mr-2 shrink-0" />
@@ -998,27 +1130,34 @@ ${bodyHtml}
               </Button>
               <Button
                 onClick={handleGenerateMiniApp}
-                className="bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white text-xs h-9 justify-start"
+                className="bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-mini-app-main"
               >
                 <Smartphone className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Blueprint App</span>
-                  <span className="text-[10px] opacity-80">Rancang mini app-nya</span>
+                  <span className="text-[10px] opacity-80">Prompt Cursor/Lovable/Bolt</span>
                 </span>
               </Button>
               <Button
-                onClick={handleGenerateQuiz}
-                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-xs h-9 justify-start"
+                onClick={() => setQuizConfigOpen(true)}
+                className="bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-quiz-main"
               >
                 <ClipboardList className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Generator Kuis</span>
-                  <span className="text-[10px] opacity-80">19 soal MCQ/esai/kasus</span>
+                  <span className="text-[10px] opacity-80">{docContent ? '✓ Berbasis konten ebook' : '19 soal MCQ/esai/kasus'}</span>
                 </span>
+                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
             </div>
+            {docContent && (
+              <div className="flex items-center gap-1.5 text-[10px] text-green-600 dark:text-green-400">
+                <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
+                Konten ebook sudah di-generate — semua fitur ekosistem menggunakan konten ini sebagai konteks
+              </div>
+            )}
           </div>
 
           <div className="pt-4 border-t space-y-3">
@@ -2144,6 +2283,110 @@ ${bodyHtml}
         </DialogContent>
       </Dialog>
 
+      {/* Silabus Pre-Config Dialog */}
+      <Dialog open={syllabusConfigOpen} onOpenChange={setSyllabusConfigOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <GraduationCap className="h-4 w-4 text-cyan-600" />
+              Konfigurasi Silabus Kursus
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Durasi Kursus</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['2 Minggu','4 Minggu','6 Minggu','3 Bulan'].map(d => (
+                  <button key={d} onClick={() => setSyllabusConfigDuration(d)}
+                    className={cn("py-1.5 rounded-lg border text-xs font-medium transition-all", syllabusConfigDuration === d ? "bg-cyan-600 text-white border-cyan-600" : "border-border hover:border-cyan-300")}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Format Delivery</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['Video + Worksheet','PDF + Quiz','Live Webinar','Self-Paced Text'].map(f => (
+                  <button key={f} onClick={() => setSyllabusConfigFormat(f)}
+                    className={cn("py-1.5 rounded-lg border text-xs font-medium transition-all", syllabusConfigFormat === f ? "bg-cyan-600 text-white border-cyan-600" : "border-border hover:border-cyan-300")}>
+                    {f}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Tujuan Utama Peserta</label>
+              <Input
+                value={syllabusConfigGoal}
+                onChange={e => setSyllabusConfigGoal(e.target.value)}
+                placeholder="contoh: bisa langsung implementasi di bisnis sendiri"
+                className="text-sm"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setSyllabusConfigOpen(false)}>Batal</Button>
+            <Button className="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 text-white" onClick={() => handleGenerateSyllabus()}>
+              <GraduationCap className="h-4 w-4 mr-2" />Generate Silabus
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Quiz Pre-Config Dialog */}
+      <Dialog open={quizConfigOpen} onOpenChange={setQuizConfigOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <ClipboardList className="h-4 w-4 text-purple-600" />
+              Konfigurasi Generator Kuis
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Level Kesulitan</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['Beginner','Intermediate','Advanced','Expert'].map(l => (
+                  <button key={l} onClick={() => setQuizConfigLevel(l)}
+                    className={cn("py-1.5 rounded-lg border text-xs font-medium transition-all", quizConfigLevel === l ? "bg-purple-600 text-white border-purple-600" : "border-border hover:border-purple-300")}>
+                    {l}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">Fokus Penilaian</label>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { val: 'komprehensif', label: 'Komprehensif' },
+                  { val: 'teori', label: 'Teori & Konsep' },
+                  { val: 'praktik', label: 'Praktik Nyata' },
+                  { val: 'analisis', label: 'Analisis Kritis' },
+                ].map(f => (
+                  <button key={f.val} onClick={() => setQuizConfigFocus(f.val)}
+                    className={cn("py-1.5 rounded-lg border text-xs font-medium transition-all", quizConfigFocus === f.val ? "bg-purple-600 text-white border-purple-600" : "border-border hover:border-purple-300")}>
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            {docContent && (
+              <div className="flex items-center gap-2 bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg px-3 py-2 text-xs text-green-700 dark:text-green-400">
+                <div className="h-2 w-2 rounded-full bg-green-500 shrink-0" />
+                Soal akan dibuat berdasarkan konten ebook yang sudah di-generate
+              </div>
+            )}
+          </div>
+          <div className="flex gap-2 pt-2">
+            <Button variant="outline" className="flex-1" onClick={() => setQuizConfigOpen(false)}>Batal</Button>
+            <Button className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white" onClick={() => handleGenerateQuiz()}>
+              <ClipboardList className="h-4 w-4 mr-2" />Generate Kuis
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Chatbot Demo Dialog */}
       <Dialog open={chatOpen} onOpenChange={setChatOpen}>
         <DialogContent className="max-w-2xl h-[88vh] flex flex-col">
@@ -2157,8 +2400,28 @@ ${bodyHtml}
             </DialogTitle>
           </DialogHeader>
           <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg px-3 py-2 flex-shrink-0 text-xs text-indigo-700 dark:text-indigo-300">
-            <strong>💡 Tips:</strong> Chatbot ini dilatih dari konten ebook kamu. Tanya apa saja seputar topik ebook!
+            {docContent
+              ? <><strong>✅ Konten ebook terdeteksi!</strong> Chatbot ini menjawab berdasarkan konten ebook yang kamu generate — bukan hanya topik umum.</>
+              : <><strong>💡 Tips:</strong> Generate dokumen dulu untuk chatbot yang lebih akurat dan spesifik tentang konten ebookmu.</>
+            }
           </div>
+          {/* Suggested questions chips */}
+          {chatMessages.length <= 1 && projectTopik && (
+            <div className="flex-shrink-0 space-y-1.5">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium px-1">Pertanyaan Populer:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {getSuggestedQuestions(projectTopik).map((q, i) => (
+                  <button
+                    key={i}
+                    onClick={() => { setChatInput(q); }}
+                    className="px-2.5 py-1 rounded-full border border-indigo-200 dark:border-indigo-700 bg-indigo-50 dark:bg-indigo-900/20 text-xs text-indigo-700 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-800/30 transition-colors text-left"
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <ScrollArea className="flex-1">
             <div className="space-y-3 p-2 pb-4">
               {chatMessages.map((msg, i) => (
@@ -2336,6 +2599,41 @@ ${bodyHtml}
                       </div>
                     </ScrollArea>
                   )}
+                  {/* AI Tool Quick Links */}
+                  {appContent && !appLoading && (() => {
+                    const buildPrompt = appContent.match(/===PROMPT_BUILD===[\s\S]*?===AKHIR_PROMPT_BUILD===/)?.[0]?.replace('===PROMPT_BUILD===','').replace('===AKHIR_PROMPT_BUILD===','').trim() || '';
+                    return (
+                      <div className="flex-shrink-0 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-3 space-y-2">
+                        <p className="text-xs font-semibold text-green-800 dark:text-green-300 flex items-center gap-1.5">
+                          <Rocket className="h-3.5 w-3.5" />
+                          Build langsung dengan AI Coding Tool:
+                        </p>
+                        <div className="flex gap-2 flex-wrap">
+                          <a href={`https://lovable.dev`} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Lovable' }); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-medium hover:from-purple-700 hover:to-pink-700 transition-all">
+                            <ExternalLink className="h-3 w-3" />Lovable.dev
+                          </a>
+                          <a href={`https://bolt.new`} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Bolt.new' }); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-medium hover:from-orange-600 hover:to-yellow-600 transition-all">
+                            <ExternalLink className="h-3 w-3" />Bolt.new
+                          </a>
+                          <a href={`https://cursor.sh`} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Cursor' }); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-slate-700 to-gray-700 text-white text-xs font-medium hover:from-slate-800 hover:to-gray-800 transition-all">
+                            <ExternalLink className="h-3 w-3" />Cursor
+                          </a>
+                          <a href={`https://replit.com`} target="_blank" rel="noopener noreferrer"
+                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Replit' }); }}
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-medium hover:from-blue-700 hover:to-indigo-700 transition-all">
+                            <ExternalLink className="h-3 w-3" />Replit
+                          </a>
+                        </div>
+                        <p className="text-[10px] text-green-600 dark:text-green-400">Klik salah satu → Prompt Build otomatis disalin → Paste di app</p>
+                      </div>
+                    );
+                  })()}
                   <div className="flex gap-2 flex-shrink-0">
                     <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(appContent); toast({ title: 'Blueprint disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
                     <Button variant="outline" onClick={() => { const b=new Blob([appContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`blueprint-app-${(projectTitle||'app').slice(0,20).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
