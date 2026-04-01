@@ -68,6 +68,12 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [scriptOpen, setScriptOpen] = useState(false);
   const [scriptContent, setScriptContent] = useState('');
   const [scriptLoading, setScriptLoading] = useState(false);
+  const [scriptTab, setScriptTab] = useState<'script' | 'seo'>('script');
+  const [seoContent, setSeoContent] = useState('');
+  const [seoLoading, setSeoLoading] = useState(false);
+  const [thumbOpen, setThumbOpen] = useState(false);
+  const [thumbImages, setThumbImages] = useState<string[]>([]);
+  const [thumbLoading, setThumbLoading] = useState(false);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -340,6 +346,7 @@ ${bodyHtml}
     setScriptOpen(true);
     setScriptContent('');
     setScriptLoading(true);
+    setScriptTab('script');
     try {
       await streamSSE(
         '/api/generate-script',
@@ -353,6 +360,41 @@ ${bodyHtml}
       toast({ title: 'Gagal membuat Script', variant: 'destructive' });
     }
   }, [projectTitle, projectTopik, docContent, toast]);
+
+  const handleGenerateYoutubeSEO = useCallback(async () => {
+    setSeoContent('');
+    setSeoLoading(true);
+    setScriptTab('seo');
+    try {
+      await streamSSE(
+        '/api/generate-youtube-seo',
+        { title: projectTitle || projectTopik, topik: projectTopik, docSummary: docContent.slice(0, 300) },
+        (chunk) => setSeoContent(prev => prev + chunk),
+        () => setSeoLoading(false),
+        (err) => { setSeoLoading(false); toast({ title: err, variant: 'destructive' }); }
+      );
+    } catch {
+      setSeoLoading(false);
+    }
+  }, [projectTitle, projectTopik, docContent, toast]);
+
+  const handleGenerateThumbnail = useCallback(async () => {
+    setThumbOpen(true);
+    setThumbImages([]);
+    setThumbLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-thumbnail', {
+        title: projectTitle || projectTopik,
+        topik: projectTopik,
+      });
+      const data = await res.json();
+      setThumbImages(data.imageUrls || []);
+    } catch {
+      toast({ title: 'Gagal membuat thumbnail', variant: 'destructive' });
+    } finally {
+      setThumbLoading(false);
+    }
+  }, [projectTitle, projectTopik, toast]);
 
   const handleGenerateDocument = useCallback(async () => {
     if (!prompt.trim()) {
@@ -1192,6 +1234,14 @@ ${bodyHtml}
                   <Mic className="h-3.5 w-3.5 mr-1.5" />
                   Script Video
                 </Button>
+                <Button
+                  onClick={handleGenerateThumbnail}
+                  className="flex-1 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-xs h-8"
+                  data-testid="button-thumbnail"
+                >
+                  <Video className="h-3.5 w-3.5 mr-1.5" />
+                  Thumbnail YT
+                </Button>
               </div>
             </div>
           )}
@@ -1301,71 +1351,157 @@ ${bodyHtml}
 
       {/* Script Video Dialog */}
       <Dialog open={scriptOpen} onOpenChange={setScriptOpen}>
-        <DialogContent className="max-w-3xl h-[85vh] flex flex-col">
+        <DialogContent className="max-w-3xl h-[88vh] flex flex-col">
           <DialogHeader className="flex-shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base">
               <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-violet-600 to-indigo-600 text-white">
                 <Mic className="h-3.5 w-3.5" />
               </div>
-              Script Presentasi Video
-              <Badge variant="secondary" className="ml-1 text-xs">Narasi · Voice-Over · Podcast</Badge>
+              Script Video & YouTube SEO
+              <Badge variant="secondary" className="ml-1 text-xs">CineMind · Autonix</Badge>
             </DialogTitle>
           </DialogHeader>
-          {scriptLoading && !scriptContent && (
-            <div className="flex flex-col items-center justify-center gap-3 py-16">
-              <Loader2 className="h-10 w-10 animate-spin text-violet-500" />
-              <p className="text-sm text-muted-foreground">AI sedang mengubah ebook menjadi script video...</p>
-            </div>
-          )}
-          {(scriptContent || scriptLoading) && (
-            <div className="flex-1 min-h-0 flex flex-col gap-3">
-              <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-lg p-3 flex-shrink-0 text-xs text-violet-700 dark:text-violet-300">
-                <strong>Tips:</strong> Gunakan script ini sebagai narasi untuk rekam video layar / podcast. Tanda <code>[JEDA]</code> = berhenti sejenak, <code>[PENEKANAN]</code> = tekan dengan nada lebih kuat.
-              </div>
-              <ScrollArea className="flex-1">
-                <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
-                  {scriptContent.split(/(\[.*?\])/g).map((part, i) =>
-                    /^\[.*\]$/.test(part)
-                      ? <span key={i} className="text-violet-600 font-bold text-xs bg-violet-100 dark:bg-violet-900/40 px-1.5 py-0.5 rounded mx-0.5">{part}</span>
-                      : <span key={i}>{part}</span>
-                  )}
-                  {scriptLoading && <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1" />}
+          <div className="flex gap-2 flex-shrink-0">
+            <button
+              onClick={() => setScriptTab('script')}
+              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all", scriptTab === 'script' ? "bg-violet-600 text-white border-violet-600" : "border-border hover:border-violet-300")}
+            ><Mic className="h-3.5 w-3.5" />Script Narasi</button>
+            <button
+              onClick={() => { if (!seoContent) handleGenerateYoutubeSEO(); else setScriptTab('seo'); }}
+              className={cn("flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all", scriptTab === 'seo' ? "bg-red-600 text-white border-red-600" : "border-border hover:border-red-300")}
+            >
+              {seoLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Globe className="h-3.5 w-3.5" />}
+              YouTube SEO Pack
+            </button>
+          </div>
+          {scriptTab === 'script' && (
+            <>
+              {scriptLoading && !scriptContent ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+                  <Loader2 className="h-10 w-10 animate-spin text-violet-500" />
+                  <p className="text-sm text-muted-foreground">AI sedang mengubah ebook menjadi script video...</p>
                 </div>
-              </ScrollArea>
+              ) : (scriptContent || scriptLoading) ? (
+                <div className="flex-1 min-h-0 flex flex-col gap-3">
+                  <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-lg p-3 flex-shrink-0 text-xs text-violet-700 dark:text-violet-300">
+                    <strong>Tips:</strong> Gunakan script sebagai narasi rekam video / podcast. <code>[JEDA]</code> = pause, <code>[PENEKANAN]</code> = tekan lebih keras.
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
+                      {scriptContent.split(/(\[.*?\])/g).map((part, i) =>
+                        /^\[.*\]$/.test(part)
+                          ? <span key={i} className="text-violet-600 font-bold text-xs bg-violet-100 dark:bg-violet-900/40 px-1.5 py-0.5 rounded mx-0.5">{part}</span>
+                          : <span key={i}>{part}</span>
+                      )}
+                      {scriptLoading && <span className="inline-block w-2 h-4 bg-violet-500 animate-pulse ml-1" />}
+                    </div>
+                  </ScrollArea>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(scriptContent); toast({ title: 'Script disalin!' }); }}>
+                      <Copy className="h-4 w-4 mr-2" />Salin
+                    </Button>
+                    <Button variant="outline" onClick={() => { const b = new Blob([scriptContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=`script-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}>
+                      <Download className="h-4 w-4 mr-2" />Download
+                    </Button>
+                    <Button disabled={scriptLoading} onClick={handleGenerateScript} className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white">
+                      <Sparkles className="h-4 w-4 mr-2" />Buat Ulang
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+          {scriptTab === 'seo' && (
+            <>
+              {seoLoading && !seoContent ? (
+                <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+                  <Loader2 className="h-10 w-10 animate-spin text-red-500" />
+                  <p className="text-sm text-muted-foreground">AI sedang membuat YouTube SEO Pack...</p>
+                </div>
+              ) : (seoContent || seoLoading) ? (
+                <div className="flex-1 min-h-0 flex flex-col gap-3">
+                  <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg p-3 flex-shrink-0 text-xs text-red-700 dark:text-red-300">
+                    <strong>YouTube SEO Pack</strong> — Judul, Deskripsi, Tags, Hashtag, Hook 30 detik, dan konsep Thumbnail untuk video promosi ebook kamu.
+                  </div>
+                  <ScrollArea className="flex-1">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2 font-mono">
+                      {seoContent}
+                      {seoLoading && <span className="inline-block w-2 h-4 bg-red-500 animate-pulse ml-1" />}
+                    </div>
+                  </ScrollArea>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(seoContent); toast({ title: 'SEO Pack disalin!' }); }}>
+                      <Copy className="h-4 w-4 mr-2" />Salin
+                    </Button>
+                    <Button variant="outline" onClick={() => { const b = new Blob([seoContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=`youtube-seo-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}>
+                      <Download className="h-4 w-4 mr-2" />Download
+                    </Button>
+                    <Button disabled={seoLoading} onClick={handleGenerateYoutubeSEO} className="bg-gradient-to-r from-red-600 to-orange-500 text-white">
+                      <Sparkles className="h-4 w-4 mr-2" />Buat Ulang
+                    </Button>
+                  </div>
+                </div>
+              ) : null}
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Thumbnail Generator Dialog */}
+      <Dialog open={thumbOpen} onOpenChange={setThumbOpen}>
+        <DialogContent className="max-w-3xl h-[85vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white">
+                <Video className="h-3.5 w-3.5" />
+              </div>
+              Thumbnail YouTube/Social Media
+              <Badge variant="secondary" className="ml-1 text-xs">4 Varian · DALL-E 3 · 16:9</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {thumbLoading ? (
+            <div className="flex-1 flex flex-col items-center justify-center gap-4">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-amber-200 border-t-amber-500 animate-spin" />
+                <Video className="absolute inset-0 m-auto h-6 w-6 text-amber-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">Membuat 4 varian thumbnail dengan DALL-E 3...</p>
+              <p className="text-xs text-muted-foreground/60">Proses ~30-60 detik</p>
+            </div>
+          ) : thumbImages.length > 0 ? (
+            <div className="flex-1 min-h-0 flex flex-col gap-3">
+              <div className="grid grid-cols-2 gap-3 overflow-y-auto flex-1">
+                {thumbImages.map((url, i) => (
+                  <div key={i} className="relative group rounded-xl overflow-hidden border bg-muted aspect-video">
+                    <img src={url} alt={`Thumbnail ${i+1}`} className="w-full h-full object-cover" />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                      <span className="text-white text-xs font-medium">Varian {i+1}</span>
+                      <a
+                        href={url}
+                        download={`thumbnail-${i+1}-${(projectTitle||'ebook').slice(0,20).replace(/\s+/g,'-')}.jpg`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-3 py-1.5 bg-white text-black rounded-lg text-xs font-medium hover:bg-amber-50"
+                        data-testid={`button-download-thumb-${i}`}
+                      >
+                        <Download className="h-3 w-3" /> Download
+                      </a>
+                    </div>
+                    <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] px-2 py-0.5 rounded-full">16:9</div>
+                  </div>
+                ))}
+              </div>
               <div className="flex gap-2 flex-shrink-0">
-                <Button
-                  variant="outline"
-                  className="flex-1"
-                  onClick={() => {
-                    navigator.clipboard.writeText(scriptContent);
-                    toast({ title: 'Script disalin!' });
-                  }}
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Salin Script
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    const blob = new Blob([scriptContent], { type: 'text/plain;charset=utf-8' });
-                    const url = URL.createObjectURL(blob);
-                    const a = document.createElement('a'); a.href = url;
-                    a.download = `script-video-${(projectTitle || projectTopik || 'ebook').slice(0, 30).replace(/\s+/g, '-')}.txt`;
-                    a.click(); URL.revokeObjectURL(url);
-                  }}
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download
-                </Button>
-                <Button
-                  disabled={scriptLoading}
-                  onClick={handleGenerateScript}
-                  className="bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:from-violet-700 hover:to-indigo-700"
-                >
+                <Button variant="outline" className="flex-1" onClick={handleGenerateThumbnail}>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Buat Ulang
+                  Generate Ulang (4 Varian Baru)
                 </Button>
               </div>
+            </div>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 text-center text-muted-foreground">
+              <Video className="h-12 w-12 opacity-20" />
+              <p className="text-sm">Klik Generate untuk membuat thumbnail</p>
             </div>
           )}
         </DialogContent>

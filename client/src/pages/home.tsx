@@ -19,6 +19,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory } from 'lucide-react';
+import { TopicSuggester } from '@/components/topic-suggester';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -296,7 +297,17 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="project" className="mt-4">
-                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                <div className="flex items-center justify-between mb-3">
+                  <p className="text-xs text-muted-foreground">Isi data ebook kamu di bawah</p>
+                  <TopicSuggester
+                    currentNiche={projectData.topik || 'bisnis digital'}
+                    onSelectTopic={(topic) => {
+                      handleProjectChange('topik', topic);
+                      handleProjectChange('judul', topic);
+                    }}
+                  />
+                </div>
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
                   <ProjectForm
                     projectData={projectData}
                     onChange={handleProjectChange}

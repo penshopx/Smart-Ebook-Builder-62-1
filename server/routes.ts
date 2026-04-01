@@ -296,6 +296,164 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/generate-thumbnail", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik } = req.body;
+      if (!title && !topik) return res.status(400).json({ error: "Title or topic required" });
+      const subject = title || topik;
+
+      const thumbnailPrompts = [
+        `YouTube thumbnail design for an ebook titled "${subject}". Bold dramatic text overlay area, cinematic background with vibrant colors, professional clean layout, high contrast, eye-catching, 16:9 ratio thumbnail style, modern typography space, NO actual readable text in image, dramatic lighting`,
+        `Professional YouTube thumbnail for ebook "${subject}". Minimalist flat design, bold color blocks, geometric shapes, clean modern aesthetic, striking contrast, space for title text overlay, 16:9 format, corporate clean style`,
+        `YouTube thumbnail for ebook "${subject}". Photorealistic scene with dramatic depth of field, bokeh background, professional studio lighting, space for bold text, vibrant saturated colors, thumbnail-optimized composition`,
+        `YouTube thumbnail design for "${subject}". Dark moody cinematic style, gradient overlay, glowing accents, futuristic tech aesthetic, space for text, dramatic shadows and highlights, high production quality`,
+      ];
+
+      const results = await Promise.allSettled(
+        thumbnailPrompts.map(p =>
+          openai.images.generate({
+            model: "dall-e-3",
+            prompt: p,
+            n: 1,
+            size: "1792x1024",
+            quality: "standard",
+          })
+        )
+      );
+
+      const imageUrls = results.map(r =>
+        r.status === 'fulfilled' ? (r.value.data[0]?.url || null) : null
+      ).filter(Boolean);
+
+      res.json({ imageUrls });
+    } catch (error: any) {
+      console.error("Thumbnail error:", error);
+      res.status(500).json({ error: "Gagal membuat thumbnail. " + (error?.message || '') });
+    }
+  });
+
+  app.post("/api/suggest-topics", isAuthenticated, async (req, res) => {
+    try {
+      const { niche, industry } = req.body;
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah market research expert yang ahli menemukan pain point dan topik ebook yang laku dijual di Indonesia.",
+          },
+          {
+            role: "user",
+            content: `Generate 10 ide topik ebook PREMIUM yang akan laku keras di Indonesia untuk niche/industri: "${niche || industry || 'bisnis digital'}".
+
+Setiap ide harus:
+- Menyentuh "luka berdarah" (masalah mendesak yang orang MATI-MATIAN ingin selesaikan)
+- Spesifik dan punya target pembaca jelas
+- Menjanjikan hasil nyata dan terukur
+
+Format SETIAP ide seperti ini:
+---
+🔥 IDE #N: [JUDUL EBOOK MENARIK]
+👥 Target: [siapa yang butuh ini]
+😣 Pain Point: [masalah mendalam yang dirasakan]
+✅ Janji: [hasil spesifik yang dijanjikan]
+💡 Angle: [pendekatan unik / hook]
+---
+
+Tulis 10 ide yang benar-benar berbeda dan menarik.`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 2048,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate ide" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to suggest topics" });
+      }
+    }
+  });
+
+  app.post("/api/generate-youtube-seo", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, docSummary } = req.body;
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah YouTube SEO expert dan content strategist Indonesia. Buat metadata yang dioptimasi untuk viral dan ditemukan di search.",
+          },
+          {
+            role: "user",
+            content: `Buat YouTube & Social Media SEO Pack lengkap untuk video promosi ebook berikut:
+
+Judul Ebook: ${title || topik}
+Topik: ${topik}
+${docSummary ? `Ringkasan: ${docSummary.slice(0, 300)}` : ''}
+
+Buat SEMUA bagian berikut:
+
+===== JUDUL VIDEO =====
+5 variasi judul YouTube yang clickbait tapi honest (pakai angka, emosi, atau pertanyaan)
+
+===== DESKRIPSI YOUTUBE =====
+Deskripsi lengkap 200-300 kata (hook + value + CTA subscribe + link placeholder + keyword-rich)
+
+===== TAGS YOUTUBE =====
+30 tags relevan (mix: broad, medium, long-tail) — pisahkan dengan koma
+
+===== HASHTAG INSTAGRAM/TIKTOK =====
+25 hashtag campuran (populer + niche + lokal Indonesia) untuk reels/tiktok
+
+===== HOOK PEMBUKA VIDEO (30 detik) =====
+Script hook pembuka yang bikin orang tidak skip (30 detik pertama yang krusial)
+
+===== THUMBNAIL CONCEPT =====
+Deskripsi konsep thumbnail yang proven clickable (warna, elemen, teks overlay, ekspresi)
+
+Tulis semuanya dalam Bahasa Indonesia yang powerful dan menjual.`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 2048,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate SEO pack" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate YouTube SEO" });
+      }
+    }
+  });
+
   app.post("/api/generate-marketing-kit", isAuthenticated, async (req, res) => {
     try {
       const { title, topik, target, industry, docSummary } = req.body;
