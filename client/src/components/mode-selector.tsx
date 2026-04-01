@@ -2,7 +2,7 @@ import { MODES } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import { 
   Lightbulb, Sparkles, Layers, FileText, Video, GraduationCap, 
-  FilePlus, Package, Bot, Megaphone, Wand2, Smartphone, ClipboardList, Mic2, Headphones
+  FilePlus, Package, Bot, Megaphone, Wand2, Smartphone, ClipboardList, Mic2, Headphones, LayoutTemplate
 } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 
@@ -22,6 +22,7 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   ClipboardList,
   Mic2,
   Headphones,
+  LayoutTemplate,
 };
 
 interface ModeSelectorProps {

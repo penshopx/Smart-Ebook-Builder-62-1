@@ -711,6 +711,123 @@ Gunakan notasi berikut dalam skrip untuk memandu perekaman:
       break;
     }
 
+    case 'LANDING_PAGE': {
+      const lpStyle = taskConfig.landingPageStyle || 'long-form';
+      const lpGoal = taskConfig.landingPageGoal || 'sell';
+      const lpPrice = taskConfig.landingPagePrice || '(harga belum ditentukan)';
+      const lpCTA = taskConfig.landingPageCTA || 'Beli Sekarang';
+      const lpBonuses = taskConfig.landingPageBonuses?.trim()
+        ? taskConfig.landingPageBonuses.split('\n').filter(Boolean).map((b, i) => `  ${i + 1}. ${b.trim()}`).join('\n')
+        : '  (tidak ada bonus tambahan)';
+      const lpFormat = taskConfig.landingPageOutputFormat || 'copy';
+
+      const lpStyleDesc: Record<string, string> = {
+        'long-form': 'Long-Form Sales Letter — copy panjang yang persuasif, menggunakan formula AIDA dan PAS',
+        'short': 'Short Copy — ringkas, langsung ke manfaat, cocok untuk retargeting atau audiens yang sudah aware',
+        'vsl': 'VSL Page — halaman dengan fokus pada video, copy pendukung video sales letter',
+        'webinar': 'Webinar Registration Page — dorong pendaftaran webinar/kelas gratis',
+      };
+      const lpGoalDesc: Record<string, string> = {
+        'sell': 'langsung closing — arahkan pembaca untuk membeli',
+        'lead': 'kumpulkan email/WhatsApp — tawarkan lead magnet gratis',
+        'webinar': 'daftar webinar gratis — dorong pendaftaran acara',
+        'waitlist': 'masuk waitlist — bangun antisipasi produk yang akan segera launch',
+      };
+      const lpOutputDesc: Record<string, string> = {
+        'copy': 'Tulis sebagai COPY SAJA — teks bersih tanpa HTML, siap dipaste ke Notion/Google Docs/Canva/builder apapun.',
+        'html': 'Tulis sebagai HTML LENGKAP dengan inline CSS — struktur <section> per bagian, warna, font, tombol yang menarik. Siap upload.',
+        'sections': 'Tulis DIPISAH PER SEKSI dengan judul jelas: [HERO], [PROBLEM], [SOLUTION], [FEATURES], [TESTIMONIAL], [PRICING], [FAQ], [CTA].',
+      };
+
+      taskInstruction = `
+MODE TUGAS: LANDING PAGE GENERATOR
+${styleReminder}
+
+Buatkan landing page ${lpStyleDesc[lpStyle]} untuk menjual ebook bertema "${projectData.topik}".
+
+=== BRIEF PRODUK ===
+- Judul Ebook: **${projectData.judul || projectData.topik}**
+- Topik: ${projectData.topik}
+- Target Pembaca: ${projectData.target || 'Umum'}
+- Bahasa: ${projectData.bahasa || 'Indonesia'}
+- Harga: **${lpPrice}**
+- Tujuan Landing Page: **${lpGoalDesc[lpGoal]}**
+- Tombol CTA: **"${lpCTA}"**
+${lpBonuses !== '  (tidak ada bonus tambahan)' ? `\nBonus yang disertakan:\n${lpBonuses}` : ''}
+
+=== FORMAT OUTPUT ===
+${lpOutputDesc[lpFormat]}
+
+=== STRUKTUR WAJIB (sesuaikan dengan tipe ${lpStyle}) ===
+
+**1. HERO SECTION**
+- Headline utama (kuat, benefit-driven, max 10 kata)
+- Subheadline (perjelas proposi nilai, 1-2 kalimat)
+- CTA pertama: "**${lpCTA}**"
+
+**2. PAIN POINT / PROBLEM AGITATION**
+- Gambarkan masalah yang dirasakan target pembaca dengan empatik
+- Gunakan teknik "Before & After" atau "Problem → Agitate → Solve"
+- 3-5 bullet point masalah yang relatable
+
+**3. SOLUSI & UNIQUE VALUE PROPOSITION**
+- Perkenalkan ebook sebagai solusi
+- Apa yang membuatnya BERBEDA dari solusi lain
+- Satu kalimat positioning yang kuat
+
+**4. FITUR & MANFAAT (Isi Ebook)**
+Buat dalam 2 format:
+- Daftar BAB / Isi Ebook (apa yang dipelajari)
+- Manfaat konkret setelah membaca (transformasi)
+
+**5. UNTUK SIAPA EBOOK INI**
+- ✅ Cocok untuk: [3-5 profil ideal]
+- ❌ Bukan untuk: [1-2 yang tidak cocok]
+
+**6. TESTIMONI TEMPLATE**
+Buat 3 contoh testimoni fiktif yang realistis (untuk placeholder):
+Format: "[Kutipan] — Nama, Pekerjaan, Kota"
+
+**7. TENTANG PENULIS (Author Bio)**
+- Tulis template bio singkat yang bisa dikustomisasi
+- Highlight kredibilitas & pengalaman relevan
+
+${lpBonuses !== '  (tidak ada bonus tambahan)' ? `**8. BONUS SECTION**
+Tampilkan bonus dengan nilai yang dirasakan:
+- Nama bonus
+- Deskripsi singkat
+- Nilai normal (buat estimasi wajar)\n` : ''}
+
+**${lpBonuses !== '  (tidak ada bonus tambahan)' ? '9' : '8'}. HARGA & PENAWARAN**
+- Tampilkan harga: **${lpPrice}**
+- Jika ada coret harga asli — buat estimasi yang masuk akal
+- Highlight nilai total (ebook + bonus)
+- Urgency copy (stok terbatas / penawaran waktu terbatas)
+- Tombol CTA besar: "**${lpCTA}**"
+
+**${lpBonuses !== '  (tidak ada bonus tambahan)' ? '10' : '9'}. GARANSI (jika ada)**
+- Template garansi uang kembali 7/14/30 hari
+- Hilangkan risiko keputusan beli
+
+**${lpBonuses !== '  (tidak ada bonus tambahan)' ? '11' : '10'}. FAQ**
+5 pertanyaan yang paling sering ditanyakan calon pembeli + jawaban meyakinkan
+
+**${lpBonuses !== '  (tidak ada bonus tambahan)' ? '12' : '11'}. CLOSING CTA**
+- Rangkum ulang proposi nilai
+- Sense of urgency
+- Tombol CTA final: "**${lpCTA}**"
+
+=== TEKNIK COPYWRITING YANG HARUS DIGUNAKAN ===
+- Formula PAS (Problem → Agitate → Solution) untuk bagian opening
+- Social proof & authority markers
+- Specificity (angka konkret lebih persuasif dari kata-kata umum)
+- Future pacing ("Bayangkan 30 hari dari sekarang...")
+- Risk reversal (garansi, jaminan)
+- Bahasa yang natural dan conversational, bukan kaku seperti brosur
+`;
+      break;
+    }
+
     default:
       taskInstruction = `
 MODE TUGAS: GENERAL ASSISTANT

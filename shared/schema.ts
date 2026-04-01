@@ -780,6 +780,7 @@ export const MODES = [
   { id: 'QUIZ_MAKER', label: 'Quiz Maker', icon: 'ClipboardList', description: 'Buat soal kuis & asesmen dari ebook' },
   { id: 'PODCAST_GENERATOR', label: 'Podcast Generator', icon: 'Mic2', description: 'Generate script podcast 2 orang (Host + Guest)' },
   { id: 'AUDIOBOOK_SCRIPT', label: 'Audiobook Script', icon: 'Headphones', description: 'Narasi solo siap rekam — bab per bab dengan pacing & cue' },
+  { id: 'LANDING_PAGE', label: 'Landing Page Generator', icon: 'LayoutTemplate', description: 'Generate copy + struktur HTML landing page penjualan ebook' },
 ] as const;
 
 // Project data schema
@@ -842,6 +843,12 @@ export const taskConfigSchema = z.object({
   audiobookPace: z.string().default('medium'),
   audiobookChapterFocus: z.string().default('full'),
   audiobookEmphasis: z.string().default('moderate'),
+  landingPageStyle: z.string().default('long-form'),
+  landingPageGoal: z.string().default('sell'),
+  landingPagePrice: z.string().default(''),
+  landingPageBonuses: z.string().default(''),
+  landingPageCTA: z.string().default('Beli Sekarang'),
+  landingPageOutputFormat: z.string().default('copy'),
 });
 
 export const extendConfigSchema = z.object({

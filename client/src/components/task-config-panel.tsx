@@ -784,6 +784,104 @@ export function TaskConfigPanel({
           </div>
         );
 
+      case 'LANDING_PAGE':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Tipe Landing Page</Label>
+                <Select
+                  value={taskConfig.landingPageStyle || 'long-form'}
+                  onValueChange={(v) => onTaskConfigChange('landingPageStyle', v)}
+                >
+                  <SelectTrigger data-testid="select-lp-style">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="long-form">Long-Form Sales Letter (konversi tinggi)</SelectItem>
+                    <SelectItem value="short">Short Copy (simpel & langsung)</SelectItem>
+                    <SelectItem value="vsl">VSL Page (Video Sales Letter)</SelectItem>
+                    <SelectItem value="webinar">Webinar Registration Page</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Tujuan Utama</Label>
+                <Select
+                  value={taskConfig.landingPageGoal || 'sell'}
+                  onValueChange={(v) => onTaskConfigChange('landingPageGoal', v)}
+                >
+                  <SelectTrigger data-testid="select-lp-goal">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="sell">Jual Ebook (direct selling)</SelectItem>
+                    <SelectItem value="lead">Kumpulkan Lead (email/WA)</SelectItem>
+                    <SelectItem value="webinar">Daftar Webinar Gratis</SelectItem>
+                    <SelectItem value="waitlist">Join Waitlist / Pre-launch</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Harga Produk</Label>
+                <Input
+                  placeholder="Contoh: Rp 97.000 / Rp 197.000 / Gratis"
+                  value={taskConfig.landingPagePrice || ''}
+                  onChange={(e) => onTaskConfigChange('landingPagePrice', e.target.value)}
+                  data-testid="input-lp-price"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Teks Tombol CTA</Label>
+                <Input
+                  placeholder="Contoh: Beli Sekarang / Dapatkan Gratis / Daftar"
+                  value={taskConfig.landingPageCTA || 'Beli Sekarang'}
+                  onChange={(e) => onTaskConfigChange('landingPageCTA', e.target.value)}
+                  data-testid="input-lp-cta"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Bonus / Materi Tambahan (opsional)</Label>
+              <Textarea
+                placeholder="Contoh: Bonus Worksheet PDF, Template Canva, Akses Grup WA Premium, Video Tutorial 2 Jam..."
+                value={taskConfig.landingPageBonuses || ''}
+                onChange={(e) => onTaskConfigChange('landingPageBonuses', e.target.value)}
+                rows={3}
+                data-testid="textarea-lp-bonuses"
+              />
+              <p className="text-xs text-muted-foreground">Satu bonus per baris. Bonus yang relevan meningkatkan konversi secara signifikan.</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Format Output</Label>
+              <Select
+                value={taskConfig.landingPageOutputFormat || 'copy'}
+                onValueChange={(v) => onTaskConfigChange('landingPageOutputFormat', v)}
+              >
+                <SelectTrigger data-testid="select-lp-format">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="copy">Copy Only — Teks siap paste ke builder mana saja</SelectItem>
+                  <SelectItem value="html">HTML + Inline CSS — Siap upload langsung</SelectItem>
+                  <SelectItem value="sections">Per Seksi — Dipisah: Hero, Problem, Solution, dll</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
+              <p className="text-xs text-muted-foreground">
+                🚀 <strong>Hasilnya mencakup:</strong> Headline + Subheadline · Problem Agitation · Unique Value Proposition · Fitur & Manfaat · Testimoni template · FAQ · Harga & CTA · Garansi copy
+              </p>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <p className="text-sm text-muted-foreground">
@@ -810,6 +908,7 @@ export function TaskConfigPanel({
       case 'QUIZ_MAKER': return 'Buat soal kuis & asesmen lengkap dari materi ebook';
       case 'PODCAST_GENERATOR': return `Script podcast ${taskConfig.podcastStyle || 'interview'} antara ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} — ${taskConfig.podcastEpisodeLength || '15-20 menit'}`;
       case 'AUDIOBOOK_SCRIPT': return `Narasi ${taskConfig.audiobookTone || 'conversational'}, pace ${taskConfig.audiobookPace || 'medium'} — ${taskConfig.audiobookChapterFocus === 'full' ? 'seluruh bab' : 'per bab'}`;
+      case 'LANDING_PAGE': return `${taskConfig.landingPageStyle === 'long-form' ? 'Long-form' : taskConfig.landingPageStyle === 'short' ? 'Short copy' : 'VSL'} landing page${taskConfig.landingPagePrice ? ` · Harga: ${taskConfig.landingPagePrice}` : ''}`;
       default: return 'Konfigurasi mode';
     }
   };

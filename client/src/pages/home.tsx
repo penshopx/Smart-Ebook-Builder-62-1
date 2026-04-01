@@ -109,6 +109,12 @@ const defaultTaskConfig: TaskConfig = {
   audiobookPace: 'medium',
   audiobookChapterFocus: 'full',
   audiobookEmphasis: 'moderate',
+  landingPageStyle: 'long-form',
+  landingPageGoal: 'sell',
+  landingPagePrice: '',
+  landingPageBonuses: '',
+  landingPageCTA: 'Beli Sekarang',
+  landingPageOutputFormat: 'copy',
 };
 
 const defaultExtendConfig: ExtendConfig = {
