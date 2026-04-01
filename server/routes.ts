@@ -190,6 +190,57 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/generate-cover", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, industry, style, colorScheme } = req.body;
+      if (!title && !topik) {
+        return res.status(400).json({ error: "Title or topik is required" });
+      }
+
+      const styleDescriptions: Record<string, string> = {
+        minimalis: "minimalist, clean, simple, lots of white space, subtle typography",
+        modern: "modern, bold typography, geometric shapes, dynamic composition",
+        profesional: "professional, corporate, elegant, sophisticated, business-style",
+        creative: "creative, artistic, vibrant, eye-catching, unique",
+        academic: "academic, scholarly, formal, authoritative, structured",
+      };
+
+      const colorDescriptions: Record<string, string> = {
+        biru: "blue and white color palette",
+        hijau: "green and white color palette",
+        merah: "deep red and gold color palette",
+        gelap: "dark navy and gold premium color palette",
+        ungu: "purple and lavender gradient color palette",
+        oranye: "orange and warm tones color palette",
+      };
+
+      const styleDesc = styleDescriptions[style] || styleDescriptions.modern;
+      const colorDesc = colorDescriptions[colorScheme] || colorDescriptions.biru;
+
+      const imagePrompt = `${styleDesc} ebook cover design background. ${colorDesc}. Abstract visual elements representing "${topik || title}". ${industry && industry !== 'general' ? `Industry: ${industry}.` : ''} High quality, digital art, book cover composition, no text, no letters, no words, professional publishing quality, 2:3 aspect ratio portrait.`;
+
+      const response = await openai.images.generate({
+        model: "dall-e-3",
+        prompt: imagePrompt,
+        size: "1024x1792",
+        quality: "standard",
+        n: 1,
+      });
+
+      const imageUrl = response.data[0]?.url;
+      if (!imageUrl) {
+        return res.status(500).json({ error: "Gagal menghasilkan gambar" });
+      }
+
+      res.json({ imageUrl, revisedPrompt: response.data[0]?.revised_prompt });
+    } catch (error: any) {
+      console.error("Generate cover error:", error);
+      res.status(500).json({ 
+        error: "Gagal membuat cover. " + (error?.message || "Silakan coba lagi.") 
+      });
+    }
+  });
+
   app.post("/api/generate-document", async (req, res) => {
     try {
       const { prompt, mode } = req.body;

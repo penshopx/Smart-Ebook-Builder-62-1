@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
 import { INDUSTRIES, EBOOK_SERIES_DATA } from '@shared/schema';
 import type { ProjectData } from '@shared/schema';
-import { Book, FileText, Target, Users, Sparkles, CheckCircle2, BookOpen, Layers } from 'lucide-react';
+import { Book, FileText, Target, Sparkles, BookOpen, Layers, ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { CoverGenerator } from '@/components/cover-generator';
 
 interface BookPreviewProps {
   projectData: ProjectData;
@@ -28,17 +31,31 @@ function getIndustryInfo(industryId: string) {
 }
 
 export function BookPreview({ projectData, activeMode }: BookPreviewProps) {
+  const [coverOpen, setCoverOpen] = useState(false);
   const completion = getCompletionPercentage(projectData);
   const industry = getIndustryInfo(projectData.industry);
   const seriesBooks = EBOOK_SERIES_DATA[projectData.level] || [];
   
   return (
+    <>
     <Card className="overflow-hidden">
       <CardHeader className="pb-3 bg-gradient-to-br from-primary/10 via-transparent to-transparent">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <BookOpen className="h-4 w-4 text-primary" />
-          Preview Ebook
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <BookOpen className="h-4 w-4 text-primary" />
+            Preview Ebook
+          </CardTitle>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCoverOpen(true)}
+            className="h-7 text-xs gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-50 dark:border-violet-700 dark:text-violet-400 dark:hover:bg-violet-950"
+            data-testid="button-open-cover-generator"
+          >
+            <ImageIcon className="h-3 w-3" />
+            Generate Cover
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex gap-4">
@@ -167,5 +184,12 @@ export function BookPreview({ projectData, activeMode }: BookPreviewProps) {
         </div>
       </CardContent>
     </Card>
+
+    <CoverGenerator
+      projectData={projectData}
+      open={coverOpen}
+      onOpenChange={setCoverOpen}
+    />
+    </>
   );
 }

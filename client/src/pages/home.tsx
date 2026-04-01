@@ -337,6 +337,8 @@ export default function Home() {
                 onRegenerate={handleRegenerate}
                 selectedAiModel={projectData.selectedAiModel}
                 onAiModelChange={(model) => handleProjectChange('selectedAiModel', model)}
+                projectTitle={projectData.judul}
+                projectTopik={projectData.topik}
               />
             </div>
           </div>
