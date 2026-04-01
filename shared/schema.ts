@@ -776,6 +776,8 @@ export const MODES = [
   { id: 'GPT_BUILDER', label: 'GPT Builder', icon: 'Bot', description: 'Buat system prompt chatbot' },
   { id: 'MARKETING_KIT', label: 'Marketing Kit', icon: 'Megaphone', description: 'Buat materi marketing & promosi' },
   { id: 'EXTEND_TEXT', label: 'Extend Text', icon: 'Wand2', description: 'Kembangkan/perluas teks pendek' },
+  { id: 'MINI_APP_BUILDER', label: 'Mini App Builder', icon: 'Smartphone', description: 'Rancang blueprint mini app dari konten ebook' },
+  { id: 'QUIZ_MAKER', label: 'Quiz Maker', icon: 'ClipboardList', description: 'Buat soal kuis & asesmen dari ebook' },
 ] as const;
 
 // Project data schema
@@ -820,6 +822,9 @@ export const taskConfigSchema = z.object({
   courseGoal: z.string().default(''),
   marketingAsset: z.string().default('Landing Page Copy (Long Form)'),
   marketingAngle: z.string().default(''),
+  appType: z.string().default('web'),
+  appComplexity: z.string().default('simple'),
+  quizFocus: z.string().default('komprehensif'),
 });
 
 export const extendConfigSchema = z.object({

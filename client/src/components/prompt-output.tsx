@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -88,6 +89,28 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [monoContent, setMonoContent] = useState('');
   const [monoLoading, setMonoLoading] = useState(false);
   const [monoTab, setMonoTab] = useState<'harga'|'platform'|'pembeli'|'launch'|'upsell'>('harga');
+  // Chatbot Demo
+  const [chatOpen, setChatOpen] = useState(false);
+  const [chatMessages, setChatMessages] = useState<{role:'user'|'assistant'; content:string}[]>([]);
+  const [chatInput, setChatInput] = useState('');
+  const [chatLoading, setChatLoading] = useState(false);
+  const [chatSystemPrompt, setChatSystemPrompt] = useState('');
+  // Silabus Kursus
+  const [syllabusOpen, setSyllabusOpen] = useState(false);
+  const [syllabusContent, setSyllabusContent] = useState('');
+  const [syllabusLoading, setSyllabusLoading] = useState(false);
+  const [syllabusTab, setSyllabusTab] = useState<'overview'|'modul'|'worksheet'|'sertifikat'>('overview');
+  // Mini App Blueprint
+  const [appOpen, setAppOpen] = useState(false);
+  const [appContent, setAppContent] = useState('');
+  const [appLoading, setAppLoading] = useState(false);
+  const [appTab, setAppTab] = useState<'konsep'|'fitur'|'screens'|'userflow'|'techstack'|'prompt_build'|'monetisasi'|'launch'>('konsep');
+  // Generator Kuis
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizContent, setQuizContent] = useState('');
+  const [quizLoading, setQuizLoading] = useState(false);
+  const [quizTab, setQuizTab] = useState<'mcq'|'tf'|'essay'|'casestudy'>('mcq');
+  const chatEndRef = useRef<HTMLDivElement>(null);
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -475,6 +498,110 @@ ${bodyHtml}
       setTtsLoading(false);
     }
   }, [scriptContent, ttsVoice, ttsAudioUrl, toast]);
+
+  // Generic SSE helper
+  const fetchSSE = useCallback(async (url: string, body: object, onChunk: (text: string) => void, onDone: () => void) => {
+    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+    if (!response.ok) throw new Error('Server error');
+    const reader = response.body?.getReader();
+    if (!reader) throw new Error('No reader');
+    const decoder = new TextDecoder();
+    let buffer = '';
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n\n');
+      buffer = lines.pop() || '';
+      for (const line of lines) {
+        if (!line.startsWith('data:')) continue;
+        try {
+          const d = JSON.parse(line.slice(5).trim());
+          if (d.content) onChunk(d.content);
+          if (d.done) onDone();
+        } catch {}
+      }
+    }
+  }, []);
+
+  const handleChatDemo = useCallback(async () => {
+    const sysPrompt = docContent
+      ? `Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}". Kamu memiliki pengetahuan mendalam berdasarkan konten berikut:\n\n${docContent.slice(0, 3000)}\n\nJawab pertanyaan pengguna dengan ramah, detail, dan berbasis konten di atas. Jika ditanya hal di luar konten, jawab berdasarkan pengetahuan umum tapi tetap fokus pada topik.`
+      : `Kamu adalah AI Assistant ahli tentang "${projectTitle || projectTopik}". ${prompt.slice(0, 1000)}`;
+    setChatSystemPrompt(sysPrompt);
+    setChatMessages([{ role: 'assistant', content: `Halo! Saya adalah AI Assistant untuk ebook **"${projectTitle || projectTopik}"**. Saya siap menjawab pertanyaan kamu tentang materi dalam ebook ini. Ada yang ingin kamu tanyakan? 😊` }]);
+    setChatOpen(true);
+  }, [docContent, projectTitle, projectTopik, prompt]);
+
+  const handleSendChat = useCallback(async () => {
+    if (!chatInput.trim() || chatLoading) return;
+    const userMsg = { role: 'user' as const, content: chatInput.trim() };
+    const newMsgs = [...chatMessages, userMsg];
+    setChatMessages(newMsgs);
+    setChatInput('');
+    setChatLoading(true);
+    let reply = '';
+    const assistantMsg = { role: 'assistant' as const, content: '' };
+    setChatMessages(prev => [...prev, assistantMsg]);
+    try {
+      await fetchSSE('/api/chat-demo', { systemPrompt: chatSystemPrompt, messages: newMsgs }, (chunk) => {
+        reply += chunk;
+        setChatMessages(prev => prev.map((m, i) => i === prev.length - 1 ? { ...m, content: reply } : m));
+      }, () => { setChatLoading(false); });
+    } catch {
+      toast({ title: 'Gagal mengirim pesan', variant: 'destructive' });
+    } finally {
+      setChatLoading(false);
+    }
+  }, [chatInput, chatLoading, chatMessages, chatSystemPrompt, fetchSSE, toast]);
+
+  const handleGenerateSyllabus = useCallback(async () => {
+    setSyllabusOpen(true);
+    setSyllabusContent('');
+    setSyllabusLoading(true);
+    setSyllabusTab('overview');
+    try {
+      await fetchSSE('/api/generate-course-syllabus',
+        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget },
+        (chunk) => setSyllabusContent(prev => prev + chunk),
+        () => setSyllabusLoading(false)
+      );
+    } catch {
+      toast({ title: 'Gagal generate silabus kursus', variant: 'destructive' });
+    } finally { setSyllabusLoading(false); }
+  }, [projectTitle, projectTopik, projectTarget, fetchSSE, toast]);
+
+  const handleGenerateMiniApp = useCallback(async () => {
+    setAppOpen(true);
+    setAppContent('');
+    setAppLoading(true);
+    setAppTab('konsep');
+    try {
+      await fetchSSE('/api/generate-mini-app',
+        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget, docContent: docContent?.slice(0, 1000) },
+        (chunk) => setAppContent(prev => prev + chunk),
+        () => setAppLoading(false)
+      );
+    } catch {
+      toast({ title: 'Gagal generate blueprint mini app', variant: 'destructive' });
+    } finally { setAppLoading(false); }
+  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+
+  const handleGenerateQuiz = useCallback(async () => {
+    setQuizOpen(true);
+    setQuizContent('');
+    setQuizLoading(true);
+    setQuizTab('mcq');
+    try {
+      await fetchSSE('/api/generate-quiz',
+        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget, docContent: docContent?.slice(0, 2000) },
+        (chunk) => setQuizContent(prev => prev + chunk),
+        () => setQuizLoading(false)
+      );
+    } catch {
+      toast({ title: 'Gagal generate kuis', variant: 'destructive' });
+    } finally { setQuizLoading(false); }
+  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
 
   const handleGenerateMonetization = useCallback(async () => {
     setMonoOpen(true);
@@ -1386,6 +1513,41 @@ ${bodyHtml}
                   </div>
                 )}
               </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Ekosistem:</div>
+                <Button
+                  onClick={handleChatDemo}
+                  className="flex-1 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs h-8"
+                  data-testid="button-chat-demo"
+                >
+                  <Bot className="h-3.5 w-3.5 mr-1.5" />
+                  Chatbot Demo
+                </Button>
+                <Button
+                  onClick={handleGenerateSyllabus}
+                  className="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs h-8"
+                  data-testid="button-syllabus"
+                >
+                  <GraduationCap className="h-3.5 w-3.5 mr-1.5" />
+                  Silabus Kursus
+                </Button>
+                <Button
+                  onClick={handleGenerateMiniApp}
+                  className="flex-1 bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white text-xs h-8"
+                  data-testid="button-mini-app"
+                >
+                  <Smartphone className="h-3.5 w-3.5 mr-1.5" />
+                  Blueprint App
+                </Button>
+                <Button
+                  onClick={handleGenerateQuiz}
+                  className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 hover:from-purple-700 hover:to-fuchsia-700 text-white text-xs h-8"
+                  data-testid="button-quiz"
+                >
+                  <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                  Generator Kuis
+                </Button>
+              </div>
             </div>
           )}
         </DialogContent>
@@ -1924,6 +2086,284 @@ ${bodyHtml}
               <ShieldCheck className="h-4 w-4 mr-2" />Review Ulang
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Chatbot Demo Dialog */}
+      <Dialog open={chatOpen} onOpenChange={setChatOpen}>
+        <DialogContent className="max-w-2xl h-[88vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-indigo-600 to-blue-600 text-white">
+                <Bot className="h-3.5 w-3.5" />
+              </div>
+              Chatbot Demo — AI dari Ebook Kamu
+              <Badge variant="secondary" className="ml-1 text-xs">Live · GPT-4o-mini</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg px-3 py-2 flex-shrink-0 text-xs text-indigo-700 dark:text-indigo-300">
+            <strong>💡 Tips:</strong> Chatbot ini dilatih dari konten ebook kamu. Tanya apa saja seputar topik ebook!
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="space-y-3 p-2 pb-4">
+              {chatMessages.map((msg, i) => (
+                <div key={i} className={cn("flex", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                  <div className={cn(
+                    "max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed",
+                    msg.role === 'user'
+                      ? "bg-indigo-600 text-white rounded-br-sm"
+                      : "bg-muted text-foreground rounded-bl-sm"
+                  )}>
+                    {msg.role === 'assistant' && (
+                      <div className="flex items-center gap-1.5 mb-1 text-xs font-medium text-indigo-600 dark:text-indigo-400">
+                        <Bot className="h-3 w-3" />AI Assistant
+                        {i === chatMessages.length - 1 && chatLoading && <Loader2 className="h-3 w-3 animate-spin ml-1" />}
+                      </div>
+                    )}
+                    <div className="whitespace-pre-wrap">{msg.content || (chatLoading && i === chatMessages.length - 1 ? <span className="inline-block w-2 h-3 bg-muted-foreground/50 animate-pulse" /> : '')}</div>
+                  </div>
+                </div>
+              ))}
+              <div ref={chatEndRef} />
+            </div>
+          </ScrollArea>
+          <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-border">
+            <Input
+              value={chatInput}
+              onChange={e => setChatInput(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendChat(); }}}
+              placeholder="Tanya sesuatu tentang ebook ini..."
+              disabled={chatLoading}
+              data-testid="input-chat"
+              className="flex-1"
+            />
+            <Button onClick={handleSendChat} disabled={chatLoading || !chatInput.trim()} className="bg-indigo-600 hover:bg-indigo-700 text-white" data-testid="button-send-chat">
+              {chatLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+            <Button variant="outline" onClick={() => { setChatMessages([{ role: 'assistant', content: `Halo! Saya siap menjawab pertanyaan tentang **"${projectTitle || projectTopik}"**. Ada yang ingin kamu tanyakan? 😊` }]); }} title="Reset chat">
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Silabus Kursus Dialog */}
+      <Dialog open={syllabusOpen} onOpenChange={setSyllabusOpen}>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-cyan-600 to-teal-600 text-white">
+                <GraduationCap className="h-3.5 w-3.5" />
+              </div>
+              Silabus E-Course Lengkap
+              <Badge variant="secondary" className="ml-1 text-xs">8 Modul · Worksheet · Sertifikat</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {syllabusLoading && !syllabusContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-cyan-200 border-t-cyan-500 animate-spin" />
+                <GraduationCap className="absolute inset-0 m-auto h-6 w-6 text-cyan-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang merancang silabus e-course 8 modul...</p>
+              <p className="text-xs text-muted-foreground/60">~20-30 detik</p>
+            </div>
+          )}
+          {(syllabusContent || syllabusLoading) && (() => {
+            const getSection = (tag: string) => {
+              const m = syllabusContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : syllabusContent;
+            };
+            const tabs = [
+              { key: 'overview', label: '📋 Overview', tag: 'OVERVIEW', color: 'from-cyan-600 to-teal-500' },
+              { key: 'modul', label: '📚 8 Modul', tag: 'MODUL', color: 'from-blue-600 to-indigo-500' },
+              { key: 'worksheet', label: '📝 Worksheet', tag: 'WORKSHEET', color: 'from-orange-500 to-amber-500' },
+              { key: 'sertifikat', label: '🎓 Sertifikat', tag: 'SERTIFIKAT', color: 'from-yellow-500 to-orange-500' },
+            ] as const;
+            const currentTab = tabs.find(t => t.key === syllabusTab)!;
+            return (
+              <>
+                <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                  {tabs.map(tab => (
+                    <button key={tab.key} onClick={() => setSyllabusTab(tab.key)}
+                      className={cn("px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                        syllabusTab === tab.key ? `bg-gradient-to-r ${tab.color} text-white border-transparent` : "border-border hover:border-cyan-300"
+                      )}>{tab.label}</button>
+                  ))}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  <ScrollArea className="flex-1">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
+                      {getSection(currentTab.tag) || (syllabusLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-cyan-500 animate-pulse ml-1" /></span> : '—')}
+                      {syllabusLoading && syllabusContent.includes(`===${currentTab.tag}===`) && !syllabusContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-cyan-500 animate-pulse ml-1" />}
+                    </div>
+                  </ScrollArea>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(syllabusContent); toast({ title: 'Silabus disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
+                    <Button variant="outline" onClick={() => { const b = new Blob([syllabusContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`silabus-${(projectTitle||'kursus').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
+                    <Button disabled={syllabusLoading} onClick={handleGenerateSyllabus} className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Mini App Blueprint Dialog */}
+      <Dialog open={appOpen} onOpenChange={setAppOpen}>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-slate-700 to-gray-800 text-white">
+                <Smartphone className="h-3.5 w-3.5" />
+              </div>
+              Blueprint Mini App
+              <Badge variant="secondary" className="ml-1 text-xs">Konsep · Fitur · Tech Stack · Prompt Build</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {appLoading && !appContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-slate-200 border-t-slate-600 animate-spin" />
+                <Smartphone className="absolute inset-0 m-auto h-6 w-6 text-slate-600" />
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang merancang blueprint mini app dari ebook kamu...</p>
+              <p className="text-xs text-muted-foreground/60">~20-30 detik</p>
+            </div>
+          )}
+          {(appContent || appLoading) && (() => {
+            const getSection = (tag: string) => {
+              const m = appContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : '';
+            };
+            const tabs = [
+              { key: 'konsep', label: '💡 Konsep', tag: 'KONSEP', color: 'from-slate-700 to-gray-700' },
+              { key: 'fitur', label: '🔧 Fitur', tag: 'FITUR', color: 'from-blue-700 to-indigo-700' },
+              { key: 'screens', label: '📱 Screens', tag: 'SCREENS', color: 'from-purple-700 to-violet-700' },
+              { key: 'userflow', label: '🗺️ User Flow', tag: 'USERFLOW', color: 'from-teal-700 to-cyan-700' },
+              { key: 'techstack', label: '⚙️ Tech Stack', tag: 'TECHSTACK', color: 'from-orange-600 to-amber-600' },
+              { key: 'prompt_build', label: '🤖 Prompt Build', tag: 'PROMPT_BUILD', color: 'from-green-700 to-emerald-700' },
+              { key: 'monetisasi', label: '💰 Monetisasi', tag: 'MONETISASI', color: 'from-yellow-600 to-orange-600' },
+              { key: 'launch', label: '🚀 Launch', tag: 'LAUNCH', color: 'from-red-600 to-rose-600' },
+            ] as const;
+            const currentTab = tabs.find(t => t.key === appTab)!;
+            return (
+              <>
+                <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                  {tabs.map(tab => (
+                    <button key={tab.key} onClick={() => setAppTab(tab.key)}
+                      className={cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+                        appTab === tab.key ? `bg-gradient-to-r ${tab.color} text-white border-transparent` : "border-border hover:border-slate-400"
+                      )}>{tab.label}</button>
+                  ))}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  {appTab === 'prompt_build' ? (
+                    <div className="flex-1 min-h-0 flex flex-col gap-2">
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg p-3 text-xs text-green-700 dark:text-green-400 flex-shrink-0">
+                        <strong>🤖 Prompt Siap Pakai untuk Cursor, Lovable, atau Bolt.new</strong> — Copy dan paste langsung ke AI coding tool untuk mulai build!
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="text-sm font-mono bg-muted rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                          {getSection('PROMPT_BUILD') || (appLoading ? '...' : '—')}
+                        </div>
+                      </ScrollArea>
+                      <Button onClick={() => { navigator.clipboard.writeText(getSection('PROMPT_BUILD')); toast({ title: 'Prompt build disalin! Paste ke Cursor/Lovable/Bolt' }); }} className="bg-green-600 hover:bg-green-700 text-white w-full">
+                        <Copy className="h-4 w-4 mr-2" />Salin Prompt Build
+                      </Button>
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1">
+                      <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
+                        {getSection(currentTab.tag) || (appLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-slate-500 animate-pulse ml-1" /></span> : '—')}
+                        {appLoading && appContent.includes(`===${currentTab.tag}===`) && !appContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-slate-500 animate-pulse ml-1" />}
+                      </div>
+                    </ScrollArea>
+                  )}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(appContent); toast({ title: 'Blueprint disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
+                    <Button variant="outline" onClick={() => { const b=new Blob([appContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`blueprint-app-${(projectTitle||'app').slice(0,20).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
+                    <Button disabled={appLoading} onClick={handleGenerateMiniApp} className="bg-gradient-to-r from-slate-700 to-gray-800 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      {/* Generator Kuis Dialog */}
+      <Dialog open={quizOpen} onOpenChange={setQuizOpen}>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-purple-600 to-fuchsia-600 text-white">
+                <ClipboardList className="h-3.5 w-3.5" />
+              </div>
+              Generator Kuis & Asesmen
+              <Badge variant="secondary" className="ml-1 text-xs">10 MCQ · 5 B/S · 3 Esai · Studi Kasus</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {quizLoading && !quizContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-purple-200 border-t-purple-500 animate-spin" />
+                <ClipboardList className="absolute inset-0 m-auto h-6 w-6 text-purple-500" />
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang membuat 19 soal dari konten ebook...</p>
+              <p className="text-xs text-muted-foreground/60">~20-30 detik</p>
+            </div>
+          )}
+          {(quizContent || quizLoading) && (() => {
+            const getSection = (tag: string) => {
+              const m = quizContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : '';
+            };
+            const tabs = [
+              { key: 'mcq', label: '🔵 Pilihan Ganda (10)', tag: 'MCQ', color: 'from-purple-600 to-violet-600' },
+              { key: 'tf', label: '✅ Benar/Salah (5)', tag: 'TF', color: 'from-blue-600 to-cyan-600' },
+              { key: 'essay', label: '✍️ Esai (3)', tag: 'ESSAY', color: 'from-orange-500 to-amber-500' },
+              { key: 'casestudy', label: '📊 Studi Kasus', tag: 'CASESTUDY', color: 'from-teal-600 to-green-600' },
+            ] as const;
+            const currentTab = tabs.find(t => t.key === quizTab)!;
+            const content = getSection(currentTab.tag);
+            return (
+              <>
+                <div className="flex gap-1.5 flex-shrink-0">
+                  {tabs.map(tab => (
+                    <button key={tab.key} onClick={() => setQuizTab(tab.key)}
+                      className={cn("flex-1 px-2 py-1.5 rounded-full text-xs font-medium border transition-all text-center",
+                        quizTab === tab.key ? `bg-gradient-to-r ${tab.color} text-white border-transparent` : "border-border hover:border-purple-300"
+                      )}>{tab.label}</button>
+                  ))}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  <ScrollArea className="flex-1">
+                    <div className="space-y-0 p-2">
+                      {content ? (
+                        <div className="text-sm whitespace-pre-wrap leading-relaxed"
+                          dangerouslySetInnerHTML={{__html: content
+                            .replace(/✅ Jawaban:([^\n]+)/g, '<span class="text-emerald-700 dark:text-emerald-400 font-medium bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded text-xs">✅ Jawaban:$1</span>')
+                            .replace(/→ (BENAR|SALAH)/g, (_, v) => `→ <span class="${v==='BENAR'?'text-emerald-700 bg-emerald-50':'text-red-600 bg-red-50'} dark:bg-transparent font-bold px-1.5 py-0.5 rounded text-xs">${v}</span>`)
+                            .replace(/💡 Kunci Jawaban:/g, '<span class="text-amber-700 font-medium">💡 Kunci Jawaban:</span>')
+                          }}
+                        />
+                      ) : (
+                        quizLoading ? <p className="text-muted-foreground text-xs text-center py-8">Generating... <span className="inline-block w-2 h-3 bg-purple-500 animate-pulse ml-1" /></p> : <p className="text-center text-muted-foreground text-sm py-8">—</p>
+                      )}
+                      {quizLoading && quizContent.includes(`===${currentTab.tag}===`) && !quizContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1" />}
+                    </div>
+                  </ScrollArea>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(quizContent); toast({ title: 'Semua soal disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
+                    <Button variant="outline" onClick={() => { const b=new Blob([quizContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`kuis-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
+                    <Button disabled={quizLoading} onClick={handleGenerateQuiz} className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

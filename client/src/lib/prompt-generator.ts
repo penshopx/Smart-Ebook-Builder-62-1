@@ -477,6 +477,78 @@ Gunakan paragraph breaks yang jelas dan sub-heading jika diperlukan.
 `;
       break;
 
+    case 'MINI_APP_BUILDER':
+      taskInstruction = `
+MODE TUGAS: MINI APP BUILDER — BLUEPRINT APLIKASI INTERAKTIF
+${styleReminder}
+
+Berdasarkan ebook bertema "${projectData.topik}", rancang blueprint mini web app yang bisa mendukung pembaca dalam mengaplikasikan isi ebook secara interaktif.
+
+=== KONTEKS EBOOK ===
+Judul: ${projectData.judul || projectData.topik}
+Target Pengguna: ${projectData.target || 'pembaca ebook'}
+Tujuan: ${projectData.tujuan || 'membantu pengguna mempraktikkan konten ebook'}
+
+=== INSTRUKSI BLUEPRINT ===
+Buat blueprint mini app yang LENGKAP dan SPESIFIK meliputi:
+
+1. **Nama & Konsep App** (1 paragraf, jelas & menarik)
+2. **Problem Solved** (masalah spesifik yang diselesaikan app ini)
+3. **5 Fitur Utama** (dengan deskripsi detail per fitur)
+4. **5 Halaman/Screen Utama** (wireframe deskriptif: apa yang ada di tiap halaman)
+5. **User Flow** (langkah step-by-step penggunaan)
+6. **Tech Stack Rekomendasi** (framework, database, API yang cocok)
+7. **Prompt untuk Build dengan AI** (prompt siap pakai untuk Cursor/Lovable/Bolt)
+8. **Monetisasi App** (gratis, freemium, atau berbayar — dengan strategi)
+9. **Launch Checklist** (10 langkah sebelum release)
+
+Buat sedetail dan sekonkret mungkin agar langsung bisa dieksekusi.
+`;
+      break;
+
+    case 'QUIZ_MAKER':
+      taskInstruction = `
+MODE TUGAS: QUIZ MAKER — GENERATOR SOAL & ASESMEN
+${styleReminder}
+
+Buat soal kuis dan asesmen komprehensif untuk menguji pemahaman pembaca tentang ebook bertema "${projectData.topik}".
+
+=== KONTEKS ===
+Judul Ebook: ${projectData.judul || projectData.topik}
+Target Pembaca: ${projectData.target || 'umum'}
+Level: ${taskConfig.fokusLevel || 'Basic'}
+
+=== INSTRUKSI PEMBUATAN SOAL ===
+
+**BAGIAN A — PILIHAN GANDA (10 soal)**
+Format:
+[Nomor]. [Pertanyaan]
+A) [Pilihan A]
+B) [Pilihan B]
+C) [Pilihan C]
+D) [Pilihan D]
+✅ Jawaban: [Huruf] — [Penjelasan singkat kenapa jawaban ini benar]
+
+**BAGIAN B — BENAR / SALAH (5 soal)**
+Format:
+[Nomor]. [Pernyataan]
+Jawaban: [BENAR / SALAH] — [Alasan]
+
+**BAGIAN C — ESAI PENDEK (3 soal)**
+Format:
+[Nomor]. [Pertanyaan terbuka yang mendalam]
+💡 Panduan Jawaban: [Poin-poin yang harus ada dalam jawaban yang baik]
+
+**BAGIAN D — STUDI KASUS (1 kasus)**
+[Skenario nyata berkaitan dengan topik]
+Pertanyaan studi kasus: [3 pertanyaan]
+
+=== CATATAN ===
+Soal harus mencakup: fakta/konsep (30%), aplikasi praktis (40%), analisis/sintesis (30%).
+Tingkat kesulitan: mudah (3), sedang (5), sulit (2) untuk pilihan ganda.
+`;
+      break;
+
     default:
       taskInstruction = `
 MODE TUGAS: GENERAL ASSISTANT

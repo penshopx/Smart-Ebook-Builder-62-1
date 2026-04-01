@@ -363,6 +363,86 @@ export function TaskConfigPanel({
           </div>
         );
 
+      case 'MINI_APP_BUILDER':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Jenis Mini App</Label>
+              <Select
+                value={taskConfig.appType || 'web'}
+                onValueChange={(value) => onTaskConfigChange('appType', value)}
+              >
+                <SelectTrigger data-testid="select-app-type">
+                  <SelectValue placeholder="Pilih jenis app" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="web">Web App (React/Next.js)</SelectItem>
+                  <SelectItem value="mobile">Mobile App (React Native)</SelectItem>
+                  <SelectItem value="chrome">Chrome Extension</SelectItem>
+                  <SelectItem value="telegram">Telegram Bot</SelectItem>
+                  <SelectItem value="notion">Notion Template + API</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Kompleksitas App</Label>
+              <Select
+                value={taskConfig.appComplexity || 'simple'}
+                onValueChange={(value) => onTaskConfigChange('appComplexity', value)}
+              >
+                <SelectTrigger data-testid="select-app-complexity">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="simple">Simple (1-2 fitur utama)</SelectItem>
+                  <SelectItem value="medium">Medium (3-5 fitur)</SelectItem>
+                  <SelectItem value="complex">Complex (6+ fitur + dashboard)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
+      case 'QUIZ_MAKER':
+        return (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Level Kesulitan</Label>
+              <Select
+                value={taskConfig.fokusLevel || 'Intermediate'}
+                onValueChange={(value) => onTaskConfigChange('fokusLevel', value)}
+              >
+                <SelectTrigger data-testid="select-quiz-level">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Beginner">Beginner (dasar)</SelectItem>
+                  <SelectItem value="Intermediate">Intermediate (menengah)</SelectItem>
+                  <SelectItem value="Advanced">Advanced (lanjut)</SelectItem>
+                  <SelectItem value="Expert">Expert (profesional)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Fokus Penilaian</Label>
+              <Select
+                value={taskConfig.quizFocus || 'komprehensif'}
+                onValueChange={(value) => onTaskConfigChange('quizFocus', value)}
+              >
+                <SelectTrigger data-testid="select-quiz-focus">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="komprehensif">Komprehensif (semua aspek)</SelectItem>
+                  <SelectItem value="teori">Teori & Konsep</SelectItem>
+                  <SelectItem value="praktik">Praktik & Aplikasi</SelectItem>
+                  <SelectItem value="analisis">Analisis & Evaluasi</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <p className="text-sm text-muted-foreground">
@@ -385,6 +465,8 @@ export function TaskConfigPanel({
       case 'GPT_BUILDER': return 'Buat system prompt untuk chatbot berbasis ebook';
       case 'MARKETING_KIT': return 'Buat materi marketing untuk promosi ebook';
       case 'EXTEND_TEXT': return 'Kembangkan teks pendek menjadi konten yang lebih lengkap';
+      case 'MINI_APP_BUILDER': return 'Rancang blueprint mini app interaktif dari konten ebook';
+      case 'QUIZ_MAKER': return 'Buat soal kuis & asesmen lengkap dari materi ebook';
       default: return 'Konfigurasi mode';
     }
   };

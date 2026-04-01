@@ -50,6 +50,9 @@ const taskConfigSchema = z.object({
   courseGoal: z.string(),
   marketingAsset: z.string(),
   marketingAngle: z.string(),
+  appType: z.string().optional().default('web'),
+  appComplexity: z.string().optional().default('simple'),
+  quizFocus: z.string().optional().default('komprehensif'),
 });
 
 const createProjectSchema = z.object({
@@ -553,6 +556,329 @@ Tulis semuanya dalam Bahasa Indonesia yang powerful dan menjual.`,
         res.end();
       } else {
         res.status(500).json({ error: "Failed to generate YouTube SEO" });
+      }
+    }
+  });
+
+  app.post("/api/chat-demo", isAuthenticated, async (req, res) => {
+    try {
+      const { systemPrompt, messages } = req.body;
+      if (!systemPrompt) return res.status(400).json({ error: "System prompt required" });
+      if (!messages || !Array.isArray(messages)) return res.status(400).json({ error: "Messages required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages.slice(-10).map((m: { role: string; content: string }) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
+        ],
+        stream: true,
+        max_completion_tokens: 800,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal memulai chat" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Chat demo failed" });
+      }
+    }
+  });
+
+  app.post("/api/generate-course-syllabus", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, courseDuration, courseFormat, courseGoal } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah instructional designer dan curriculum developer profesional Indonesia yang ahli dalam merancang e-course berkualitas tinggi. Kamu memahami teori belajar, desain modul, dan cara membuat kurikulum yang engaging dan hasil nyata.",
+          },
+          {
+            role: "user",
+            content: `Rancang silabus e-course LENGKAP dan DETAIL dari ebook berikut:
+
+Judul Ebook: ${title || topik}
+Topik: ${topik}
+Target Peserta: ${target || 'umum'}
+Durasi Kursus: ${courseDuration || '4 Minggu'}
+Format: ${courseFormat || 'Video + Worksheet'}
+Tujuan Kursus: ${courseGoal || 'peserta bisa mengaplikasikan semua materi dalam kehidupan nyata'}
+
+Buat silabus dalam format PERSIS ini:
+
+===OVERVIEW===
+🎓 NAMA KURSUS: [nama menarik]
+📋 DESKRIPSI: [2-3 kalimat positioning kursus]
+🎯 HASIL BELAJAR UTAMA: [3-5 bullet point konkret, terukur]
+👥 TARGET PESERTA: [deskripsi spesifik]
+⏱️ TOTAL DURASI: [estimasi jam belajar]
+📦 YANG DIDAPAT PESERTA: [list bonus & deliverables]
+===AKHIR_OVERVIEW===
+
+===MODUL===
+[Buat 8 modul dengan format per modul sebagai berikut:]
+
+## MODUL [N]: [JUDUL MODUL]
+⏱️ Durasi: [X jam]
+🎯 Learning Outcome: [Apa yang bisa peserta lakukan setelah modul ini]
+📚 Materi:
+- Sesi 1: [judul + deskripsi singkat]
+- Sesi 2: [judul + deskripsi singkat]
+- Sesi 3: [judul + deskripsi singkat]
+🛠️ Aktivitas: [tugas/latihan spesifik]
+📝 Asesmen: [cara mengukur pemahaman peserta]
+💎 Bonus/Resource: [template, worksheet, atau resource pendukung]
+===AKHIR_MODUL===
+
+===WORKSHEET===
+Template worksheet untuk MODUL 1 yang bisa langsung digunakan peserta:
+[Buat worksheet nyata dengan tabel, pertanyaan refleksi, dan space untuk latihan]
+===AKHIR_WORKSHEET===
+
+===SERTIFIKAT===
+Kriteria kelulusan dan teks sertifikat:
+[Buat teks sertifikat yang profesional dan motivatif]
+===AKHIR_SERTIFIKAT===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 3000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate silabus" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate syllabus" });
+      }
+    }
+  });
+
+  app.post("/api/generate-mini-app", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, docContent } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah product manager dan app designer yang ahli dalam merancang mini web apps berbasis AI untuk pasar Indonesia. Kamu bisa merancang blueprint aplikasi yang spesifik, buildable, dan bernilai bisnis.",
+          },
+          {
+            role: "user",
+            content: `Rancang blueprint MINI WEB APP yang lahir dari ebook berikut:
+
+Judul Ebook: ${title || topik}
+Topik: ${topik}
+Target Pengguna App: ${target || 'pembaca ebook'}
+${docContent ? `Ringkasan konten ebook:\n${docContent.slice(0, 1000)}` : ''}
+
+Buat blueprint dalam format PERSIS ini:
+
+===KONSEP===
+📱 NAMA APP: [nama yang catchy & relevan]
+🎯 TAGLINE: [1 kalimat value proposition]
+💡 KONSEP: [2-3 kalimat: apa yang dilakukan app ini dan kenapa orang butuh ini]
+🔥 PROBLEM SOLVED: [masalah spesifik yang diselesaikan — dari sudut pandang pengguna]
+===AKHIR_KONSEP===
+
+===FITUR===
+[5 fitur utama dengan format:]
+🔧 FITUR [N]: [Nama Fitur]
+Deskripsi: [apa yang bisa dilakukan pengguna]
+User Value: [mengapa pengguna butuh fitur ini]
+Tech Behind: [teknologi/API yang digunakan]
+===AKHIR_FITUR===
+
+===SCREENS===
+[5 halaman utama dengan deskripsi wireframe detail:]
+📱 HALAMAN [N]: [Nama Halaman]
+Layout: [deskripsi elemen UI yang ada]
+Aksi Pengguna: [apa yang bisa dilakukan]
+Data Ditampilkan: [informasi apa yang muncul]
+===AKHIR_SCREENS===
+
+===USERFLOW===
+🗺️ USER FLOW (Step by step dari install sampai hasil):
+[Langkah 1-10 yang jelas dan konkret]
+===AKHIR_USERFLOW===
+
+===TECHSTACK===
+⚙️ TECH STACK REKOMENDASI:
+Frontend: [framework + library UI]
+Backend: [framework/BaaS]
+Database: [pilihan + alasan]
+AI/API: [AI API yang diintegrasikan]
+Hosting: [platform deployment]
+Build Time Estimasi: [dengan AI coding tools]
+Biaya Bulanan Estimasi: [server + API cost]
+===AKHIR_TECHSTACK===
+
+===PROMPT_BUILD===
+🤖 PROMPT SIAP PAKAI UNTUK BUILD DI CURSOR/LOVABLE/BOLT:
+
+"[Tulis prompt lengkap dan detail yang bisa langsung di-paste ke AI coding tool untuk memulai build app ini. Min 200 kata, sangat spesifik tentang fitur, UI, tech stack, dan behavior yang diinginkan]"
+===AKHIR_PROMPT_BUILD===
+
+===MONETISASI===
+💰 STRATEGI MONETISASI:
+Model: [freemium / one-time / subscription]
+Free Tier: [apa yang gratis]
+Paid Tier: [apa yang berbayar + harga dalam IDR]
+Revenue Estimasi: [proyeksi realistis per bulan]
+===AKHIR_MONETISASI===
+
+===LAUNCH===
+🚀 LAUNCH CHECKLIST (10 langkah):
+[Langkah 1-10 dari development sampai live]
+===AKHIR_LAUNCH===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 3000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate blueprint mini app" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate mini app blueprint" });
+      }
+    }
+  });
+
+  app.post("/api/generate-quiz", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, docContent, level } = req.body;
+      if (!topik && !title && !docContent) return res.status(400).json({ error: "Topic or content required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah instructional designer dan assessment expert Indonesia yang ahli dalam membuat soal evaluasi yang berkualitas, valid, dan relevan. Soal yang kamu buat selalu kontekstual, tidak ambigu, dan mengukur pemahaman yang sesungguhnya.",
+          },
+          {
+            role: "user",
+            content: `Buat SOAL KUIS & ASESMEN LENGKAP untuk ebook berikut:
+
+Judul: ${title || topik}
+Topik: ${topik}
+Target Pembaca: ${target || 'umum'}
+Level: ${level || 'Intermediate'}
+${docContent ? `Konten ebook (referensi soal):\n${docContent.slice(0, 2000)}` : ''}
+
+Buat dalam format PERSIS ini:
+
+===MCQ===
+BAGIAN A — PILIHAN GANDA (10 Soal)
+
+1. [Pertanyaan yang jelas dan spesifik]
+A) [Pilihan]
+B) [Pilihan]
+C) [Pilihan]
+D) [Pilihan]
+✅ Jawaban: [Huruf] | [Penjelasan singkat kenapa ini benar]
+
+[Ulangi untuk soal 2-10]
+===AKHIR_MCQ===
+
+===TF===
+BAGIAN B — BENAR / SALAH (5 Soal)
+
+1. [Pernyataan yang bisa dinilai benar atau salah]
+→ [BENAR / SALAH] | Alasan: [penjelasan]
+
+[Ulangi untuk soal 2-5]
+===AKHIR_TF===
+
+===ESSAY===
+BAGIAN C — ESAI PENDEK (3 Soal)
+
+1. [Pertanyaan terbuka yang mengukur kemampuan analisis/aplikasi]
+💡 Kunci Jawaban: [poin-poin yang harus ada dalam jawaban ideal, min 4 poin]
+
+[Ulangi untuk soal 2-3]
+===AKHIR_ESSAY===
+
+===CASESTUDY===
+BAGIAN D — STUDI KASUS
+
+Skenario:
+[Cerita/situasi nyata 3-4 kalimat yang relevan dengan topik]
+
+Pertanyaan:
+1. [Pertanyaan analisis]
+2. [Pertanyaan solusi]
+3. [Pertanyaan evaluasi]
+
+Panduan Penilaian: [Rubrik singkat untuk menilai jawaban peserta]
+===AKHIR_CASESTUDY===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 3000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate kuis" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate quiz" });
       }
     }
   });
