@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { Link } from 'wouter';
 import { ModeSelector } from '@/components/mode-selector';
 import { ProjectForm } from '@/components/project-form';
 import { TaskConfigPanel } from '@/components/task-config-panel';
@@ -15,10 +16,19 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
@@ -86,6 +96,108 @@ const defaultExtendConfig: ExtendConfig = {
   teksAwal: '',
   targetPanjang: '300-500 kata',
 };
+
+const PLAN_BADGE_STYLE: Record<string, string> = {
+  free: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+  pro: 'bg-primary/10 text-primary',
+  enterprise: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
+};
+
+function UserProfileDropdown({ user }: { user: any }) {
+  const { logout } = useAuth();
+  const { data: planData } = useQuery<{ plan: string; promptsUsedToday: number; dailyLimit: number | null }>({
+    queryKey: ['/api/user/plan'],
+    staleTime: 1000 * 60 * 2,
+  });
+
+  const plan = planData?.plan ?? user?.plan ?? 'free';
+  const promptsUsed = planData?.promptsUsedToday ?? 0;
+  const dailyLimit = planData?.dailyLimit;
+  const displayName = user?.firstName || user?.email?.split('@')[0] || 'Pengguna';
+
+  const PlanIcon = plan === 'enterprise' ? Crown : plan === 'pro' ? Zap : Sparkles;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          className="flex items-center gap-1.5 rounded-full hover:bg-muted px-1.5 py-1 transition-colors"
+          data-testid="button-profile-dropdown"
+        >
+          <Avatar className="h-7 w-7">
+            <AvatarImage src={user?.profileImageUrl || undefined} />
+            <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+              {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+            </AvatarFallback>
+          </Avatar>
+          <Badge className={`hidden sm:flex text-[10px] px-1.5 py-0 h-4 gap-0.5 border-0 ${PLAN_BADGE_STYLE[plan]}`}>
+            <PlanIcon className="h-2.5 w-2.5" />
+            {plan.charAt(0).toUpperCase() + plan.slice(1)}
+          </Badge>
+          <ChevronDown className="h-3 w-3 text-muted-foreground hidden sm:block" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuLabel className="pb-2">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-8 w-8">
+              <AvatarImage src={user?.profileImageUrl || undefined} />
+              <AvatarFallback className="text-xs bg-primary/10 text-primary font-semibold">
+                {user?.firstName?.[0] || user?.email?.[0]?.toUpperCase() || 'U'}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="font-semibold text-sm truncate">{displayName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user?.email || '—'}</p>
+            </div>
+          </div>
+          <div className="mt-2 flex items-center justify-between">
+            <Badge className={`text-[10px] gap-1 border-0 ${PLAN_BADGE_STYLE[plan]}`}>
+              <PlanIcon className="h-2.5 w-2.5" />
+              Paket {plan.charAt(0).toUpperCase() + plan.slice(1)}
+            </Badge>
+            {dailyLimit && (
+              <span className="text-xs text-muted-foreground">{promptsUsed}/{dailyLimit} prompt hari ini</span>
+            )}
+            {!dailyLimit && (
+              <span className="text-xs text-green-600 dark:text-green-400">Unlimited</span>
+            )}
+          </div>
+          {dailyLimit && (
+            <Progress
+              value={Math.min((promptsUsed / dailyLimit) * 100, 100)}
+              className="h-1 mt-1.5"
+            />
+          )}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href="/account" className="flex items-center gap-2 cursor-pointer" data-testid="menu-account">
+            <Settings className="h-4 w-4" />
+            Akun & Langganan
+          </Link>
+        </DropdownMenuItem>
+        {plan === 'free' && (
+          <DropdownMenuItem asChild>
+            <Link href="/account" className="flex items-center gap-2 cursor-pointer text-primary" data-testid="menu-upgrade">
+              <Zap className="h-4 w-4" />
+              Upgrade ke Pro
+            </Link>
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive cursor-pointer"
+          onClick={() => logout()}
+          data-testid="menu-logout"
+        >
+          <LogOut className="h-4 w-4 mr-2" />
+          Keluar
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
 
 export default function Home() {
   const [projectData, setProjectData] = useState<ProjectData>(defaultProjectData);
@@ -254,24 +366,7 @@ export default function Home() {
             </Button>
             <ThemeToggle />
             <div className="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-2 pl-1 sm:pl-2 border-l">
-              {user && (
-                <Avatar className="h-7 w-7 sm:h-8 sm:w-8 hidden sm:flex">
-                  <AvatarImage src={user.profileImageUrl || undefined} alt={user.firstName || 'User'} />
-                  <AvatarFallback>
-                    {user.firstName?.[0] || user.email?.[0]?.toUpperCase() || 'U'}
-                  </AvatarFallback>
-                </Avatar>
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                asChild
-                data-testid="button-logout"
-              >
-                <a href="/api/logout">
-                  <LogOut className="h-4 w-4" />
-                </a>
-              </Button>
+              <UserProfileDropdown user={user} />
             </div>
           </div>
         </div>

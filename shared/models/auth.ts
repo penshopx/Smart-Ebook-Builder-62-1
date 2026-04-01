@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { index, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
+import { index, integer, jsonb, pgTable, timestamp, varchar } from "drizzle-orm/pg-core";
 
 // Session storage table.
 // (IMPORTANT) This table is mandatory for Replit Auth, don't drop it.
@@ -21,9 +21,42 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
+  // Subscription plan: 'free' | 'pro' | 'enterprise'
+  plan: varchar("plan").default("free").notNull(),
+  // Daily prompt tracking
+  promptsUsedToday: integer("prompts_used_today").default(0).notNull(),
+  lastPromptDate: varchar("last_prompt_date").default(""),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Plan limits
+export const PLAN_LIMITS = {
+  free: {
+    promptsPerDay: 5,
+    maxProjects: 1,
+    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE'],
+    exports: ['txt'],
+    label: 'Free',
+    color: 'gray',
+  },
+  pro: {
+    promptsPerDay: Infinity,
+    maxProjects: Infinity,
+    allowedModes: 'all',
+    exports: ['txt', 'pdf', 'docx', 'md', 'html'],
+    label: 'Pro',
+    color: 'primary',
+  },
+  enterprise: {
+    promptsPerDay: Infinity,
+    maxProjects: Infinity,
+    allowedModes: 'all',
+    exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
+    label: 'Enterprise',
+    color: 'amber',
+  },
+} as const;

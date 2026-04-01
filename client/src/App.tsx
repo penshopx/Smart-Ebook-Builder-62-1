@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { useAuth } from "@/hooks/use-auth";
 import Home from "@/pages/home";
 import Landing from "@/pages/landing";
+import Account from "@/pages/account";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -31,6 +32,7 @@ function AppContent() {
   return (
     <Switch>
       <Route path="/" component={Home} />
+      <Route path="/account" component={Account} />
       <Route component={NotFound} />
     </Switch>
   );

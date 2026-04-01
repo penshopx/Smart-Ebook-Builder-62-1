@@ -109,9 +109,17 @@ The `shared/` directory contains code used by both frontend and backend:
 14. **Monetization Strategy** - `/api/generate-monetization` SSE: generates 5-tab strategy (Pricing tiers, Selling Platforms, Buyer Persona, 30-day Launch Plan, Upsell Ecosystem); green "Strategi Jual" button in Bisnis row
 15. **Mode Akurat Badge** - Shows "Mode Akurat · N sumber" badge in action bar when reference files are uploaded, signaling AI is grounded in user's source documents
 
+### Plan & Auth System
+- **3 Tiers**: Free (5 prompt/day, 3 modes, TXT only), Pro (unlimited, 13 modes, all exports), Enterprise (Pro + team/API)
+- **DB columns**: `plan`, `prompts_used_today`, `last_prompt_date` on `users` table
+- **Plan limits defined in**: `shared/models/auth.ts` — `PLAN_LIMITS`
+- **Auth routes** in `server/replit_integrations/auth/routes.ts`: `/api/auth/user`, `/api/user/plan`, `/api/user/track-prompt`, `/api/user/upgrade-request`, `/api/admin/set-plan`
+- **Upgrade flow**: manual — user clicks upgrade → WhatsApp/email contact info returned; admin sets plan via `/api/admin/set-plan`
+
 ### Key Screens
-- **Landing Page** (`/`) - Marketing page for unauthenticated users with pricing tiers
-- **App Home** (`/`) - Main application for authenticated users with prompt generation tools
+- **Landing Page** (`/`) - Marketing page for unauthenticated users with pricing tiers, 9-step ecosystem, 13 modes grid
+- **App Home** (`/`) - Main application for authenticated users with prompt generation tools; profile dropdown shows plan badge + daily usage + link to /account
+- **Account Page** (`/account`) - Profile card, usage progress bar, 3-tier pricing cards, feature grid, upgrade dialog with WhatsApp/email flow
 - Project saving/loading functionality
 - Copy prompts to clipboard
 - Direct link to DokumenTender AI for execution
