@@ -778,6 +778,7 @@ export const MODES = [
   { id: 'EXTEND_TEXT', label: 'Extend Text', icon: 'Wand2', description: 'Kembangkan/perluas teks pendek' },
   { id: 'MINI_APP_BUILDER', label: 'Mini App Builder', icon: 'Smartphone', description: 'Rancang blueprint mini app dari konten ebook' },
   { id: 'QUIZ_MAKER', label: 'Quiz Maker', icon: 'ClipboardList', description: 'Buat soal kuis & asesmen dari ebook' },
+  { id: 'PODCAST_GENERATOR', label: 'Podcast Generator', icon: 'Mic2', description: 'Generate script podcast 2 orang (Host + Guest)' },
 ] as const;
 
 // Project data schema
@@ -830,6 +831,11 @@ export const taskConfigSchema = z.object({
   bigIdeaAngle: z.string().default('Unik & Berbeda'),
   jumlahBab: z.string().default('7'),
   outlineDepth: z.string().default('Standard'),
+  podcastHost: z.string().default('Andi'),
+  podcastGuest: z.string().default('Sari'),
+  podcastStyle: z.string().default('interview'),
+  podcastEpisodeLength: z.string().default('15-20 menit'),
+  podcastSegments: z.string().default('5'),
 });
 
 export const extendConfigSchema = z.object({

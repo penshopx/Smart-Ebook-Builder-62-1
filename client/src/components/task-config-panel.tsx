@@ -608,6 +608,86 @@ export function TaskConfigPanel({
           </div>
         );
 
+      case 'PODCAST_GENERATOR':
+        return (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Nama Host (Pembawa Acara)</Label>
+                <Input
+                  placeholder="Contoh: Andi, Sarah, Budi..."
+                  value={taskConfig.podcastHost || 'Andi'}
+                  onChange={(e) => onTaskConfigChange('podcastHost', e.target.value)}
+                  data-testid="input-podcast-host"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nama Guest (Narasumber)</Label>
+                <Input
+                  placeholder="Contoh: Sari, Michael, Dewi..."
+                  value={taskConfig.podcastGuest || 'Sari'}
+                  onChange={(e) => onTaskConfigChange('podcastGuest', e.target.value)}
+                  data-testid="input-podcast-guest"
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Gaya Podcast</Label>
+                <Select
+                  value={taskConfig.podcastStyle || 'interview'}
+                  onValueChange={(value) => onTaskConfigChange('podcastStyle', value)}
+                >
+                  <SelectTrigger data-testid="select-podcast-style">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="interview">Interview (Host tanya, Guest jawab)</SelectItem>
+                    <SelectItem value="debate">Debate (Dua sudut pandang berbeda)</SelectItem>
+                    <SelectItem value="storytelling">Storytelling (Narasi pengalaman nyata)</SelectItem>
+                    <SelectItem value="educational">Educational (Ajarin step-by-step)</SelectItem>
+                    <SelectItem value="casual">Casual Talk (Obrolan santai tapi informatif)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Durasi Episode</Label>
+                <Select
+                  value={taskConfig.podcastEpisodeLength || '15-20 menit'}
+                  onValueChange={(value) => onTaskConfigChange('podcastEpisodeLength', value)}
+                >
+                  <SelectTrigger data-testid="select-podcast-length">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="5-10 menit">5-10 menit (Mini Episode)</SelectItem>
+                    <SelectItem value="15-20 menit">15-20 menit (Standard)</SelectItem>
+                    <SelectItem value="30-45 menit">30-45 menit (Deep Dive)</SelectItem>
+                    <SelectItem value="60+ menit">60+ menit (Webinar Style)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Jumlah Segmen/Babak</Label>
+              <Select
+                value={taskConfig.podcastSegments || '5'}
+                onValueChange={(value) => onTaskConfigChange('podcastSegments', value)}
+              >
+                <SelectTrigger data-testid="select-podcast-segments">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3 Segmen (Opening → Inti → Closing)</SelectItem>
+                  <SelectItem value="5">5 Segmen (Standard)</SelectItem>
+                  <SelectItem value="7">7 Segmen (Detail)</SelectItem>
+                  <SelectItem value="10">10 Segmen (Full Episode)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        );
+
       default:
         return (
           <p className="text-sm text-muted-foreground">
@@ -632,6 +712,7 @@ export function TaskConfigPanel({
       case 'EXTEND_TEXT': return 'Kembangkan teks pendek menjadi konten yang lebih lengkap';
       case 'MINI_APP_BUILDER': return 'Rancang blueprint mini app interaktif dari konten ebook';
       case 'QUIZ_MAKER': return 'Buat soal kuis & asesmen lengkap dari materi ebook';
+      case 'PODCAST_GENERATOR': return `Script podcast ${taskConfig.podcastStyle || 'interview'} antara ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} — ${taskConfig.podcastEpisodeLength || '15-20 menit'}`;
       default: return 'Konfigurasi mode';
     }
   };

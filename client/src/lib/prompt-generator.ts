@@ -559,6 +559,71 @@ Tingkat kesulitan: mudah (3), sedang (5), sulit (2) untuk pilihan ganda.
 `;
       break;
 
+    case 'PODCAST_GENERATOR': {
+      const podcastStyle = taskConfig.podcastStyle || 'interview';
+      const styleDesc: Record<string, string> = {
+        interview: 'format tanya-jawab mendalam antara Host dan narasumber ahli',
+        debate: 'format debat dengan dua sudut pandang berbeda dan saling berargumen',
+        storytelling: 'format bercerita berdasarkan pengalaman nyata yang menginspirasi',
+        educational: 'format edukasi step-by-step yang mudah dipahami pendengar awam',
+        casual: 'format obrolan santai namun tetap informatif dan mengalir natural',
+      };
+      taskInstruction = `
+MODE TUGAS: PODCAST SCRIPT GENERATOR — 2 ORANG
+${styleReminder}
+
+Buatkan script podcast lengkap dan siap rekam dalam ${styleDesc[podcastStyle] || 'format interview'}.
+
+=== DETAIL EPISODE ===
+- Topik: **${projectData.topik}**
+- Judul Episode: ${projectData.judul || `"${projectData.topik}" — Panduan Lengkap`}
+- Host: **${taskConfig.podcastHost || 'Andi'}**
+- Guest/Narasumber: **${taskConfig.podcastGuest || 'Sari'}**
+- Format: **${podcastStyle.charAt(0).toUpperCase() + podcastStyle.slice(1)}** — ${styleDesc[podcastStyle]}
+- Durasi Target: **${taskConfig.podcastEpisodeLength || '15-20 menit'}**
+- Jumlah Segmen: **${taskConfig.podcastSegments || '5'} segmen**
+- Target Pendengar: ${projectData.target || 'Umum'}
+
+=== FORMAT SCRIPT ===
+Gunakan format berikut untuk setiap dialog:
+**[NAMA]:** Teks dialog...
+
+Sertakan notasi produksi dalam kurung siku:
+- [INTRO MUSIK — FADE IN]
+- [JEDA/TRANSISI]  
+- [SOUND EFFECT: ...]
+- [OUTRO MUSIK — FADE OUT]
+
+=== STRUKTUR ${taskConfig.podcastSegments || '5'} SEGMEN ===
+**SEGMEN 1 — OPENING (2-3 menit)**
+- ${taskConfig.podcastHost || 'Andi'} membuka episode dengan hook yang menarik
+- Perkenalan singkat guest dan latar belakangnya
+- Preview topik yang akan dibahas
+
+**SEGMEN 2-${parseInt(taskConfig.podcastSegments || '5') - 1} — KONTEN UTAMA**
+Bahas topik "${projectData.topik}" secara mendalam:
+- Poin-poin kunci yang perlu diketahui pendengar
+- Contoh nyata, data, atau pengalaman personal
+- Tips praktis yang langsung bisa diterapkan
+${podcastStyle === 'debate' ? '- Saling memberikan argumen dan kontra-argumen yang berbobot' : ''}
+${podcastStyle === 'storytelling' ? '- Narasi pengalaman nyata dengan detail emosional' : ''}
+
+**SEGMEN ${taskConfig.podcastSegments || '5'} — CLOSING (2-3 menit)**
+- Rangkuman 3 poin terpenting dari episode ini
+- Call-to-action untuk pendengar
+- Preview episode berikutnya (opsional)
+- ${taskConfig.podcastHost || 'Andi'} mengucapkan penutup yang berkesan
+
+=== CATATAN PRODUKSI ===
+- Dialog harus terasa natural, tidak kaku seperti membaca teks
+- Gunakan variasi kalimat: panjang dan pendek bergantian
+- Tambahkan reaksi natural: "Oh menarik!", "Betul sekali!", "Hmm, jadi..."
+- Sisipkan humor ringan yang sesuai konteks (jika format casual/interview)
+- Total kata: estimasi ${taskConfig.podcastEpisodeLength === '5-10 menit' ? '800-1200' : taskConfig.podcastEpisodeLength === '30-45 menit' ? '3000-5000' : '1500-2500'} kata
+`;
+      break;
+    }
+
     default:
       taskInstruction = `
 MODE TUGAS: GENERAL ASSISTANT

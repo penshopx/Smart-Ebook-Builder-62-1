@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
+import { JudulTerlaris } from '@/components/judul-terlaris';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -98,6 +99,11 @@ const defaultTaskConfig: TaskConfig = {
   bigIdeaAngle: 'Unik & Berbeda',
   jumlahBab: '7',
   outlineDepth: 'Standard',
+  podcastHost: 'Andi',
+  podcastGuest: 'Sari',
+  podcastStyle: 'interview',
+  podcastEpisodeLength: '15-20 menit',
+  podcastSegments: '5',
 };
 
 const defaultExtendConfig: ExtendConfig = {
@@ -400,15 +406,23 @@ export default function Home() {
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="project" className="mt-4">
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
                   <p className="text-xs text-muted-foreground">Isi data ebook kamu di bawah</p>
-                  <TopicSuggester
-                    currentNiche={projectData.topik || 'bisnis digital'}
-                    onSelectTopic={(topic) => {
-                      handleProjectChange('topik', topic);
-                      handleProjectChange('judul', topic);
-                    }}
-                  />
+                  <div className="flex items-center gap-2">
+                    <JudulTerlaris
+                      onSelectJudul={(judul) => {
+                        handleProjectChange('judul', judul);
+                        if (!projectData.topik) handleProjectChange('topik', judul);
+                      }}
+                    />
+                    <TopicSuggester
+                      currentNiche={projectData.topik || 'bisnis digital'}
+                      onSelectTopic={(topic) => {
+                        handleProjectChange('topik', topic);
+                        handleProjectChange('judul', topic);
+                      }}
+                    />
+                  </div>
                 </div>
                 <div className="max-h-[50vh] lg:max-h-[calc(100vh-300px)] overflow-y-auto pr-2">
                   <ProjectForm
