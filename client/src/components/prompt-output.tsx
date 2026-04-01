@@ -40,9 +40,11 @@ interface PromptOutputProps {
   onAiModelChange?: (modelId: string) => void;
   projectTitle?: string;
   projectTopik?: string;
+  projectTarget?: string;
+  uploadedFiles?: { name: string; type: string; size: string }[];
 }
 
-export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik }: PromptOutputProps) {
+export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [] }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
@@ -82,6 +84,10 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [ttsVoice, setTtsVoice] = useState<'nova' | 'alloy' | 'shimmer' | 'onyx' | 'echo'>('nova');
   const [ttsPlaying, setTtsPlaying] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [monoOpen, setMonoOpen] = useState(false);
+  const [monoContent, setMonoContent] = useState('');
+  const [monoLoading, setMonoLoading] = useState(false);
+  const [monoTab, setMonoTab] = useState<'harga'|'platform'|'pembeli'|'launch'|'upsell'>('harga');
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
@@ -469,6 +475,44 @@ ${bodyHtml}
       setTtsLoading(false);
     }
   }, [scriptContent, ttsVoice, ttsAudioUrl, toast]);
+
+  const handleGenerateMonetization = useCallback(async () => {
+    setMonoOpen(true);
+    setMonoContent('');
+    setMonoLoading(true);
+    setMonoTab('harga');
+    try {
+      const response = await fetch('/api/generate-monetization', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget }),
+      });
+      if (!response.ok) throw new Error('Server error');
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          try {
+            const d = JSON.parse(line.slice(5).trim());
+            if (d.content) setMonoContent(prev => prev + d.content);
+            if (d.done) setMonoLoading(false);
+          } catch {}
+        }
+      }
+    } catch {
+      toast({ title: 'Gagal generate strategi monetisasi', variant: 'destructive' });
+    } finally {
+      setMonoLoading(false);
+    }
+  }, [projectTitle, projectTopik, projectTarget, toast]);
 
   const handleGenerateDocument = useCallback(async () => {
     if (!prompt.trim()) {
@@ -1325,6 +1369,23 @@ ${bodyHtml}
                   Review AI
                 </Button>
               </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Bisnis:</div>
+                <Button
+                  onClick={handleGenerateMonetization}
+                  className="flex-1 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 text-white text-xs h-8"
+                  data-testid="button-monetization"
+                >
+                  <span className="mr-1.5 text-sm leading-none">💰</span>
+                  Strategi Jual Ebook
+                </Button>
+                {uploadedFiles.length > 0 && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-[10px] text-blue-700 dark:text-blue-400 font-medium shrink-0">
+                    <ShieldCheck className="h-3 w-3" />
+                    Mode Akurat · {uploadedFiles.length} sumber
+                  </div>
+                )}
+              </div>
             </div>
           )}
         </DialogContent>
@@ -1640,6 +1701,91 @@ ${bodyHtml}
               <p className="text-sm">Klik Generate untuk membuat thumbnail</p>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Monetization Strategy Dialog */}
+      <Dialog open={monoOpen} onOpenChange={setMonoOpen}>
+        <DialogContent className="max-w-3xl h-[88vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-green-600 to-emerald-500 text-white text-sm">
+                💰
+              </div>
+              Strategi Monetisasi Ebook
+              <Badge variant="secondary" className="ml-1 text-xs">Harga · Platform · Buyer · Launch · Upsell</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {monoLoading && !monoContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-green-200 border-t-green-500 animate-spin" />
+                <span className="absolute inset-0 m-auto text-lg flex items-center justify-center">💰</span>
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang menyusun strategi monetisasi...</p>
+              <p className="text-xs text-muted-foreground/60">~15-20 detik</p>
+            </div>
+          )}
+          {(monoContent || monoLoading) && (() => {
+            const getSection = (tag: string) => {
+              const m = monoContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : '';
+            };
+            const tabs = [
+              { key: 'harga', label: '💰 Harga', tag: 'HARGA', color: 'from-green-600 to-emerald-500', active: 'bg-green-600' },
+              { key: 'platform', label: '🛒 Platform', tag: 'PLATFORM', color: 'from-blue-600 to-cyan-500', active: 'bg-blue-600' },
+              { key: 'pembeli', label: '👤 Pembeli', tag: 'PEMBELI', color: 'from-purple-600 to-violet-500', active: 'bg-purple-600' },
+              { key: 'launch', label: '🚀 Launch', tag: 'LAUNCH', color: 'from-orange-500 to-amber-500', active: 'bg-orange-500' },
+              { key: 'upsell', label: '📦 Upsell', tag: 'UPSELL', color: 'from-pink-600 to-rose-500', active: 'bg-pink-600' },
+            ] as const;
+            const currentTab = tabs.find(t => t.key === monoTab)!;
+            const sectionContent = getSection(currentTab.tag);
+            return (
+              <>
+                <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                  {tabs.map(tab => (
+                    <button
+                      key={tab.key}
+                      onClick={() => setMonoTab(tab.key)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-full text-xs font-medium border transition-all",
+                        monoTab === tab.key
+                          ? `bg-gradient-to-r ${tab.color} text-white border-transparent`
+                          : "border-border hover:border-green-300"
+                      )}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  <ScrollArea className="flex-1">
+                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
+                      {sectionContent || (
+                        monoLoading
+                          ? <span className="text-muted-foreground text-xs">Sedang di-generate... <span className="inline-block w-2 h-3 bg-green-500 animate-pulse ml-1" /></span>
+                          : <span className="text-muted-foreground text-xs">Klik tab lain untuk melihat bagian ini setelah selesai di-generate.</span>
+                      )}
+                      {sectionContent && monoLoading && monoContent.includes(`===${currentTab.tag}===`) && !monoContent.includes(`===AKHIR_${currentTab.tag}===`) && (
+                        <span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1" />
+                      )}
+                    </div>
+                  </ScrollArea>
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(monoContent); toast({ title: 'Strategi monetisasi disalin!' }); }}>
+                      <Copy className="h-4 w-4 mr-2" />Salin Semua
+                    </Button>
+                    <Button variant="outline" onClick={() => { const b = new Blob([monoContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download=`monetisasi-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}>
+                      <Download className="h-4 w-4 mr-2" />Download
+                    </Button>
+                    <Button disabled={monoLoading} onClick={handleGenerateMonetization} className="bg-gradient-to-r from-green-600 to-emerald-500 text-white">
+                      <Sparkles className="h-4 w-4 mr-2" />Buat Ulang
+                    </Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

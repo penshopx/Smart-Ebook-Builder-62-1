@@ -557,6 +557,123 @@ Tulis semuanya dalam Bahasa Indonesia yang powerful dan menjual.`,
     }
   });
 
+  app.post("/api/generate-monetization", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, industry, pageCount } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah business strategist dan digital product expert Indonesia yang ahli dalam monetisasi ebook, e-course, dan produk digital. Kamu memahami market Indonesia, perilaku konsumen digital, platform jual beli, dan strategi pricing yang efektif. Berikan saran yang spesifik, realistis, dan actionable.",
+          },
+          {
+            role: "user",
+            content: `Buat Strategi Monetisasi lengkap untuk ebook berikut:
+
+Judul: ${title || topik}
+Topik/Niche: ${topik}
+Target Pembaca: ${target || 'umum'}
+Niche Industri: ${industry || 'umum'}
+${pageCount ? `Estimasi halaman: ${pageCount}` : ''}
+
+Buat strategi LENGKAP dalam format PERSIS ini:
+
+===HARGA===
+🏷️ PAKET BASIC — Rp [harga] 
+Isi: [apa saja yang termasuk]
+Target: [siapa yang cocok beli paket ini]
+
+🏷️ PAKET STANDAR — Rp [harga] ← Rekomendasi Terlaris
+Isi: [apa saja yang termasuk — versi lengkap]
+Target: [siapa yang cocok]
+
+🏷️ PAKET PREMIUM — Rp [harga]
+Isi: [apa saja yang termasuk — dengan bonus eksklusif]
+Target: [high-value buyer]
+
+💡 Tips Pricing: [saran konkret tentang psikologi harga, anchor pricing, dll]
+===AKHIR_HARGA===
+
+===PLATFORM===
+[Ranking 5 platform terbaik untuk jual ebook ini, dengan penjelasan kenapa dan tips spesifik per platform. Contoh: Tokopedia, Gumroad, WhatsApp direct, Telegram group, Instagram DM, Linktree, dll]
+===AKHIR_PLATFORM===
+
+===PEMBELI===
+🎯 PROFIL PEMBELI IDEAL
+
+Nama Persona: [nama fiktif representatif]
+Usia: [range]
+Pekerjaan: [profesi umum]
+Pain Point Utama: [masalah terbesar yang mendorong pembelian]
+Motivasi Beli: [apa yang mereka harapkan]
+Channel Temukan Produk: [di mana mereka biasa menemukan produk digital]
+Kata yang Beresonansi: [7-10 kata/frasa yang membuat mereka klik]
+Red Flag yang Bikin Kabur: [apa yang membuat mereka tidak jadi beli]
+===AKHIR_PEMBELI===
+
+===LAUNCH===
+🚀 STRATEGI LAUNCH 30 HARI
+
+PRAE-LAUNCH (Hari 1-7):
+[langkah konkret]
+
+SOFT LAUNCH (Hari 8-14):
+[langkah konkret]
+
+MAIN LAUNCH (Hari 15-21):
+[langkah konkret + taktik flash sale/early bird]
+
+POST-LAUNCH (Hari 22-30):
+[langkah konkret + follow-up & testimoni]
+===AKHIR_LAUNCH===
+
+===UPSELL===
+📦 EKOSISTEM PRODUK
+
+Downsell (lebih murah — untuk yang tidak beli):
+[ide produk]
+
+Upsell 1 (level berikutnya):
+[ide produk + harga estimasi]
+
+Upsell 2 (premium/VIP):
+[ide produk + harga estimasi]
+
+Cross-sell (produk pendamping):
+[ide produk]
+
+Bundle Idea:
+[ide bundle kreatif]
+===AKHIR_UPSELL===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 2000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate strategi monetisasi" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate monetization strategy" });
+      }
+    }
+  });
+
   app.post("/api/generate-marketing-kit", isAuthenticated, async (req, res) => {
     try {
       const { title, topik, target, industry, docSummary } = req.body;

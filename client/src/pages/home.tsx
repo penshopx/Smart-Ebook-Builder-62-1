@@ -350,6 +350,8 @@ export default function Home() {
                 onAiModelChange={(model) => handleProjectChange('selectedAiModel', model)}
                 projectTitle={projectData.judul}
                 projectTopik={projectData.topik}
+                projectTarget={projectData.target}
+                uploadedFiles={uploadedFiles}
               />
             </div>
           </div>

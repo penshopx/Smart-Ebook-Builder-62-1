@@ -106,6 +106,8 @@ The `shared/` directory contains code used by both frontend and backend:
 11. **Extend Text** - Expand/develop short text
 12. **AI Quality Review** - Score generated ebook on 5 dimensions (Struktur, Kedalaman, Keterbacaan, Kelengkapan, Nilai Jual) with actionable improvement suggestions
 13. **Text-to-Speech** - Convert Script Narasi to MP3 audio using OpenAI TTS (voices: Nova, Shimmer, Alloy, Echo, Onyx); audio player with play/pause + download in Script dialog
+14. **Monetization Strategy** - `/api/generate-monetization` SSE: generates 5-tab strategy (Pricing tiers, Selling Platforms, Buyer Persona, 30-day Launch Plan, Upsell Ecosystem); green "Strategi Jual" button in Bisnis row
+15. **Mode Akurat Badge** - Shows "Mode Akurat · N sumber" badge in action bar when reference files are uploaded, signaling AI is grounded in user's source documents
 
 ### Key Screens
 - **Landing Page** (`/`) - Marketing page for unauthenticated users with pricing tiers
