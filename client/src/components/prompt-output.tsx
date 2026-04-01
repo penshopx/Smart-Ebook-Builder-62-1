@@ -31,6 +31,7 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const [docContent, setDocContent] = useState('');
   const [docError, setDocError] = useState('');
   const [isDocCopied, setIsDocCopied] = useState(false);
@@ -146,6 +147,21 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
     }
   }, [prompt, toast]);
 
+  const handleRegenerate = useCallback(async () => {
+    if (!onRegenerate) return;
+    setIsRegenerating(true);
+    onRegenerate();
+    await new Promise(r => setTimeout(r, 600));
+    setIsRegenerating(false);
+    if (textAreaRef.current) {
+      textAreaRef.current.scrollTop = 0;
+    }
+    toast({
+      title: "Prompt diperbarui!",
+      description: "Prompt telah di-generate ulang berdasarkan data form terkini.",
+    });
+  }, [onRegenerate, toast]);
+
   const handleCloseDocDialog = () => {
     abortRef.current?.abort();
     setIsDocDialogOpen(false);
@@ -194,12 +210,22 @@ export function PromptOutput({ prompt, onRegenerate, selectedAiModel = 'dokument
             {onRegenerate && (
               <Button
                 size="lg"
-                onClick={onRegenerate}
+                onClick={handleRegenerate}
+                disabled={isRegenerating}
                 className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 data-testid="button-generate"
               >
-                <Sparkles className="h-5 w-5 mr-2" />
-                Generate Prompt
+                {isRegenerating ? (
+                  <>
+                    <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-5 w-5 mr-2" />
+                    Generate Prompt
+                  </>
+                )}
               </Button>
             )}
 
