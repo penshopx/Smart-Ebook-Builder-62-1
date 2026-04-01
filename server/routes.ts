@@ -258,8 +258,14 @@ export async function registerRoutes(
       }
 
       const cleanContext = context.trim().slice(0, 300);
+      const type = req.body.type || 'illustration';
 
-      const variantPrompts = [
+      const variantPrompts = type === 'infographic' ? [
+        `Professional data visualization infographic about: "${cleanContext}". Style: clean modern business chart, bar chart or pie chart aesthetic, blue and white corporate colors, minimal flat design. No actual text or labels visible, purely visual elements.`,
+        `Business infographic visual about: "${cleanContext}". Style: modern flat icons, flow diagram, circular process steps, teal and orange corporate palette. Purely symbolic, no readable text.`,
+        `Statistical visualization about: "${cleanContext}". Style: elegant minimal dashboard, line graph or area chart aesthetic, white background, accent colors. No text or numbers visible.`,
+        `Conceptual infographic about: "${cleanContext}". Style: isometric flat illustration, icon-based, professional report aesthetic, navy and gold palette. No readable text.`,
+      ] : [
         `Photorealistic illustration depicting: "${cleanContext}". Style: professional, editorial photography style. No text.`,
         `Digital art illustration depicting: "${cleanContext}". Style: modern flat design, vibrant colors. No text.`,
         `Conceptual artwork depicting: "${cleanContext}". Style: abstract, symbolic, artistic. No text.`,
