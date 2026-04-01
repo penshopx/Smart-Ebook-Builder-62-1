@@ -1,13 +1,20 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, ExternalLink, Bot, Sparkles } from 'lucide-react';
+import { MessageCircle, ExternalLink, Bot, Sparkles, Workflow, FileText } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+
+const USE_CASES = [
+  { label: "Draft Bab", desc: "Tulis konten bab dari prompt outline" },
+  { label: "Silabus Kursus", desc: "Buat kurikulum dari prompt E-Course" },
+  { label: "Marketing Copy", desc: "Eksekusi prompt Marketing Kit" },
+  { label: "System Prompt", desc: "Uji prompt dari GPT Builder" },
+];
 
 export function DokumenterChatButton() {
   const [showDialog, setShowDialog] = useState(false);
@@ -43,16 +50,18 @@ export function DokumenterChatButton() {
           </DialogHeader>
 
           <div className="space-y-4 pt-2">
+            {/* Main pitch */}
             <div className="p-4 rounded-lg bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border border-blue-500/20">
               <div className="flex items-center gap-2 mb-2">
                 <Sparkles className="h-4 w-4 text-blue-600" />
-                <span className="font-semibold text-sm">AI Terbaik untuk Prompt Ebook</span>
+                <span className="font-semibold text-sm">Eksekusi Prompt Pipeline Anda di Sini</span>
               </div>
-              <span className="text-sm text-muted-foreground">
-                Eksekusi prompt yang sudah Anda generate di DokumenTender AI untuk hasil optimal dalam Bahasa Indonesia.
-              </span>
+              <p className="text-sm text-muted-foreground">
+                Salin prompt dari 13 mode generasi Ebook Builder Pro, lalu jalankan di DokumenTender AI untuk hasil optimal dalam Bahasa Indonesia.
+              </p>
             </div>
-            
+
+            {/* Badges */}
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-[10px]">Gratis</Badge>
@@ -64,7 +73,27 @@ export function DokumenterChatButton() {
               </div>
               <div className="flex items-center gap-2">
                 <Badge variant="secondary" className="text-[10px]">Industri</Badge>
-                <span>Spesialis dokumen teknis & tender</span>
+                <span>Spesialis dokumen teknis, tender & SOP</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge variant="secondary" className="text-[10px]">Pipeline</Badge>
+                <span>Cocok untuk eksekusi semua 9 langkah ekosistem</span>
+              </div>
+            </div>
+
+            {/* Use cases */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Workflow className="h-3 w-3" />
+                Cocok untuk eksekusi:
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {USE_CASES.map((uc, idx) => (
+                  <div key={idx} className="flex flex-col p-2 rounded-md bg-muted/50 border text-xs">
+                    <span className="font-medium text-foreground">{uc.label}</span>
+                    <span className="text-muted-foreground text-[10px] mt-0.5">{uc.desc}</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>

@@ -5,7 +5,8 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
-import { MessageCircle, Send, Loader2, X, Sparkles, HelpCircle, BookOpen, Lightbulb } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
+import { MessageCircle, Send, Loader2, Lightbulb, Workflow, Smartphone, ClipboardList, Bot, BookOpen } from 'lucide-react';
 import { apiRequest } from '@/lib/queryClient';
 
 interface Message {
@@ -14,11 +15,21 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "Bagaimana cara menggunakan aplikasi ini?",
-  "Apa saja 11 mode generasi yang tersedia?",
-  "Industri apa saja yang didukung?",
-  "Tips membuat ebook yang menjual?",
-  "Apa perbedaan DokumenTender AI dengan ChatGPT?",
+  "Apa itu Ekosistem 9-Langkah?",
+  "Apa saja 13 mode generasi yang tersedia?",
+  "Bagaimana cara pakai Mini App Builder?",
+  "Quiz Maker bisa buat soal level apa saja?",
+  "Bagaimana alur pipeline dari ebook ke ekosistem?",
+  "Format export apa yang didukung?",
+  "Tips memulai ebook untuk pemula?",
+  "Apa perbedaan GPT Builder dengan Chatbot Demo?",
+];
+
+const FEATURE_CHIPS = [
+  { label: "Pipeline", icon: Workflow, question: "Jelaskan pipeline 9-langkah secara detail" },
+  { label: "Mini App", icon: Smartphone, question: "Bagaimana cara menggunakan Mini App Builder dan deep-link ke Lovable/Bolt?" },
+  { label: "Quiz Maker", icon: ClipboardList, question: "Bagaimana Quiz Maker bekerja dan apa pilihan level-nya?" },
+  { label: "Chatbot Demo", icon: Bot, question: "Apa itu Chatbot Demo dan bagaimana cara menggunakannya?" },
 ];
 
 export function ChaesaChatbot() {
@@ -26,13 +37,13 @@ export function ChaesaChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Halo! Saya Chaesa, asisten Ebook Builder Pro. 
+      content: `Halo! Saya Chaesa, asisten Ebook Builder Pro.
 
 Saya bisa membantu Anda:
-- Menjelaskan cara menggunakan fitur-fitur aplikasi
-- Memberikan tips membuat ebook yang menarik
-- Menjawab pertanyaan seputar 11 mode generasi
-- Membantu memilih industri/tema yang tepat
+- Memahami 13 mode generasi prompt yang tersedia
+- Memandu pipeline Ekosistem 9-Langkah (ebook → chatbot, kursus, mini app, kuis, marketing, audio, thumbnail, monetisasi)
+- Menjelaskan fitur baru: Mini App Builder, Quiz Maker, Chatbot Demo
+- Tips membuat ebook dan ekosistem konten yang menghasilkan
 
 Silakan tanyakan apa saja!`
     }
@@ -81,27 +92,30 @@ Silakan tanyakan apa saja!`
     }
   }, [messages]);
 
+  const showQuickSection = messages.length <= 2;
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
         <button
           className="fixed bottom-24 sm:bottom-6 right-4 sm:right-6 h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-2xl z-[9999] bg-gradient-to-br from-purple-600 to-pink-500 text-white flex items-center justify-center transition-all hover:scale-105 active:scale-95 hover:shadow-purple-500/30"
           data-testid="button-open-chaesa"
+          aria-label="Tanya Chaesa"
         >
           <MessageCircle className="h-6 w-6" />
         </button>
       </SheetTrigger>
       <SheetContent side="right" className="w-full sm:w-[420px] p-0 flex flex-col">
-        <SheetHeader className="p-4 border-b bg-gradient-to-r from-purple-600 to-pink-500">
+        <SheetHeader className="p-4 border-b bg-gradient-to-r from-purple-600 to-pink-500 shrink-0">
           <SheetTitle className="flex items-center gap-3 text-white">
             <Avatar className="h-10 w-10 border-2 border-white/20">
-              <AvatarFallback className="bg-white/20 text-white font-bold">
+              <AvatarFallback className="bg-white/20 text-white font-bold text-sm">
                 C
               </AvatarFallback>
             </Avatar>
             <div className="text-left">
               <span className="font-bold block">Chaesa</span>
-              <p className="text-xs text-white/80 font-normal">Asisten Ebook Builder Pro</p>
+              <p className="text-xs text-white/80 font-normal">Asisten Ebook Builder Pro · 13 Mode · 9 Langkah</p>
             </div>
           </SheetTitle>
         </SheetHeader>
@@ -147,32 +161,58 @@ Silakan tanyakan apa saja!`
           </div>
         </ScrollArea>
 
-        {/* Quick Questions */}
-        {messages.length <= 2 && (
-          <div className="px-4 pb-2">
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <Lightbulb className="h-3 w-3" />
-              Pertanyaan populer:
-            </p>
-            <div className="flex flex-wrap gap-1">
-              {QUICK_QUESTIONS.slice(0, 3).map((q, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => handleSend(q)}
-                  className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
-                  disabled={chatMutation.isPending}
-                >
-                  {q}
-                </button>
-              ))}
+        {/* Quick Questions & Feature Chips */}
+        {showQuickSection && (
+          <div className="px-4 pb-2 space-y-3 border-t pt-3 shrink-0">
+            {/* Feature quick-access chips */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Workflow className="h-3 w-3" />
+                Fitur unggulan:
+              </p>
+              <div className="grid grid-cols-2 gap-1.5">
+                {FEATURE_CHIPS.map((chip, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(chip.question)}
+                    className="flex items-center gap-1.5 text-xs px-2.5 py-2 rounded-lg bg-primary/8 hover:bg-primary/15 text-primary border border-primary/20 hover:border-primary/40 transition-colors text-left"
+                    disabled={chatMutation.isPending}
+                    data-testid={`chip-feature-${idx}`}
+                  >
+                    <chip.icon className="h-3.5 w-3.5 shrink-0" />
+                    <span className="font-medium">{chip.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Popular questions */}
+            <div>
+              <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                <Lightbulb className="h-3 w-3" />
+                Pertanyaan populer:
+              </p>
+              <div className="flex flex-wrap gap-1">
+                {QUICK_QUESTIONS.slice(0, 4).map((q, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleSend(q)}
+                    className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80 text-muted-foreground hover:text-foreground transition-colors"
+                    disabled={chatMutation.isPending}
+                    data-testid={`chip-question-${idx}`}
+                  >
+                    {q}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
         )}
 
-        <div className="p-4 border-t bg-background">
+        <div className="p-4 border-t bg-background shrink-0">
           <div className="flex gap-2">
             <Input
-              placeholder="Tanya Chaesa tentang aplikasi ini..."
+              placeholder="Tanya Chaesa tentang fitur atau cara pakai..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
@@ -187,7 +227,11 @@ Silakan tanyakan apa saja!`
               className="rounded-full shrink-0"
               data-testid="button-send-message"
             >
-              <Send className="h-4 w-4" />
+              {chatMutation.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Send className="h-4 w-4" />
+              )}
             </Button>
           </div>
         </div>
