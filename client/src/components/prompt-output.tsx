@@ -181,6 +181,17 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpOutputFormat, setLpOutputFormat] = useState('copy');
   // FlipBook Guide
   const [flipbookOpen, setFlipbookOpen] = useState(false);
+  // Riset Ebook (Research Center)
+  const [risetOpen, setRisetOpen] = useState(false);
+  const [risetContent, setRisetContent] = useState('');
+  const [risetLoading, setRisetLoading] = useState(false);
+  const [risetType, setRisetType] = useState<'keyword' | 'website' | 'youtube'>('keyword');
+  const [risetQuery, setRisetQuery] = useState('');
+  // Mockup 3D Generator
+  const [mockupOpen, setMockupOpen] = useState(false);
+  const [mockupImages, setMockupImages] = useState<string[]>([]);
+  const [mockupLoading, setMockupLoading] = useState(false);
+  const [mockupStyle, setMockupStyle] = useState<'book' | 'phone' | 'tablet'>('phone');
   // Cover HTML Template Generator
   const [coverTplOpen, setCoverTplOpen] = useState(false);
   const [coverTplContent, setCoverTplContent] = useState('');
@@ -517,6 +528,60 @@ ${bodyHtml}
       setThumbLoading(false);
     }
   }, [projectTitle, projectTopik, toast]);
+
+  const handleRisetEbook = useCallback(async () => {
+    if (!risetQuery.trim()) { toast({ title: 'Masukkan kata kunci atau URL terlebih dulu', variant: 'destructive' }); return; }
+    setRisetContent('');
+    setRisetLoading(true);
+    try {
+      const response = await fetch('/api/research-ebook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: risetType, query: risetQuery, industry: projectTopik }),
+      });
+      if (!response.ok) throw new Error('Server error');
+      const reader = response.body?.getReader();
+      if (!reader) throw new Error('No reader');
+      const decoder = new TextDecoder();
+      let buffer = '';
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          if (!line.startsWith('data:')) continue;
+          try {
+            const parsed = JSON.parse(line.slice(5).trim());
+            if (parsed.content) setRisetContent(p => p + parsed.content);
+            if (parsed.done) break;
+          } catch {}
+        }
+      }
+    } catch {
+      toast({ title: 'Gagal melakukan riset', variant: 'destructive' });
+    } finally {
+      setRisetLoading(false);
+    }
+  }, [risetQuery, risetType, projectTopik, toast]);
+
+  const handleGenerateMockup = useCallback(async () => {
+    setMockupImages([]);
+    setMockupLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-mockup', {
+        title: projectTitle || projectTopik,
+        style: mockupStyle,
+      });
+      const data = await res.json();
+      setMockupImages(data.imageUrls || []);
+    } catch {
+      toast({ title: 'Gagal membuat mockup 3D', variant: 'destructive' });
+    } finally {
+      setMockupLoading(false);
+    }
+  }, [projectTitle, projectTopik, mockupStyle, toast]);
 
   const handleReviewDocument = useCallback(async () => {
     if (!docContent) { toast({ title: 'Generate dokumen dulu sebelum review', variant: 'destructive' }); return; }
@@ -1348,6 +1413,28 @@ ${bodyHtml}
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Convert ke FlipBook</span>
                   <span className="text-[10px] opacity-80">Heyzine (gratis) · FlipHTML5 · FlippingBook · FlipBuilder</span>
+                </span>
+              </Button>
+              <Button
+                onClick={() => { setRisetOpen(true); setRisetContent(''); }}
+                className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-riset-ebook"
+              >
+                <Search className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Riset Topik</span>
+                  <span className="text-[10px] opacity-80">Ide ebook marketable</span>
+                </span>
+              </Button>
+              <Button
+                onClick={() => { setMockupOpen(true); setMockupImages([]); }}
+                className="bg-gradient-to-r from-rose-600 to-pink-700 hover:from-rose-700 hover:to-pink-800 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-mockup-3d"
+              >
+                <span className="text-base mr-2 shrink-0">📸</span>
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Mockup 3D</span>
+                  <span className="text-[10px] opacity-80">Cover buku DALL-E 3</span>
                 </span>
               </Button>
             </div>
@@ -3456,6 +3543,159 @@ ${bodyHtml}
             >
               <Zap className="h-3.5 w-3.5 mr-1.5" /> {coverTplContent ? 'Generate Ulang' : 'Generate Cover'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Riset Ebook Dialog */}
+      <Dialog open={risetOpen} onOpenChange={setRisetOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5 text-emerald-600" />
+              Riset Topik Ebook
+              <Badge variant="secondary" className="text-xs">AI Research</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Temukan ide ebook yang marketable dan siap dijual. Masukkan kata kunci, URL, atau topik — AI akan analisis potensinya.
+            </p>
+            <div className="flex gap-1 p-1 bg-muted rounded-lg">
+              {([['keyword', '🔑 Kata Kunci'], ['website', '🌐 Website URL'], ['youtube', '▶️ YouTube Topik']] as const).map(([key, label]) => (
+                <button
+                  key={key}
+                  onClick={() => { setRisetType(key); setRisetQuery(''); }}
+                  className={`flex-1 py-1.5 px-2 rounded-md text-xs font-medium transition-all ${risetType === key ? 'bg-background shadow text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="flex-1 h-9 px-3 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder={
+                  risetType === 'keyword' ? 'Contoh: kesehatan mental, investasi saham, UMKM digital...' :
+                  risetType === 'website' ? 'https://contoh.com/artikel-topik' :
+                  'Contoh: cara sukses jualan TikTok Shop, bisnis online 2025...'
+                }
+                value={risetQuery}
+                onChange={e => setRisetQuery(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleRisetEbook()}
+                data-testid="input-riset-query"
+              />
+              <Button
+                onClick={handleRisetEbook}
+                disabled={risetLoading || !risetQuery.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0"
+                data-testid="button-riset-submit"
+              >
+                {risetLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                <span className="ml-1">Riset</span>
+              </Button>
+            </div>
+            {risetLoading && (
+              <div className="flex items-center gap-2 text-sm text-emerald-600 animate-pulse">
+                <Loader2 className="h-4 w-4 animate-spin" />
+                AI sedang menganalisis potensi pasar...
+              </div>
+            )}
+            {risetContent && (
+              <div className="rounded-lg border bg-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hasil Riset</span>
+                  <Button
+                    size="sm" variant="ghost"
+                    onClick={() => { navigator.clipboard.writeText(risetContent); toast({ description: 'Hasil riset disalin!' }); }}
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1" /> Salin
+                  </Button>
+                </div>
+                <div className="prose prose-sm dark:prose-invert max-w-none">
+                  <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">{risetContent}</pre>
+                </div>
+              </div>
+            )}
+            {risetContent && !risetLoading && (
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3">
+                <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
+                  💡 Langkah selanjutnya: Pilih ide terbaik, lalu klik "Generate Prompt" di panel utama untuk memulai pipeline 16 output!
+                </p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Mockup 3D Dialog */}
+      <Dialog open={mockupOpen} onOpenChange={setMockupOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">📸</span>
+              Mockup 3D Ebook
+              <Badge variant="secondary" className="text-xs">DALL-E 3</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Buat gambar mockup 3D profesional untuk marketing ebook <strong>{projectTitle || projectTopik}</strong>. Pilih style tampilan:
+            </p>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                ['book', '📗', 'Book Only', 'Tampilan buku saja'],
+                ['phone', '📱', 'Book & Phone', 'Buku + HP mockup'],
+                ['tablet', '📲', 'Tablet View', 'Tampilan tablet'],
+              ] as const).map(([key, icon, label, desc]) => (
+                <button
+                  key={key}
+                  onClick={() => setMockupStyle(key)}
+                  className={`p-3 rounded-lg border-2 text-center transition-all ${mockupStyle === key ? 'border-rose-500 bg-rose-50 dark:bg-rose-950/20' : 'border-border hover:border-rose-300'}`}
+                  data-testid={`button-mockup-style-${key}`}
+                >
+                  <div className="text-2xl mb-1">{icon}</div>
+                  <div className="text-xs font-semibold">{label}</div>
+                  <div className="text-[10px] text-muted-foreground">{desc}</div>
+                </button>
+              ))}
+            </div>
+            <Button
+              className="w-full bg-rose-600 hover:bg-rose-700 text-white"
+              onClick={handleGenerateMockup}
+              disabled={mockupLoading}
+              data-testid="button-mockup-generate"
+            >
+              {mockupLoading ? (
+                <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Membuat mockup 3D dengan DALL-E 3...</>
+              ) : (
+                <><Sparkles className="h-4 w-4 mr-2" /> {mockupImages.length > 0 ? 'Generate Ulang' : 'Generate Mockup 3D'}</>
+              )}
+            </Button>
+            {mockupLoading && (
+              <div className="text-center text-xs text-muted-foreground animate-pulse">
+                DALL-E 3 sedang merender mockup 3D profesional... (15-30 detik)
+              </div>
+            )}
+            {mockupImages.length > 0 && (
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  {mockupImages.map((url, i) => (
+                    <div key={i} className="relative group rounded-lg overflow-hidden border">
+                      <img src={url} alt={`Mockup ${i + 1}`} className="w-full object-cover" />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 gap-2">
+                        <a href={url} download={`mockup-${i + 1}.png`} className="bg-white text-black text-xs font-semibold px-3 py-1.5 rounded-full flex items-center gap-1">
+                          <Download className="h-3 w-3" /> Unduh
+                        </a>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Hover gambar untuk unduh. Gunakan untuk Tokopedia/Shopee, Instagram, dan marketing material.
+                </p>
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>

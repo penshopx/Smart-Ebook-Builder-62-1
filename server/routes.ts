@@ -1560,5 +1560,131 @@ Output: HANYA kode HTML lengkap, tidak ada teks lain di luar HTML.`,
     }
   });
 
+  // Riset Ebook - AI Research from keyword/website/youtube topic
+  app.post("/api/research-ebook", isAuthenticated, async (req, res) => {
+    try {
+      const { type, query, industry } = req.body;
+      if (!query) return res.status(400).json({ error: "Query required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const typeLabel = type === 'website' ? `analisis konten website: ${query}` :
+                        type === 'youtube' ? `topik YouTube/video: ${query}` :
+                        `kata kunci: ${query}`;
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: "Kamu adalah AI market research specialist yang ahli menemukan peluang ebook di pasar Indonesia. Gunakan data tren pasar Indonesia, platform Tokopedia/Shopee, dan kebutuhan pembaca Indonesia.",
+          },
+          {
+            role: "user",
+            content: `Lakukan riset mendalam untuk membuat ebook yang laku di Indonesia berdasarkan ${typeLabel}.
+${industry ? `Industri fokus: ${industry}` : ''}
+
+Berikan analisis lengkap dengan format berikut:
+
+## 🔍 ANALISIS POTENSI PASAR
+
+**Tren Saat Ini:** [analisis tren topik ini di Indonesia]
+**Target Pembeli:** [profil pembeli ideal di Indonesia]
+**Platform Terbaik:** [Tokopedia/Shopee/Gumroad/WhatsApp]
+**Potensi Harga:** [estimasi harga dalam Rupiah yang realistis]
+
+---
+
+## 💡 5 IDE EBOOK TERBAIK
+
+Untuk setiap ide, format seperti ini:
+
+### 🔥 IDE #N: [JUDUL EBOOK MENARIK]
+**Target Pembaca:** [siapa yang butuh ini]
+**Pain Point:** [masalah mendalam yang dirasakan]
+**Janji:** [hasil spesifik yang dijanjikan]
+**Angle Unik:** [kenapa ini berbeda dari yang lain]
+**Estimasi Harga:** Rp [angka] - Rp [angka]
+**Potensi Platform:** [platform terbaik untuk jual ini]
+
+---
+
+## 📊 REKOMENDASI TERBAIK
+
+**Pilihan Utama:** [judul ide yang paling potensial]
+**Alasan:** [kenapa ini paling marketable]
+**Langkah Pertama:** [apa yang harus dilakukan user sekarang]
+
+Buat analisis yang sangat spesifik dan actionable untuk pasar Indonesia!`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 2000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal melakukan riset" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to research ebook" });
+      }
+    }
+  });
+
+  // Generate 3D Ebook Mockup - DALL-E 3
+  app.post("/api/generate-mockup", isAuthenticated, async (req, res) => {
+    try {
+      const { title, style } = req.body;
+      if (!title) return res.status(400).json({ error: "Title required" });
+
+      const stylePrompts: Record<string, string[]> = {
+        book: [
+          `Professional 3D book mockup of an Indonesian ebook titled "${title}". Realistic hardcover book floating at 45-degree angle, dramatic studio lighting, shadow on surface, clean white/light gray background, professional product photography style, highly detailed cover with elegant typography, glossy finish, high resolution`,
+          `3D rendered ebook cover mockup for "${title}". Softcover book, slight perspective tilt, warm studio light, subtle drop shadow, crisp clean aesthetic, bookstore display style, vibrant professional color palette, Indonesia market professional design`,
+        ],
+        phone: [
+          `Professional 3D mockup of ebook "${title}" displayed on a modern smartphone screen. Elegant phone floating at angle with ebook cover visible on screen, soft studio lighting, clean minimal background, app store style product shot, realistic screen reflection, premium look`,
+          `Ebook mockup "${title}" on smartphone. Phone screen showing ebook cover, lifestyle flat lay composition, white marble surface background, soft natural lighting, Instagram-ready product shot, premium minimalist aesthetic`,
+        ],
+        tablet: [
+          `Professional 3D mockup of ebook "${title}" displayed on a tablet/iPad. Realistic tablet floating slightly angled, ebook cover visible on screen, soft studio lighting, clean background, premium product photography, digital reading experience visualization`,
+          `Ebook "${title}" on modern tablet screen mockup. Elegant tablet at angle, ebook cover prominently displayed, coffee shop lifestyle background blur, premium look, professional product visualization for marketing`,
+        ],
+      };
+
+      const prompts = stylePrompts[style || 'phone'] || stylePrompts.phone;
+
+      const results = await Promise.allSettled(
+        prompts.map(p =>
+          openai.images.generate({
+            model: "dall-e-3",
+            prompt: p,
+            n: 1,
+            size: "1024x1024",
+            quality: "standard",
+          })
+        )
+      );
+
+      const imageUrls = results.map(r =>
+        r.status === 'fulfilled' ? (r.value.data[0]?.url || null) : null
+      ).filter(Boolean);
+
+      res.json({ imageUrls });
+    } catch (error: any) {
+      console.error("Mockup error:", error);
+      res.status(500).json({ error: "Gagal membuat mockup. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }
