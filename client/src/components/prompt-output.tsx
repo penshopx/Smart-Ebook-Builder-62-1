@@ -104,6 +104,8 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
+  const [planLimitOpen, setPlanLimitOpen] = useState(false);
+  const [planLimitInfo, setPlanLimitInfo] = useState<{ used: number; limit: number } | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [docContent, setDocContent] = useState('');
@@ -736,7 +738,14 @@ ${bodyHtml}
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
     });
-    if (!response.ok) { onError('Gagal menghubungi server'); return; }
+    if (!response.ok) {
+      if (response.status === 429) {
+        try { const d = await response.json(); setPlanLimitInfo({ used: d.used, limit: d.limit }); setPlanLimitOpen(true); } catch {}
+      } else {
+        onError('Gagal menghubungi server');
+      }
+      return;
+    }
     const reader = response.body?.getReader();
     if (!reader) { onError('Tidak ada response'); return; }
     const decoder = new TextDecoder();
@@ -1851,7 +1860,13 @@ ${bodyHtml}
   // Generic SSE helper
   const fetchSSE = useCallback(async (url: string, body: object, onChunk: (text: string) => void, onDone: () => void) => {
     const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-    if (!response.ok) throw new Error('Server error');
+    if (!response.ok) {
+      if (response.status === 429) {
+        try { const d = await response.json(); setPlanLimitInfo({ used: d.used, limit: d.limit }); } catch {}
+        setPlanLimitOpen(true);
+      }
+      throw new Error('Server error');
+    }
     const reader = response.body?.getReader();
     if (!reader) throw new Error('No reader');
     const decoder = new TextDecoder();
@@ -2189,6 +2204,12 @@ ${bodyHtml}
       });
 
       if (!response.ok) {
+        if (response.status === 429) {
+          try { const d = await response.json(); setPlanLimitInfo({ used: d.used, limit: d.limit }); } catch {}
+          setPlanLimitOpen(true);
+          setIsDocDialogOpen(false);
+          return;
+        }
         throw new Error('Gagal menghubungi server');
       }
 
@@ -7688,6 +7709,51 @@ ${bodyHtml}
               </div>
             )}
           </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Plan Limit Dialog */}
+      <Dialog open={planLimitOpen} onOpenChange={setPlanLimitOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-2xl">⚡</span>
+              <span>Limit Harian Tercapai</span>
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              {planLimitInfo
+                ? `Kamu sudah menggunakan ${planLimitInfo.used} dari ${planLimitInfo.limit} prompt gratis hari ini.`
+                : 'Prompt harian gratis kamu sudah habis.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-2">
+            <div className="rounded-xl bg-primary/5 border border-primary/20 p-4 space-y-2">
+              <p className="font-semibold text-sm text-primary">🚀 Upgrade ke Pro — Rp 99K/bulan</p>
+              <ul className="text-xs text-muted-foreground space-y-1">
+                <li>✅ Unlimited prompt setiap hari</li>
+                <li>✅ Semua 16 mode generasi AI</li>
+                <li>✅ Pipeline 9-Langkah Ekosistem penuh</li>
+                <li>✅ Export PDF, DOCX, HTML, MD</li>
+                <li>✅ 24 tema industri Indonesia</li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-2">
+              <a
+                href="/account"
+                className="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary to-purple-600 text-white text-sm font-semibold px-4 py-2.5 hover:opacity-90 transition-opacity"
+                onClick={() => setPlanLimitOpen(false)}
+                data-testid="button-upgrade-cta"
+              >
+                <span>👑</span> Upgrade Sekarang
+              </a>
+              <button
+                onClick={() => setPlanLimitOpen(false)}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors text-center py-1"
+              >
+                Besok akan ada 5 prompt gratis lagi
+              </button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </>

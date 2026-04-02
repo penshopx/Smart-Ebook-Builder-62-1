@@ -237,6 +237,12 @@ export default function Home() {
   const { toast } = useToast();
   const { user } = useAuth();
 
+  const { data: planData } = useQuery<{ plan: string; allowedModes: string[] | 'all' }>({
+    queryKey: ['/api/user/plan'],
+    staleTime: 1000 * 60 * 5,
+  });
+  const allowedModes: string[] | 'all' = planData?.allowedModes ?? 'all';
+
   const handleProjectChange = (name: string, value: string) => {
     setProjectData(prev => ({ ...prev, [name]: value }));
   };
@@ -408,7 +414,7 @@ export default function Home() {
 
       <main className="container px-4 py-6 mx-auto max-w-screen-2xl">
         <div className="mb-6">
-          <ModeSelector activeMode={activeMode} onModeChange={setActiveMode} />
+          <ModeSelector activeMode={activeMode} onModeChange={setActiveMode} allowedModes={allowedModes} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -3,8 +3,31 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { setupAuth, registerAuthRoutes, isAuthenticated } from "./replit_integrations/auth";
+import { authStorage } from "./replit_integrations/auth/storage";
+import { PLAN_LIMITS } from "@shared/models/auth";
 import { getChaesaResponse } from "./chaesa";
 import OpenAI from "openai";
+
+function getUserId(req: any): string {
+  return req.user?.claims?.sub ?? req.user?.id ?? '';
+}
+
+async function checkPlanLimit(req: any, res: any): Promise<boolean> {
+  const userId = getUserId(req);
+  if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return false; }
+  const result = await authStorage.trackPromptUsage(userId);
+  if (!result.allowed) {
+    res.status(429).json({
+      error: 'Limit harian tercapai',
+      message: `Kamu sudah menggunakan ${result.used} dari ${result.limit} prompt hari ini. Upgrade ke Pro untuk unlimited prompt.`,
+      used: result.used,
+      limit: result.limit,
+      code: 'DAILY_LIMIT_EXCEEDED',
+    });
+    return false;
+  }
+  return true;
+}
 
 const openai = new OpenAI({
   apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
@@ -100,10 +123,58 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
-  app.get("/api/projects", isAuthenticated, async (_req, res) => {
+  // ===== USER PLAN ENDPOINTS =====
+  app.get("/api/user/plan", isAuthenticated, async (req, res) => {
     try {
-      const projects = await storage.getProjects();
-      res.json(projects);
+      const userId = getUserId(req);
+      const user = await authStorage.getUser(userId);
+      if (!user) return res.status(404).json({ error: "User not found" });
+      const plan = (user.plan ?? 'free') as keyof typeof PLAN_LIMITS;
+      const limits = PLAN_LIMITS[plan] ?? PLAN_LIMITS.free;
+      const today = new Date().toISOString().split('T')[0];
+      const isNewDay = user.lastPromptDate !== today;
+      const promptsUsedToday = isNewDay ? 0 : (user.promptsUsedToday ?? 0);
+      res.json({
+        plan,
+        promptsUsedToday,
+        dailyLimit: limits.promptsPerDay === Infinity ? null : limits.promptsPerDay,
+        allowedModes: limits.allowedModes,
+        exports: limits.exports,
+        label: limits.label,
+        maxProjects: limits.maxProjects === Infinity ? null : limits.maxProjects,
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to fetch plan" });
+    }
+  });
+
+  app.post("/api/user/upgrade-request", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { targetPlan } = z.object({ targetPlan: z.enum(['pro', 'enterprise']) }).parse(req.body);
+      await storage.createUpgradeRequest(userId, targetPlan);
+      const planPrices: Record<string, string> = { pro: 'Rp 99.000/bulan', enterprise: 'Rp 499.000/bulan' };
+      res.json({
+        success: true,
+        requestedPlan: targetPlan,
+        price: planPrices[targetPlan],
+        contactInfo: {
+          whatsapp: 'https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20ingin%20upgrade%20ke%20paket%20' + targetPlan,
+          email: 'upgrade@chaesaai.com',
+          subject: `Upgrade ${targetPlan} - Chaesa AI Studio`,
+        },
+      });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to process upgrade request" });
+    }
+  });
+
+  // ===== PROJECTS =====
+  app.get("/api/projects", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const projectsList = await storage.getProjects(userId);
+      res.json(projectsList);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch projects" });
     }
@@ -111,10 +182,9 @@ export async function registerRoutes(
 
   app.get("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
-      const project = await storage.getProject(req.params.id as string);
-      if (!project) {
-        return res.status(404).json({ error: "Project not found" });
-      }
+      const userId = getUserId(req);
+      const project = await storage.getProject(req.params.id as string, userId);
+      if (!project) return res.status(404).json({ error: "Project not found" });
       res.json(project);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch project" });
@@ -123,11 +193,26 @@ export async function registerRoutes(
 
   app.post("/api/projects", isAuthenticated, async (req, res) => {
     try {
+      const userId = getUserId(req);
       const parsed = createProjectSchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
+      if (!parsed.success) return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
+
+      // Enforce project limit for free plan
+      const user = await authStorage.getUser(userId);
+      const plan = (user?.plan ?? 'free') as keyof typeof PLAN_LIMITS;
+      const limits = PLAN_LIMITS[plan];
+      if (limits.maxProjects !== Infinity) {
+        const count = await storage.countProjects(userId);
+        if (count >= (limits.maxProjects as number)) {
+          return res.status(403).json({
+            error: 'Batas proyek tercapai',
+            message: `Paket ${limits.label} hanya mendukung ${limits.maxProjects} proyek. Upgrade ke Pro untuk unlimited proyek.`,
+            code: 'PROJECT_LIMIT_EXCEEDED',
+          });
+        }
       }
-      const project = await storage.createProject(parsed.data);
+
+      const project = await storage.createProject(userId, parsed.data);
       res.status(201).json(project);
     } catch (error) {
       res.status(500).json({ error: "Failed to create project" });
@@ -136,14 +221,11 @@ export async function registerRoutes(
 
   app.put("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
+      const userId = getUserId(req);
       const parsed = createProjectSchema.partial().safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
-      }
-      const project = await storage.updateProject(req.params.id as string, parsed.data);
-      if (!project) {
-        return res.status(404).json({ error: "Project not found" });
-      }
+      if (!parsed.success) return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
+      const project = await storage.updateProject(req.params.id as string, userId, parsed.data);
+      if (!project) return res.status(404).json({ error: "Project not found" });
       res.json(project);
     } catch (error) {
       res.status(500).json({ error: "Failed to update project" });
@@ -152,41 +234,42 @@ export async function registerRoutes(
 
   app.delete("/api/projects/:id", isAuthenticated, async (req, res) => {
     try {
-      const deleted = await storage.deleteProject(req.params.id as string);
-      if (!deleted) {
-        return res.status(404).json({ error: "Project not found" });
-      }
+      const userId = getUserId(req);
+      const deleted = await storage.deleteProject(req.params.id as string, userId);
+      if (!deleted) return res.status(404).json({ error: "Project not found" });
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to delete project" });
     }
   });
 
-  app.get("/api/history", async (_req, res) => {
+  // ===== HISTORY =====
+  app.get("/api/history", isAuthenticated, async (req, res) => {
     try {
-      const history = await storage.getPromptHistory();
+      const userId = getUserId(req);
+      const history = await storage.getPromptHistory(userId);
       res.json(history);
     } catch (error) {
       res.status(500).json({ error: "Failed to fetch history" });
     }
   });
 
-  app.post("/api/history", async (req, res) => {
+  app.post("/api/history", isAuthenticated, async (req, res) => {
     try {
+      const userId = getUserId(req);
       const parsed = promptHistorySchema.safeParse(req.body);
-      if (!parsed.success) {
-        return res.status(400).json({ error: "Invalid history data", details: parsed.error.issues });
-      }
-      const entry = await storage.addPromptHistory(parsed.data);
+      if (!parsed.success) return res.status(400).json({ error: "Invalid history data", details: parsed.error.issues });
+      const entry = await storage.addPromptHistory(userId, parsed.data);
       res.status(201).json(entry);
     } catch (error) {
       res.status(500).json({ error: "Failed to add history entry" });
     }
   });
 
-  app.delete("/api/history", async (_req, res) => {
+  app.delete("/api/history", isAuthenticated, async (req, res) => {
     try {
-      await storage.clearPromptHistory();
+      const userId = getUserId(req);
+      await storage.clearPromptHistory(userId);
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ error: "Failed to clear history" });
@@ -619,6 +702,8 @@ Tulis semuanya dalam Bahasa Indonesia yang powerful dan menjual.`,
     try {
       const { title, topik, target, courseDuration, courseFormat, courseGoal } = req.body;
       if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+      const allowed = await checkPlanLimit(req, res);
+      if (!allowed) return;
 
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
@@ -1180,12 +1265,14 @@ Format setiap segmen:
     }
   });
 
-  app.post("/api/generate-document", async (req, res) => {
+  app.post("/api/generate-document", isAuthenticated, async (req, res) => {
     try {
       const { prompt, mode } = req.body;
       if (!prompt) {
         return res.status(400).json({ error: "Prompt is required" });
       }
+      const allowed = await checkPlanLimit(req, res);
+      if (!allowed) return;
 
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");

@@ -2,9 +2,11 @@ import { MODES } from '@shared/schema';
 import { cn } from '@/lib/utils';
 import { 
   Lightbulb, Sparkles, Layers, FileText, Video, GraduationCap, 
-  FilePlus, Package, Bot, Megaphone, Wand2, Smartphone, ClipboardList, Mic2, Headphones, LayoutTemplate
+  FilePlus, Package, Bot, Megaphone, Wand2, Smartphone, ClipboardList, Mic2, Headphones, LayoutTemplate, Lock
 } from 'lucide-react';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
+import { useToast } from '@/hooks/use-toast';
+import { Link } from 'wouter';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Lightbulb,
@@ -55,9 +57,33 @@ const PHASE_CONFIG = [
 interface ModeSelectorProps {
   activeMode: string;
   onModeChange: (mode: string) => void;
+  allowedModes?: string[] | 'all';
 }
 
-export function ModeSelector({ activeMode, onModeChange }: ModeSelectorProps) {
+export function ModeSelector({ activeMode, onModeChange, allowedModes = 'all' }: ModeSelectorProps) {
+  const { toast } = useToast();
+
+  const isLocked = (modeId: string) => {
+    if (allowedModes === 'all') return false;
+    return !allowedModes.includes(modeId);
+  };
+
+  const handleModeClick = (modeId: string) => {
+    if (isLocked(modeId)) {
+      toast({
+        title: '🔒 Mode ini perlu upgrade',
+        description: 'Mode ini hanya tersedia untuk paket Pro. Upgrade untuk akses semua 16 mode.',
+        action: (
+          <a href="/account" className="inline-flex items-center gap-1 rounded bg-primary text-white text-xs px-3 py-1.5 font-medium hover:opacity-90 transition-opacity">
+            Upgrade
+          </a>
+        ),
+      });
+      return;
+    }
+    onModeChange(modeId);
+  };
+
   return (
     <ScrollArea className="w-full whitespace-nowrap">
       <div className="flex items-center gap-1 pb-3">
@@ -78,21 +104,24 @@ export function ModeSelector({ activeMode, onModeChange }: ModeSelectorProps) {
                 {phaseModes.map((mode) => {
                   const Icon = iconMap[mode.icon];
                   const isActive = activeMode === mode.id;
+                  const locked = isLocked(mode.id);
                   return (
                     <button
                       key={mode.id}
-                      onClick={() => onModeChange(mode.id)}
+                      onClick={() => handleModeClick(mode.id)}
                       data-testid={`button-mode-${mode.id.toLowerCase()}`}
-                      title={mode.description || mode.label}
+                      title={locked ? `🔒 ${mode.label} — Perlu upgrade ke Pro` : (mode.description || mode.label)}
                       className={cn(
                         "flex items-center gap-1.5 px-3 py-2 rounded-md text-xs font-medium transition-all whitespace-nowrap",
-                        "border hover-elevate active-elevate-2",
-                        isActive
-                          ? "bg-primary text-primary-foreground border-primary shadow-sm scale-105"
-                          : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-primary/40"
+                        "border",
+                        locked
+                          ? "opacity-50 cursor-not-allowed bg-muted text-muted-foreground border-border"
+                          : isActive
+                            ? "bg-primary text-primary-foreground border-primary shadow-sm scale-105 hover-elevate active-elevate-2"
+                            : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-primary/40 hover-elevate active-elevate-2"
                       )}
                     >
-                      {Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0" />}
+                      {locked ? <Lock className="h-3 w-3 flex-shrink-0 opacity-60" /> : Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0" />}
                       <span>{mode.label}</span>
                     </button>
                   );

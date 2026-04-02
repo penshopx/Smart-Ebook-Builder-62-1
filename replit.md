@@ -4,6 +4,34 @@
 
 Chaesa AI Studio is an AI Prompt Generator Indonesia-first platform centered on the "Ekosistem Kompetensi Digital" concept. The ebook is Step 1 (foundation) where user competency is documented, then transferred to Chatbot AI, E-Course, Mini App, Document Generator, and other digital products. Full pipeline: Ebook+ → Publish → Distribusi → Sosmed → Konversi → Strategi+ → Iklan → Funnel → Ekosistem. 53 API routes, 21 generator features, 24 industry themes.
 
+## Architecture Changes (April 2026 — Backend + Auth + Monetization Pass)
+
+### Database Persistence (was: in-memory)
+- **`shared/models/projects.ts`** — New Drizzle tables: `projects`, `prompt_history`, `upgrade_requests`. All tables have `userId` for per-user scoping.
+- **`server/storage.ts`** — `MemStorage` replaced with `DatabaseStorage` (full PostgreSQL persistence via Drizzle). All operations scoped by `userId`.
+- **`server/db.ts`** — Updated to import from all model files: `schema`, `auth models`, `project models`, `chat models`.
+- **`drizzle.config.ts`** — Updated schema paths to include all model files. Tables pushed to PostgreSQL.
+
+### Plan Enforcement System (Free → Pro → Enterprise)
+- **`shared/models/auth.ts`** — `PLAN_LIMITS` defines limits: Free (5 prompts/day, 1 project, 3 modes), Pro (unlimited), Enterprise (unlimited + API).
+- **`server/routes.ts`** — `checkPlanLimit()` middleware checks `promptsUsedToday` before generation routes. Returns HTTP 429 with `code: 'DAILY_LIMIT_EXCEEDED'` when limit hit.
+- **Project creation** — Enforces `maxProjects` limit per plan. Returns HTTP 403 with `code: 'PROJECT_LIMIT_EXCEEDED'`.
+- **All projects/history routes** — Now scoped by `userId` extracted from Replit OIDC session.
+
+### New API Endpoints
+- **`GET /api/user/plan`** — Returns user's plan, `promptsUsedToday`, `dailyLimit`, `allowedModes`, `exports`, `maxProjects`. Used by account page and home page.
+- **`POST /api/user/upgrade-request`** — Creates an upgrade request record, returns WhatsApp/email contact info for manual upgrade.
+
+### Frontend Plan Integration
+- **`ModeSelector`** — Now accepts `allowedModes` prop. Locked modes (not in plan) show a lock icon, are greyed out, and clicking shows an upgrade toast with link to `/account`.
+- **`home.tsx`** — Fetches `/api/user/plan` and passes `allowedModes` to ModeSelector.
+- **`prompt-output.tsx`** — `fetchSSE`, `streamSSE`, and `handleGenerateDocument` all detect HTTP 429 responses and show a `PlanLimitDialog` with upgrade CTA.
+- **`PlanLimitDialog`** — New dialog inside `prompt-output.tsx` shown when daily limit is reached. Shows usage info + Pro upgrade benefits + link to `/account`.
+
+### Account Page (already existed, now functional)
+- **`/api/user/plan`** backend endpoint now provides real data to the account page's usage/plan display.
+- **`/api/user/upgrade-request`** backend endpoint powers the upgrade request flow (returns WhatsApp/email contact details).
+
 ## Latest Features (April 2026)
 
 ### 3 New Generator Features
