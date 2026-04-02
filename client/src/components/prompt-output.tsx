@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -180,6 +180,12 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpLoading, setLpLoading] = useState(false);
   const [lpTab, setLpTab] = useState<'copy' | 'preview' | 'sections'>('copy');
   const [lpOutputFormat, setLpOutputFormat] = useState('copy');
+  const [lpConfigOpen, setLpConfigOpen] = useState(false);
+  const [lpPrice, setLpPrice] = useState('');
+  const [lpBonuses, setLpBonuses] = useState('');
+  const [lpCTA, setLpCTA] = useState('Beli Sekarang');
+  const [lpStyle, setLpStyle] = useState('long-form');
+  const [lpGoal, setLpGoal] = useState('sell');
   // FlipBook Guide
   const [flipbookOpen, setFlipbookOpen] = useState(false);
   // Riset Ebook (Research Center)
@@ -735,13 +741,28 @@ ${bodyHtml}
   }, []);
 
   const handleChatDemo = useCallback(async () => {
-    const sysPrompt = docContent
-      ? `Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}". Kamu memiliki pengetahuan mendalam berdasarkan konten berikut:\n\n${docContent.slice(0, 3000)}\n\nJawab pertanyaan pengguna dengan ramah, detail, dan berbasis konten di atas. Jika ditanya hal di luar konten, jawab berdasarkan pengetahuan umum tapi tetap fokus pada topik.`
-      : `Kamu adalah AI Assistant ahli tentang "${projectTitle || projectTopik}". ${prompt.slice(0, 1000)}`;
+    const parts: string[] = [];
+    parts.push(`Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}".`);
+    if (authorName) parts.push(`Ebook ini ditulis oleh ${authorName}.`);
+    if (docContent) parts.push(`\n📖 KONTEN EBOOK:\n${docContent.slice(0, 2500)}`);
+    if (syllabusContent) parts.push(`\n🎓 STRUKTUR E-COURSE:\n${syllabusContent.slice(0, 800)}`);
+    if (quizContent) parts.push(`\n❓ KUIS & SOAL:\n${quizContent.slice(0, 600)}`);
+    if (monoContent) parts.push(`\n💰 STRATEGI MONETISASI & HARGA:\n${monoContent.slice(0, 600)}`);
+    if (mktContent) parts.push(`\n📣 MARKETING & PROMOSI:\n${mktContent.slice(0, 500)}`);
+    parts.push(`\nJawab pertanyaan pengguna dengan ramah, informatif, dan berbasis data di atas. Jika ditanya soal harga, berikan info dari strategi monetisasi. Jika ditanya soal kursus, berikan info dari silabus. Selalu fokus pada topik ebook.`);
+    if (!docContent && !syllabusContent && !monoContent) {
+      parts.length = 0;
+      parts.push(`Kamu adalah AI Assistant ahli tentang "${projectTitle || projectTopik}". ${prompt.slice(0, 1000)}`);
+    }
+    const sysPrompt = parts.join(' ');
     setChatSystemPrompt(sysPrompt);
-    setChatMessages([{ role: 'assistant', content: `Halo! Saya adalah AI Assistant untuk ebook **"${projectTitle || projectTopik}"**. Saya siap menjawab pertanyaan kamu tentang materi dalam ebook ini. Ada yang ingin kamu tanyakan? 😊` }]);
+    const dataSources = [docContent && 'konten ebook', syllabusContent && 'silabus', quizContent && 'kuis', monoContent && 'harga & monetisasi', mktContent && 'marketing kit'].filter(Boolean);
+    const greeting = dataSources.length > 0
+      ? `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**${authorName ? ` oleh ${authorName}` : ''}.\n\nSaya sudah terhubung dengan: ${dataSources.join(', ')}. Tanyakan apa saja tentang materi, harga, kursus, atau cara pemasarannya! 😊`
+      : `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**. Saya siap menjawab pertanyaan kamu tentang topik ini. Ada yang ingin kamu tanyakan? 😊`;
+    setChatMessages([{ role: 'assistant', content: greeting }]);
     setChatOpen(true);
-  }, [docContent, projectTitle, projectTopik, prompt]);
+  }, [docContent, syllabusContent, quizContent, monoContent, mktContent, projectTitle, projectTopik, prompt, authorName]);
 
   const handleSendChat = useCallback(async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -898,13 +919,16 @@ ${bodyHtml}
           title: projectTitle || projectTopik,
           topik: projectTopik,
           target: projectTarget,
+          author: authorName || undefined,
+          mockupUrl: mockupImages[0] || undefined,
+          syllabusSnippet: syllabusContent ? syllabusContent.slice(0, 500) : undefined,
           docContent: docContent.slice(0, 1500),
-          landingPageStyle: config?.style,
-          landingPageGoal: config?.goal,
-          landingPagePrice: config?.price,
-          landingPageBonuses: config?.bonuses,
-          landingPageCTA: config?.cta,
-          landingPageOutputFormat: config?.outputFormat,
+          landingPageStyle: config?.style ?? lpStyle,
+          landingPageGoal: config?.goal ?? lpGoal,
+          landingPagePrice: config?.price ?? lpPrice,
+          landingPageBonuses: config?.bonuses ?? lpBonuses,
+          landingPageCTA: config?.cta ?? lpCTA,
+          landingPageOutputFormat: config?.outputFormat ?? lpOutputFormat,
         },
         (chunk) => setLpContent(prev => prev + chunk),
         () => setLpLoading(false),
@@ -913,7 +937,7 @@ ${bodyHtml}
       setLpLoading(false);
       toast({ title: 'Gagal membuat landing page', variant: 'destructive' });
     }
-  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, authorName, mockupImages, syllabusContent, docContent, lpStyle, lpGoal, lpPrice, lpBonuses, lpCTA, lpOutputFormat, fetchSSE, toast]);
 
   const handleGenerateCoverTemplate = useCallback(async (opts?: {author?: string; colorScheme?: string; style?: string}) => {
     setCoverTplOpen(true);
@@ -1494,14 +1518,14 @@ ${bodyHtml}
                 {audiobookContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
-                onClick={() => handleGenerateLandingPage()}
+                onClick={() => lpContent ? setLpOpen(true) : setLpConfigOpen(true)}
                 className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-landing-page-main"
               >
                 <ExternalLink className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Landing Page</span>
-                  <span className="text-[10px] opacity-80">{lpContent ? '✓ Copy + HTML selesai' : 'Copy + HTML siap upload'}</span>
+                  <span className="text-[10px] opacity-80">{lpContent ? '✓ Copy + HTML selesai' : 'Konfigurasi → Generate'}</span>
                 </span>
                 {lpContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
@@ -2804,18 +2828,42 @@ ${bodyHtml}
               <Badge variant="secondary" className="ml-1 text-xs">Live · GPT-4o-mini</Badge>
             </DialogTitle>
           </DialogHeader>
-          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg px-3 py-2 flex-shrink-0 text-xs text-indigo-700 dark:text-indigo-300">
-            {docContent
-              ? <><strong>✅ Konten ebook terdeteksi!</strong> Chatbot ini menjawab berdasarkan konten ebook yang kamu generate — bukan hanya topik umum.</>
-              : <><strong>💡 Tips:</strong> Generate dokumen dulu untuk chatbot yang lebih akurat dan spesifik tentang konten ebookmu.</>
-            }
+          {/* Data sources status */}
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 border border-indigo-200 dark:border-indigo-700 rounded-lg px-3 py-2 flex-shrink-0 space-y-2">
+            <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">🧠 Data yang memberdayakan chatbot ini:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { label: 'Konten Ebook', active: !!docContent, icon: '📖' },
+                { label: 'Silabus', active: !!syllabusContent, icon: '🎓' },
+                { label: 'Kuis', active: !!quizContent, icon: '❓' },
+                { label: 'Harga & Monetisasi', active: !!monoContent, icon: '💰' },
+                { label: 'Marketing Kit', active: !!mktContent, icon: '📣' },
+              ].map(src => (
+                <span key={src.label} className={cn(
+                  'inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border font-medium',
+                  src.active
+                    ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/30 dark:border-green-700 dark:text-green-400'
+                    : 'bg-muted border-border text-muted-foreground line-through opacity-50'
+                )}>
+                  {src.icon} {src.label}
+                </span>
+              ))}
+            </div>
+            {!docContent && !syllabusContent && !monoContent && (
+              <p className="text-[10px] text-amber-600 dark:text-amber-400">💡 Generate beberapa output pipeline dulu untuk chatbot yang lebih cerdas dan spesifik!</p>
+            )}
           </div>
           {/* Suggested questions chips */}
           {chatMessages.length <= 1 && projectTopik && (
             <div className="flex-shrink-0 space-y-1.5">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium px-1">Pertanyaan Populer:</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium px-1">Pertanyaan yang bisa kamu tanya:</p>
               <div className="flex flex-wrap gap-1.5">
-                {getSuggestedQuestions(projectTopik).map((q, i) => (
+                {[
+                  ...getSuggestedQuestions(projectTopik),
+                  ...(monoContent ? ['Berapa harga ebook ini?', 'Bagaimana cara beli?'] : []),
+                  ...(syllabusContent ? ['Apa saja modul di kursus ini?'] : []),
+                  ...(quizContent ? ['Berikan saya soal latihan'] : []),
+                ].slice(0, 8).map((q, i) => (
                   <button
                     key={i}
                     onClick={() => { setChatInput(q); }}
@@ -2850,7 +2898,34 @@ ${bodyHtml}
               <div ref={chatEndRef} />
             </div>
           </ScrollArea>
-          <div className="flex gap-2 flex-shrink-0 pt-2 border-t border-border">
+          <div className="flex gap-1 flex-shrink-0 pt-1.5 border-t border-border flex-wrap">
+            <Button
+              size="sm" variant="ghost"
+              className="h-7 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => {
+                const txt = chatMessages.map(m => `${m.role === 'user' ? 'Kamu' : 'AI'}: ${m.content}`).join('\n\n');
+                navigator.clipboard.writeText(txt);
+                toast({ description: 'Percakapan disalin!' });
+              }}
+            >
+              <Copy className="h-3 w-3" /> Salin Percakapan
+            </Button>
+            <Button
+              size="sm" variant="ghost"
+              className="h-7 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => { setChatOpen(false); setTimeout(() => handleGenerateLandingPage(), 300); }}
+            >
+              <ExternalLink className="h-3 w-3" /> → Landing Page
+            </Button>
+            <Button
+              size="sm" variant="ghost"
+              className="h-7 text-[10px] text-muted-foreground hover:text-foreground gap-1"
+              onClick={() => { setChatOpen(false); setTimeout(() => { setQuizConfigOpen(true); }, 300); }}
+            >
+              <HelpCircle className="h-3 w-3" /> → Buat Kuis
+            </Button>
+          </div>
+          <div className="flex gap-2 flex-shrink-0 pt-1 border-t border-border">
             <Input
               value={chatInput}
               onChange={e => setChatInput(e.target.value)}
@@ -3384,13 +3459,91 @@ ${bodyHtml}
         </DialogContent>
       </Dialog>
 
-      {/* ── LANDING PAGE DIALOG ── */}
+      {/* ── LANDING PAGE PRE-CONFIG DIALOG ── */}
+      <Dialog open={lpConfigOpen} onOpenChange={setLpConfigOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Settings2 className="h-5 w-5 text-emerald-500" />
+              Konfigurasi Landing Page
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            {/* Data sync info */}
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-1.5">
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline Terdeteksi:</p>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  { label: 'Konten Ebook', active: !!docContent },
+                  { label: 'Silabus E-Course', active: !!syllabusContent },
+                  { label: 'Monetisasi', active: !!monoContent },
+                  { label: 'Mockup', active: mockupImages.length > 0 },
+                  { label: 'Penulis', active: !!authorName },
+                ].map(d => (
+                  <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700' : 'bg-muted border-border text-muted-foreground opacity-50 line-through')}>
+                    {d.active ? '✓' : '○'} {d.label}
+                  </span>
+                ))}
+              </div>
+              <p className="text-[10px] text-muted-foreground">Semua data aktif akan otomatis disertakan ke landing page.</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium flex items-center gap-1"><DollarSign className="h-3 w-3" /> Harga (Rp)</label>
+                <Input placeholder="Contoh: Rp 99.000" value={lpPrice} onChange={e => setLpPrice(e.target.value)} className="h-8 text-sm" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Teks Tombol CTA</label>
+                <Input placeholder="Beli Sekarang" value={lpCTA} onChange={e => setLpCTA(e.target.value)} className="h-8 text-sm" />
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Gaya Landing Page</label>
+                <select value={lpStyle} onChange={e => setLpStyle(e.target.value)} className="w-full h-8 text-xs rounded border border-border bg-background px-2">
+                  <option value="long-form">Long-Form Sales Letter</option>
+                  <option value="short">Short Copy (Ringkas)</option>
+                  <option value="vsl">VSL / Video Sales</option>
+                  <option value="webinar">Webinar Registration</option>
+                </select>
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium">Tujuan</label>
+                <select value={lpGoal} onChange={e => setLpGoal(e.target.value)} className="w-full h-8 text-xs rounded border border-border bg-background px-2">
+                  <option value="sell">Jual Langsung</option>
+                  <option value="lead">Kumpulkan Lead</option>
+                  <option value="webinar">Daftar Webinar</option>
+                  <option value="waitlist">Pre-Launch Waitlist</option>
+                </select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium">Bonus Produk (satu per baris)</label>
+              <Textarea
+                placeholder={"Contoh:\nBonus Template Canva\nBonus Video Tutorial\nBonus Konsultasi 1 Jam"}
+                value={lpBonuses}
+                onChange={e => setLpBonuses(e.target.value)}
+                rows={3}
+                className="text-sm resize-none"
+              />
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setLpConfigOpen(false)}>Batal</Button>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setLpConfigOpen(false); handleGenerateLandingPage(); }}>
+              <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Landing Page
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={lpOpen} onOpenChange={setLpOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
           <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
             <DialogTitle className="flex items-center gap-2">
               <ExternalLink className="h-5 w-5 text-emerald-500" />
               Landing Page Generator
+              {authorName && <span className="text-xs font-normal text-muted-foreground">· {authorName}</span>}
               <Badge className="ml-auto bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-0">Copy & HTML</Badge>
             </DialogTitle>
           </DialogHeader>
@@ -3492,10 +3645,10 @@ ${bodyHtml}
             )}
           </div>
           <div className="px-6 py-3 border-t flex flex-wrap items-center gap-2 shrink-0 bg-muted/30">
-            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(lpContent); toast({ description: 'Landing page copy disalin!' }); }}>
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(lpContent); toast({ description: 'Landing page copy disalin!' }); }} disabled={!lpContent}>
               <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin
             </Button>
-            <Button size="sm" variant="outline" onClick={() => { const b = new Blob([lpContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='landing-page-copy.txt'; a.click(); }}>
+            <Button size="sm" variant="outline" onClick={() => { const b = new Blob([lpContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='landing-page-copy.txt'; a.click(); }} disabled={!lpContent}>
               <Download className="h-3.5 w-3.5 mr-1.5" /> TXT
             </Button>
             {lpOutputFormat === 'html' && lpContent && (
@@ -3515,10 +3668,39 @@ ${bodyHtml}
                 </button>
               ))}
             </div>
-            <Button size="sm" className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleGenerateLandingPage()} disabled={lpLoading}>
+            <Button size="sm" variant="outline" className="ml-auto" onClick={() => setLpConfigOpen(true)}>
+              <Settings2 className="h-3.5 w-3.5 mr-1.5" /> Konfigurasi
+            </Button>
+            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleGenerateLandingPage()} disabled={lpLoading}>
               <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Ulang
             </Button>
           </div>
+          {/* Integration hints */}
+          {lpContent && !lpLoading && (
+            <div className="px-6 pb-4 shrink-0">
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2">
+                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-300">🔗 Lengkapi ekosistem landing page kamu:</p>
+                <div className="flex flex-wrap gap-2">
+                  {mockupImages.length === 0 && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => { setLpOpen(false); setTimeout(() => setMockupOpen(true), 300); }}>
+                      <ImagePlus className="h-3 w-3 mr-1" /> + Buat Mockup 3D
+                    </Button>
+                  )}
+                  {!mktContent && (
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                      onClick={() => { setLpOpen(false); setTimeout(() => { setMktOpen(true); handleGenerateMarketingKit(); }, 300); }}>
+                      <Megaphone className="h-3 w-3 mr-1" /> + Marketing Kit
+                    </Button>
+                  )}
+                  <Button size="sm" variant="outline" className="h-7 text-xs border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    onClick={() => { setLpOpen(false); setTimeout(() => handleChatDemo(), 300); }}>
+                    <Bot className="h-3 w-3 mr-1" /> + Chatbot Demo
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

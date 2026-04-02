@@ -1361,7 +1361,7 @@ Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max
   // ── LANDING PAGE GENERATOR ────────────────────────────────────────────────
   app.post("/api/generate-landing-page", isAuthenticated, async (req, res) => {
     try {
-      const { title, topik, target, landingPageStyle, landingPageGoal, landingPagePrice, landingPageBonuses, landingPageCTA, landingPageOutputFormat, docContent } = req.body;
+      const { title, topik, target, author, mockupUrl, syllabusSnippet, landingPageStyle, landingPageGoal, landingPagePrice, landingPageBonuses, landingPageCTA, landingPageOutputFormat, docContent } = req.body;
       if (!topik && !title) return res.status(400).json({ error: "Topic required" });
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -1404,11 +1404,14 @@ Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max
 Judul Ebook: ${title || topik}
 Topik: ${topik}
 Target Pembaca: ${target || 'umum'}
+Penulis/Author: ${author || 'Pakar di bidang ini'}
 Harga: ${landingPagePrice || '(belum ditentukan)'}
 Tujuan: ${goalMap[landingPageGoal || 'sell']}
 Tombol CTA: "${landingPageCTA || 'Beli Sekarang'}"
 ${bonusList ? `\nBonus Produk:\n${bonusList}` : ''}
 ${docContent ? `\nReferensi konten ebook:\n${docContent.slice(0, 1500)}` : ''}
+${syllabusSnippet ? `\nStruktur E-Course:\n${syllabusSnippet}` : ''}
+${mockupUrl ? `\nNote: Tersedia gambar mockup ebook untuk visual produk.` : ''}
 
 FORMAT OUTPUT:
 ${outputInstr[landingPageOutputFormat || 'copy']}
@@ -1440,7 +1443,7 @@ STRUKTUR WAJIB (sesuaikan dengan gaya ${landingPageStyle || 'long-form'}):
 Format: "[Kutipan] — Nama, Pekerjaan"
 
 7. TENTANG PENULIS
-Template bio yang bisa dikustomisasi
+${author ? `Nama: ${author}\nTulis bio singkat yang membangun kredibilitas ${author} sebagai ahli di bidang ${topik || title}.` : 'Template bio yang bisa dikustomisasi'}
 
 ${bonusList ? `8. SEKSI BONUS
 Tampilkan setiap bonus dengan nilai yang dirasakan\n` : ''}

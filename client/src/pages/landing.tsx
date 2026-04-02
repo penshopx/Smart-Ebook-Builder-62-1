@@ -55,7 +55,11 @@ import {
   Volume2,
   Search,
   Layers,
-  Workflow
+  Workflow,
+  ExternalLink,
+  ShieldCheck,
+  Mic,
+  ImagePlus
 } from 'lucide-react';
 
 const TESTIMONIALS = [
@@ -150,14 +154,21 @@ const FEATURES = [
 
 const ECOSYSTEM_STEPS = [
   { step: 1, icon: Book, title: 'Ebook', desc: 'Konten utama', color: 'from-blue-500 to-cyan-500', phase: 'Foundation' },
-  { step: 2, icon: Bot, title: 'Chatbot Demo', desc: 'Demo interaktif berisi konten', color: 'from-violet-500 to-purple-600', phase: 'Konversi' },
-  { step: 3, icon: GraduationCap, title: 'Silabus E-Course', desc: 'Kurikulum dari ebook', color: 'from-emerald-500 to-green-600', phase: 'Monetisasi' },
+  { step: 2, icon: Bot, title: 'Chatbot Demo', desc: 'AI dari konten ebook', color: 'from-violet-500 to-purple-600', phase: 'Konversi' },
+  { step: 3, icon: GraduationCap, title: 'Silabus E-Course', desc: 'Kurikulum 8 modul', color: 'from-emerald-500 to-green-600', phase: 'Monetisasi' },
   { step: 4, icon: Smartphone, title: 'Mini App Blueprint', desc: 'Rancangan aplikasi', color: 'from-orange-500 to-amber-500', phase: 'Produk' },
-  { step: 5, icon: ClipboardList, title: 'Quiz Generator', desc: 'Soal asesmen', color: 'from-pink-500 to-rose-500', phase: 'Engagement' },
-  { step: 6, icon: Megaphone, title: 'Marketing Kit', desc: 'Materi promosi', color: 'from-red-500 to-orange-500', phase: 'Growth' },
+  { step: 5, icon: ClipboardList, title: 'Quiz Generator', desc: 'Soal asesmen berlevel', color: 'from-pink-500 to-rose-500', phase: 'Engagement' },
+  { step: 6, icon: Megaphone, title: 'Marketing Kit', desc: '7 kanal promosi', color: 'from-red-500 to-orange-500', phase: 'Growth' },
   { step: 7, icon: Volume2, title: 'Script + TTS', desc: 'Narasi & audio', color: 'from-indigo-500 to-blue-600', phase: 'Distribusi' },
   { step: 8, icon: Image, title: 'Thumbnail AI', desc: 'Cover DALL-E 3', color: 'from-teal-500 to-cyan-600', phase: 'Visual' },
   { step: 9, icon: DollarSign, title: 'Monetisasi', desc: 'Strategi revenue', color: 'from-amber-500 to-yellow-500', phase: 'Revenue' },
+  { step: 10, icon: ShieldCheck, title: 'AI Quality Review', desc: 'Cek kualitas otomatis', color: 'from-lime-500 to-green-500', phase: 'QA' },
+  { step: 11, icon: Mic, title: 'Podcast Script', desc: 'Script episode podcast', color: 'from-purple-500 to-pink-500', phase: 'Audio' },
+  { step: 12, icon: Book, title: 'Audiobook Script', desc: 'Narasi solo profesional', color: 'from-rose-500 to-red-600', phase: 'Audio' },
+  { step: 13, icon: ExternalLink, title: 'Landing Page', desc: 'Copy + HTML siap upload', color: 'from-green-500 to-emerald-600', phase: 'Jual' },
+  { step: 14, icon: Palette, title: 'Cover Template', desc: 'HTML siap cetak', color: 'from-cyan-500 to-teal-600', phase: 'Visual' },
+  { step: 15, icon: Globe, title: 'FlipBook Guide', desc: 'Panduan interaktif', color: 'from-sky-500 to-blue-600', phase: 'Distribusi' },
+  { step: 16, icon: ImagePlus, title: 'Mockup 3D', desc: 'Foto produk DALL-E 3', color: 'from-fuchsia-500 to-purple-600', phase: 'Visual' },
 ];
 
 const FAQ_DATA = [
@@ -166,8 +177,8 @@ const FAQ_DATA = [
     answer: "Ya! Tool ini dirancang untuk semua level. Interface yang intuitif, pipeline workflow yang terstruktur, dan panduan langkah demi langkah memudahkan siapa saja untuk mulai membuat ekosistem konten profesional, bahkan tanpa pengalaman sebelumnya."
   },
   {
-    question: "Apa itu Ekosistem 9-Langkah?",
-    answer: "Ekosistem 9-Langkah adalah pipeline produksi konten lengkap yang membantu Anda mengubah satu ebook menjadi 9 output berbeda: Chatbot Demo interaktif, Silabus E-Course, Mini App Blueprint, Kuis Asesmen, Marketing Kit, Script + TTS audio, Thumbnail AI (DALL-E 3), Strategi Monetisasi, dan AI Quality Review. Satu sumber, sembilan produk!"
+    question: "Apa itu Pipeline 16-Output?",
+    answer: "Pipeline 16-Output adalah ekosistem produksi konten lengkap yang mengubah satu ebook menjadi 16 produk berbeda: Chatbot Demo AI, Silabus E-Course 8 Modul, Mini App Blueprint, Quiz Generator berlevel, Marketing Kit 7 kanal (Instagram, TikTok, WhatsApp, Tokopedia, dll), Script + TTS Audio, Thumbnail AI (DALL-E 3), Strategi Monetisasi, AI Quality Review, Podcast Script, Audiobook Script, Landing Page Copy & HTML, Cover Template HTML, FlipBook Guide, Riset Topik, dan Mockup 3D DALL-E 3. Satu sumber, 16 produk profesional!"
   },
   {
     question: "Bagaimana cara kerja generator prompt?",
@@ -183,7 +194,7 @@ const FAQ_DATA = [
   },
   {
     question: "Berapa banyak mode generasi yang tersedia?",
-    answer: "Tersedia 13 mode generasi lengkap: Brainstorm, Big Idea, Outline, Draft Bab, Video Script, E-Course Builder, Document Generator, GPT Builder, Marketing Kit, Mini App Builder, Quiz Maker, Extend Text, dan Prompt Pack. Ditambah Ekosistem 9-Langkah untuk produksi konten menyeluruh."
+    answer: "Tersedia 16 mode generasi lengkap: Brainstorm, Big Idea, Outline, Draft Bab, Video Script, E-Course Builder, Document Generator, GPT Builder, Marketing Kit, Mini App Builder, Quiz Maker, Extend Text, Prompt Pack, Podcast Script, Audiobook Script, dan Riset Topik. Ditambah Pipeline 16-Output untuk ekosistem konten menyeluruh."
   },
   {
     question: "Bagaimana dengan Mini App Builder dan Quiz Maker?",
@@ -224,8 +235,8 @@ function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] 
 function ComparisonTable() {
   const features = [
     { name: "Prompt per hari", free: "5", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Mode generasi", free: "3", pro: "13", enterprise: "13 + Custom" },
-    { name: "Ekosistem 9-Langkah", free: false, pro: true, enterprise: true },
+    { name: "Mode generasi", free: "3", pro: "16", enterprise: "16 + Custom" },
+    { name: "Pipeline 16-Output Penuh", free: false, pro: true, enterprise: true },
     { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
     { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
     { name: "Industry themes", free: "3", pro: "24", enterprise: "24 + Custom" },
@@ -364,7 +375,7 @@ export default function Landing() {
 
               <Badge variant="secondary" className="mb-6 px-4 py-2">
                 <Sparkles className="h-3 w-3 mr-2" />
-                AI-Powered Prompt Generator · 13 Mode · Ekosistem 9-Langkah
+                AI-Powered Prompt Generator · 16 Mode · Pipeline 16-Output
               </Badge>
               
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
@@ -433,7 +444,7 @@ export default function Landing() {
           </div>
         </section>
 
-        {/* NEW: Ekosistem 9-Langkah Pipeline */}
+        {/* Pipeline 16-Output */}
         <section className="py-20 border-b">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
@@ -442,15 +453,15 @@ export default function Landing() {
                 Ekosistem Konten
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Pipeline 9-Langkah — Satu Sumber, Sembilan Produk
+                Pipeline 16-Output — Satu Ebook, Enam Belas Produk
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Setelah membuat ebook, lanjutkan pipeline untuk membangun ekosistem konten lengkap 
-                yang menghasilkan berbagai revenue stream secara otomatis.
+                Dari satu ebook, bangun ekosistem konten penuh: chatbot AI, kursus, podcast, 
+                landing page, mockup 3D, marketing kit, dan banyak lagi — semua terintegrasi.
               </p>
             </div>
 
-            {/* Central Ebook → 9 outputs visual */}
+            {/* Central Ebook → 16 outputs visual */}
             <div className="max-w-5xl mx-auto">
               {/* Top row label */}
               <div className="flex items-center justify-center mb-6">
@@ -458,11 +469,11 @@ export default function Landing() {
                   <Book className="h-5 w-5" />
                   Ebook Anda (Sumber Utama)
                   <ArrowRight className="h-5 w-5" />
-                  9 Output Otomatis
+                  16 Output Otomatis
                 </div>
               </div>
 
-              <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-9 gap-3">
+              <div className="grid grid-cols-4 md:grid-cols-8 lg:grid-cols-8 gap-3">
                 {ECOSYSTEM_STEPS.filter(s => s.step > 1).map((step, idx) => (
                   <div key={idx} className="group text-center" data-testid={`card-ecosystem-step-${step.step}`}>
                     <div className={`inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br ${step.color} text-white mb-3 group-hover:scale-110 transition-transform shadow-md mx-auto`}>
@@ -524,10 +535,10 @@ export default function Landing() {
                   Dengan Ebook Builder Pro
                 </h3>
                 {[
-                  "Generate prompt lengkap dalam hitungan detik, 13 mode pilihan",
+                  "Generate prompt lengkap dalam hitungan detik, 16 mode pilihan",
                   "Pipeline workflow terstruktur dari brainstorm hingga ekosistem",
                   "Prompt profesional dioptimasi per industri — hasil konsisten",
-                  "Satu ebook → 9 output: chatbot, kursus, app, kuis, marketing...",
+                  "Satu ebook → 16 output: chatbot AI, kursus, podcast, landing page, mockup 3D...",
                   "Strategi monetisasi lengkap built-in untuk setiap output"
                 ].map((solution, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
@@ -579,7 +590,7 @@ export default function Landing() {
                 <Layers className="h-3 w-3 mr-2" />
                 Fitur Lengkap
               </Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">13 Mode Generasi Prompt</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">16 Mode Generasi Prompt</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
                 Dari brainstorming ide hingga blueprint mini app dan kuis asesmen — semua yang Anda butuhkan 
                 untuk membangun ekosistem konten profesional dalam satu platform.
@@ -778,15 +789,19 @@ export default function Landing() {
                   <ul className="space-y-3">
                     {[
                       'Unlimited prompt',
-                      'Semua 13 mode generasi',
-                      'Ekosistem 9-Langkah penuh',
+                      'Semua 16 mode generasi',
+                      'Pipeline 16-Output penuh',
+                      'Chatbot Demo AI terintegrasi',
+                      'Mockup 3D DALL-E 3',
+                      'Landing Page Copy & HTML',
+                      'Podcast & Audiobook Script',
+                      'Marketing Kit 7 Kanal',
                       'Unlimited proyek',
                       'Export TXT/PDF/DOCX/MD/HTML',
                       '24 industry themes',
                       'AI Image via DALL-E 3',
                       'Text-to-Speech (TTS)',
                       'Mini App Blueprint + deep-link',
-                      'AI Character modes',
                       'Priority support',
                     ].map((feature) => (
                       <li key={feature} className="flex items-center gap-2">
@@ -911,7 +926,7 @@ export default function Landing() {
                 Siap Membangun Ekosistem Konten Anda?
               </h2>
               <p className="text-xl text-muted-foreground mb-4">
-                Dari satu ebook → 9 output konten profesional. Chatbot, kursus, mini app, kuis, marketing kit, TTS audio, thumbnail AI, dan strategi monetisasi — semua dalam satu pipeline.
+                Dari satu ebook → 16 output konten profesional. Chatbot AI, kursus, podcast, audiobook, landing page, mockup 3D, marketing kit 7 kanal, dan banyak lagi — semua dalam satu pipeline terintegrasi.
               </p>
               <p className="text-base text-muted-foreground mb-8">
                 Bergabung dengan 500+ content creator yang sudah menggunakan Ebook Builder Pro.
@@ -958,14 +973,14 @@ export default function Landing() {
                 <span className="font-bold">Ebook Builder Pro</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered prompt generator untuk membangun ekosistem konten profesional dari satu ebook — 9 output, 13 mode, 24 industri.
+                AI-powered prompt generator untuk membangun ekosistem konten profesional dari satu ebook — 16 output, 16 mode, 24 industri.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Produk</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="hover:text-foreground cursor-pointer">13 Mode Generasi</li>
-                <li className="hover:text-foreground cursor-pointer">Ekosistem 9-Langkah</li>
+                <li className="hover:text-foreground cursor-pointer">16 Mode Generasi</li>
+                <li className="hover:text-foreground cursor-pointer">Pipeline 16-Output</li>
                 <li className="hover:text-foreground cursor-pointer">Pricing</li>
                 <li className="hover:text-foreground cursor-pointer">FAQ</li>
               </ul>

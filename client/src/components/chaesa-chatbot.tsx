@@ -15,21 +15,21 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "Apa itu Ekosistem 9-Langkah?",
-  "Apa saja 13 mode generasi yang tersedia?",
-  "Bagaimana cara pakai Mini App Builder?",
-  "Quiz Maker bisa buat soal level apa saja?",
-  "Bagaimana alur pipeline dari ebook ke ekosistem?",
-  "Format export apa yang didukung?",
-  "Tips memulai ebook untuk pemula?",
-  "Apa perbedaan GPT Builder dengan Chatbot Demo?",
+  "Apa itu Pipeline 16-Output?",
+  "Apa saja 16 mode generasi yang tersedia?",
+  "Bagaimana cara pakai Mockup 3D DALL-E 3?",
+  "Apa itu Landing Page Generator dan fiturnya?",
+  "Bagaimana Chatbot Demo terintegrasi dengan pipeline?",
+  "Bagaimana Riset Topik bekerja?",
+  "Apa perbedaan Podcast Script vs Audiobook Script?",
+  "Tips strategi monetisasi ebook di Indonesia?",
 ];
 
 const FEATURE_CHIPS = [
-  { label: "Pipeline", icon: Workflow, question: "Jelaskan pipeline 9-langkah secara detail" },
-  { label: "Mini App", icon: Smartphone, question: "Bagaimana cara menggunakan Mini App Builder dan deep-link ke Lovable/Bolt?" },
-  { label: "Quiz Maker", icon: ClipboardList, question: "Bagaimana Quiz Maker bekerja dan apa pilihan level-nya?" },
-  { label: "Chatbot Demo", icon: Bot, question: "Apa itu Chatbot Demo dan bagaimana cara menggunakannya?" },
+  { label: "Pipeline 16", icon: Workflow, question: "Jelaskan Pipeline 16-Output secara detail — semua output dari satu ebook" },
+  { label: "Mockup 3D", icon: BookOpen, question: "Bagaimana fitur Mockup 3D DALL-E 3 bekerja dan bagaimana menggunakannya?" },
+  { label: "Landing Page", icon: Bot, question: "Jelaskan fitur Landing Page Generator dan integrasi dengan data pipeline" },
+  { label: "Chatbot AI", icon: ClipboardList, question: "Bagaimana Chatbot Demo menggunakan data silabus, monetisasi, dan marketing kit?" },
 ];
 
 export function ChaesaChatbot() {
@@ -40,10 +40,10 @@ export function ChaesaChatbot() {
       content: `Halo! Saya Chaesa, asisten Ebook Builder Pro.
 
 Saya bisa membantu Anda:
-- Memahami 13 mode generasi prompt yang tersedia
-- Memandu pipeline Ekosistem 9-Langkah (ebook → chatbot, kursus, mini app, kuis, marketing, audio, thumbnail, monetisasi)
-- Menjelaskan fitur baru: Mini App Builder, Quiz Maker, Chatbot Demo
-- Tips membuat ebook dan ekosistem konten yang menghasilkan
+- Memahami 16 mode generasi prompt yang tersedia
+- Memandu Pipeline 16-Output: ebook → chatbot AI, kursus, podcast, audiobook, landing page, mockup 3D DALL-E 3, marketing kit 7 kanal, dan banyak lagi
+- Menjelaskan fitur terintegrasi: Chatbot Demo yang terhubung ke semua data pipeline, Landing Page dengan pre-config, Riset Topik, dan Mockup 3D
+- Tips strategi monetisasi ebook di Indonesia (Tokopedia, Shopee, WhatsApp, TikTok)
 
 Silakan tanyakan apa saja!`
     }
