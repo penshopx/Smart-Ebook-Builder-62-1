@@ -90,6 +90,20 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
+## 6 New Feature Expansion (Sosmed + Strategi+ + Iklan Rows)
+
+### Sosmed Row — Expanded to 4 buttons
+- **IG Caption Pack** (`/api/generate-ig-caption`, gpt-4o) — Generate 5/7/10 caption Instagram per topik: per caption ada hook stop-scroll, body, CTA spesifik, hashtag set 15-20, best time to post. Dialog: tone selector (casual/profesional/motivational/edukasi/humor), jumlah toggle, brand name input, generate button + copy all.
+- **Reels/TikTok Hook Generator** (`/api/generate-reel-hook`, gpt-4o) — Generate 10/15/20 hook video Reels & TikTok, dikelompokkan per 5 pola: Pattern Interrupt, Curiosity Gap, Controversy, Story, Data/Angka. Per hook: visual opening 0-1s, dialog 1-3s, text overlay, audio vibe, potensi viral ⭐1-5. Bonus caption+hashtag untuk 1 reel terbaik.
+
+### Strategi+ Row — Expanded to 4 buttons
+- **Pricing Ladder & Offer Stack** (`/api/generate-pricing-ladder`, gpt-4o) — Value ladder 5 tier lengkap: Lead Magnet (gratis) → Tripwire (47-97k) → Core Product → Upsell OTO → Continuity membership. Per tier: nama, harga, deliverables, positioning statement, urgency trigger. Revenue projection table 100 buyers/bulan + copywriting per tier + tips implementasi Indonesia.
+- **Launch Checklist D-30** (`/api/generate-launch-checklist`, gpt-4o) — Timeline launch 30 hari: D-30 s/d D-21 (persiapan), D-20 s/d D-8 (warm-up), D-7 s/d D-2 (countdown harian), D-1 (final prep), D-0 (jam per jam launch day), D+1 s/d D+7 (post-launch). Bonus: 3 template WA broadcast siap kirim + 5 stories sequence IG + KPI metrics. Channel selector: WA+IG, WA+Email, Semua Platform.
+
+### Iklan Row — Expanded to 5 buttons
+- **TikTok Ads Script** (`/api/generate-tiktok-ads`, gpt-4o) — 3 variasi script video ads TikTok (15s/30s/60s): Pain Angle + Story Angle + Social Proof Angle. Per script: Hook 0-3s (visual + dialog + text overlay), Problem, Solution+Proof, CTA. Plus musik, hashtag TikTok 10, budget suggestion, targeting tips, A/B test plan.
+- **Google Search Ads RSA** (`/api/generate-google-ads`, gpt-4o) — Responsive Search Ads lengkap: keyword strategy (primary+secondary+negative), 15 headlines ≤30 karakter (3 kelompok: Brand/Benefit/CTA), 4 descriptions ≤90 karakter, sitelink extensions, callout extensions, structured snippets, bidding strategy, landing page optimization checklist 10 poin.
+
 ## Export Proteksi & Publish / Baca Online Features
 
 ### New "Publish:" Row (added between Ebook+ and Distribusi rows)

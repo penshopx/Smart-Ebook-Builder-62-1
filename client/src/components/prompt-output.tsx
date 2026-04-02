@@ -307,6 +307,41 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [ebPublishHtml, setEbPublishHtml] = useState('');
   const [ebPublishTheme, setEbPublishTheme] = useState<'light' | 'dark'>('light');
   // ===== END EXPORT PROTEKSI & PUBLISH =====
+  // ===== SOSMED EXPANSION: IG Caption + Reel Hook =====
+  const [igCaptionOpen, setIgCaptionOpen] = useState(false);
+  const [igCaptionContent, setIgCaptionContent] = useState('');
+  const [igCaptionLoading, setIgCaptionLoading] = useState(false);
+  const [igCaptionTone, setIgCaptionTone] = useState('casual');
+  const [igCaptionJumlah, setIgCaptionJumlah] = useState('7');
+  const [igCaptionBrand, setIgCaptionBrand] = useState('');
+  const [reelHookOpen, setReelHookOpen] = useState(false);
+  const [reelHookContent, setReelHookContent] = useState('');
+  const [reelHookLoading, setReelHookLoading] = useState(false);
+  const [reelHookJumlah, setReelHookJumlah] = useState('15');
+  // ===== STRATEGI+ EXPANSION: Pricing Ladder + Launch Checklist =====
+  const [pricingLadderOpen, setPricingLadderOpen] = useState(false);
+  const [pricingLadderContent, setPricingLadderContent] = useState('');
+  const [pricingLadderLoading, setPricingLadderLoading] = useState(false);
+  const [pricingCorePrice, setPricingCorePrice] = useState('');
+  const [launchCheckOpen, setLaunchCheckOpen] = useState(false);
+  const [launchCheckContent, setLaunchCheckContent] = useState('');
+  const [launchCheckLoading, setLaunchCheckLoading] = useState(false);
+  const [launchChannels, setLaunchChannels] = useState('WhatsApp, Instagram');
+  const [launchHarga, setLaunchHarga] = useState('');
+  const [launchTanggal, setLaunchTanggal] = useState('');
+  // ===== IKLAN EXPANSION: TikTok Ads + Google Ads =====
+  const [tikTokAdsOpen, setTikTokAdsOpen] = useState(false);
+  const [tikTokAdsContent, setTikTokAdsContent] = useState('');
+  const [tikTokAdsLoading, setTikTokAdsLoading] = useState(false);
+  const [tikTokMasalah, setTikTokMasalah] = useState('');
+  const [tikTokSolusi, setTikTokSolusi] = useState('');
+  const [tikTokCta, setTikTokCta] = useState('');
+  const [tikTokDurasi, setTikTokDurasi] = useState('30');
+  const [googleAdsOpen, setGoogleAdsOpen] = useState(false);
+  const [googleAdsContent, setGoogleAdsContent] = useState('');
+  const [googleAdsLoading, setGoogleAdsLoading] = useState(false);
+  const [googleKeywords, setGoogleKeywords] = useState('');
+  const [googleBenefit, setGoogleBenefit] = useState('');
   // LP Section Kit
   const [lpSectionOpen, setLpSectionOpen] = useState(false);
   const [lpSectionContent, setLpSectionContent] = useState('');
@@ -1341,6 +1376,97 @@ ${bodyHtml}
     setEbPublishHtml(html);
   }, [chapters, projectTitle, projectTopik, ebOwnerName, ebPublishTheme]);
   // ===== END PUBLISH HANDLER =====
+
+  // ===== SOSMED HANDLERS =====
+  const handleIgCaption = useCallback(async () => {
+    setIgCaptionOpen(true);
+    setIgCaptionContent('');
+    setIgCaptionLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-ig-caption', {
+        topik: projectTopik, judul: projectTitle,
+        tone: igCaptionTone, jumlah: igCaptionJumlah, brand: igCaptionBrand,
+      });
+      const data = await res.json();
+      setIgCaptionContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate IG Caption Pack', variant: 'destructive' }); }
+    finally { setIgCaptionLoading(false); }
+  }, [projectTopik, projectTitle, igCaptionTone, igCaptionJumlah, igCaptionBrand, toast]);
+
+  const handleReelHook = useCallback(async () => {
+    setReelHookOpen(true);
+    setReelHookContent('');
+    setReelHookLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-reel-hook', {
+        topik: projectTopik, judul: projectTitle, jumlahHook: reelHookJumlah,
+      });
+      const data = await res.json();
+      setReelHookContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate Reels/TikTok Hook', variant: 'destructive' }); }
+    finally { setReelHookLoading(false); }
+  }, [projectTopik, projectTitle, reelHookJumlah, toast]);
+
+  // ===== STRATEGI+ HANDLERS =====
+  const handlePricingLadder = useCallback(async () => {
+    setPricingLadderOpen(true);
+    setPricingLadderContent('');
+    setPricingLadderLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-pricing-ladder', {
+        topik: projectTopik, judul: projectTitle, corePrice: pricingCorePrice,
+      });
+      const data = await res.json();
+      setPricingLadderContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate Pricing Ladder', variant: 'destructive' }); }
+    finally { setPricingLadderLoading(false); }
+  }, [projectTopik, projectTitle, pricingCorePrice, toast]);
+
+  const handleLaunchChecklist = useCallback(async () => {
+    setLaunchCheckOpen(true);
+    setLaunchCheckContent('');
+    setLaunchCheckLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-launch-checklist', {
+        topik: projectTopik, judul: projectTitle,
+        channels: launchChannels, hargaLaunch: launchHarga, tanggalLaunch: launchTanggal,
+      });
+      const data = await res.json();
+      setLaunchCheckContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate Launch Checklist', variant: 'destructive' }); }
+    finally { setLaunchCheckLoading(false); }
+  }, [projectTopik, projectTitle, launchChannels, launchHarga, launchTanggal, toast]);
+
+  // ===== IKLAN HANDLERS =====
+  const handleTikTokAds = useCallback(async () => {
+    setTikTokAdsOpen(true);
+    setTikTokAdsContent('');
+    setTikTokAdsLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-tiktok-ads', {
+        topik: projectTopik, judul: projectTitle,
+        masalah: tikTokMasalah, solusi: tikTokSolusi, cta: tikTokCta, durasi: tikTokDurasi,
+      });
+      const data = await res.json();
+      setTikTokAdsContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate TikTok Ads Script', variant: 'destructive' }); }
+    finally { setTikTokAdsLoading(false); }
+  }, [projectTopik, projectTitle, tikTokMasalah, tikTokSolusi, tikTokCta, tikTokDurasi, toast]);
+
+  const handleGoogleAds = useCallback(async () => {
+    setGoogleAdsOpen(true);
+    setGoogleAdsContent('');
+    setGoogleAdsLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-google-ads', {
+        topik: projectTopik, judul: projectTitle,
+        keywords: googleKeywords, benefit: googleBenefit,
+      });
+      const data = await res.json();
+      setGoogleAdsContent(data.content || '');
+    } catch { toast({ title: 'Gagal generate Google Search Ads', variant: 'destructive' }); }
+    finally { setGoogleAdsLoading(false); }
+  }, [projectTopik, projectTitle, googleKeywords, googleBenefit, toast]);
 
   const handleGenerateEbTemplate = useCallback(async () => {
     setEbTemplateOpen(true);
@@ -3208,7 +3334,7 @@ ${bodyHtml}
               {/* ===== END DISTRIBUSI ROW ===== */}
 
               {/* ===== SOSMED ROW (Edukazo-inspired) ===== */}
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-16">Sosmed:</div>
                 <Button
                   onClick={() => setSocialPilarOpen(true)}
@@ -3227,6 +3353,24 @@ ${bodyHtml}
                 >
                   {threadLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🧵</span>}
                   Thread FB/X<span className="ml-1 text-[7px] opacity-40 font-mono">·Storytelling</span>
+                </Button>
+                <Button
+                  onClick={() => setIgCaptionOpen(true)}
+                  disabled={igCaptionLoading}
+                  className="flex-1 bg-gradient-to-r from-fuchsia-600 to-pink-600 hover:from-fuchsia-700 hover:to-pink-700 text-white text-xs h-8"
+                  data-testid="button-ig-caption"
+                >
+                  {igCaptionLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">📸</span>}
+                  IG Caption Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={() => setReelHookOpen(true)}
+                  disabled={reelHookLoading}
+                  className="flex-1 bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white text-xs h-8"
+                  data-testid="button-reel-hook"
+                >
+                  {reelHookLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🎬</span>}
+                  Reels/TikTok Hook<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
               </div>
               {/* ===== END SOSMED ROW ===== */}
@@ -3256,7 +3400,7 @@ ${bodyHtml}
                 </div>
                 <span className="text-[9px] text-muted-foreground opacity-50 font-mono ml-1">·4o</span>
               </div>
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-14 shrink-0">Strategi+:</div>
                 <Button
                   onClick={handleGenerateFunnelBlueprint}
@@ -3274,8 +3418,26 @@ ${bodyHtml}
                   <span className="mr-1.5 text-sm leading-none">⚡</span>
                   Headline Power Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
+                <Button
+                  onClick={() => setPricingLadderOpen(true)}
+                  disabled={pricingLadderLoading}
+                  className="flex-1 bg-gradient-to-r from-emerald-700 to-green-700 hover:from-emerald-800 hover:to-green-800 text-white text-xs h-8"
+                  data-testid="button-pricing-ladder"
+                >
+                  {pricingLadderLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">💲</span>}
+                  Pricing Ladder<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={() => setLaunchCheckOpen(true)}
+                  disabled={launchCheckLoading}
+                  className="flex-1 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-800 hover:to-amber-800 text-white text-xs h-8"
+                  data-testid="button-launch-checklist"
+                >
+                  {launchCheckLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🚀</span>}
+                  Launch Checklist<span className="ml-1 text-[7px] opacity-40 font-mono">·D-30</span>
+                </Button>
               </div>
-              <div className="flex items-center gap-2 pt-1">
+              <div className="flex items-center gap-2 pt-1 flex-wrap">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Iklan:</div>
                 <Button
                   onClick={handleGenerateMetaAds}
@@ -3300,6 +3462,24 @@ ${bodyHtml}
                 >
                   <span className="mr-1.5 text-sm leading-none">⏳</span>
                   Scarcity Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={() => setTikTokAdsOpen(true)}
+                  disabled={tikTokAdsLoading}
+                  className="flex-1 bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white text-xs h-8"
+                  data-testid="button-tiktok-ads"
+                >
+                  {tikTokAdsLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🎵</span>}
+                  TikTok Ads Script<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={() => setGoogleAdsOpen(true)}
+                  disabled={googleAdsLoading}
+                  className="flex-1 bg-gradient-to-r from-sky-600 to-blue-600 hover:from-sky-700 hover:to-blue-700 text-white text-xs h-8"
+                  data-testid="button-google-ads"
+                >
+                  {googleAdsLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🔍</span>}
+                  Google Search Ads<span className="ml-1 text-[7px] opacity-40 font-mono">·RSA</span>
                 </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
@@ -6457,6 +6637,305 @@ ${bodyHtml}
       </Dialog>
 
       {/* ===== END PROTEKSI & PUBLISH DIALOGS ===== */}
+
+      {/* ===== 6 NEW FEATURE DIALOGS ===== */}
+
+      {/* IG Caption Pack Dialog */}
+      <Dialog open={igCaptionOpen} onOpenChange={setIgCaptionOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">📸</span>
+              IG Caption Pack — Instagram Content Generator
+            </DialogTitle>
+            <DialogDescription className="text-xs">Generate {igCaptionJumlah} caption Instagram siap posting lengkap dengan hook, body, CTA, dan hashtag set.</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2 flex-wrap shrink-0">
+            <div className="flex items-center gap-1.5">
+              <label className="text-xs text-muted-foreground">Tone:</label>
+              {['casual', 'profesional', 'motivational', 'edukasi', 'humor'].map(t => (
+                <button key={t} onClick={() => setIgCaptionTone(t)}
+                  className={`text-[10px] px-2 py-0.5 rounded border transition-all ${igCaptionTone === t ? 'bg-fuchsia-600 text-white border-fuchsia-600' : 'border-border hover:bg-muted/40'}`}>
+                  {t}
+                </button>
+              ))}
+            </div>
+            <div className="flex items-center gap-1.5 ml-auto">
+              <label className="text-xs text-muted-foreground">Jumlah:</label>
+              {['5','7','10'].map(n => (
+                <button key={n} onClick={() => setIgCaptionJumlah(n)}
+                  className={`text-[10px] px-2 py-0.5 rounded border transition-all ${igCaptionJumlah === n ? 'bg-fuchsia-600 text-white border-fuchsia-600' : 'border-border hover:bg-muted/40'}`}>
+                  {n} caption
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="flex gap-2 shrink-0">
+            <input className="border rounded px-2 py-1 text-xs flex-1" placeholder="Nama brand/akun IG (opsional)"
+              value={igCaptionBrand} onChange={e => setIgCaptionBrand(e.target.value)} />
+            <Button onClick={handleIgCaption} disabled={igCaptionLoading} size="sm"
+              className="bg-gradient-to-r from-fuchsia-600 to-pink-600 text-white text-xs">
+              {igCaptionLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">📸</span>}
+              Generate {igCaptionJumlah} Caption
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {igCaptionLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating {igCaptionJumlah} caption Instagram...</span></div>
+            ) : igCaptionContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{igCaptionContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(igCaptionContent); toast({ title: '✅ Semua caption disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat caption pack Instagram</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reels/TikTok Hook Generator Dialog */}
+      <Dialog open={reelHookOpen} onOpenChange={setReelHookOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🎬</span>
+              Reels / TikTok Hook Generator — Stop Scroll Formula
+            </DialogTitle>
+            <DialogDescription className="text-xs">Generate {reelHookJumlah} hook video dengan 5 pola viral. Setiap hook lengkap dengan visual opening, dialog, text overlay, dan audio vibe.</DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center gap-2 shrink-0 flex-wrap">
+            <label className="text-xs text-muted-foreground">Jumlah Hook:</label>
+            {['10','15','20'].map(n => (
+              <button key={n} onClick={() => setReelHookJumlah(n)}
+                className={`text-[10px] px-2 py-0.5 rounded border transition-all ${reelHookJumlah === n ? 'bg-violet-600 text-white border-violet-600' : 'border-border hover:bg-muted/40'}`}>
+                {n} hooks
+              </button>
+            ))}
+            <Button onClick={handleReelHook} disabled={reelHookLoading} size="sm" className="ml-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white text-xs">
+              {reelHookLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">🎬</span>}
+              Generate {reelHookJumlah} Hooks
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {reelHookLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating {reelHookJumlah} hook video...</span></div>
+            ) : reelHookContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{reelHookContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(reelHookContent); toast({ title: '✅ Semua hook disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat hook video Reels/TikTok</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Pricing Ladder Dialog */}
+      <Dialog open={pricingLadderOpen} onOpenChange={setPricingLadderOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">💲</span>
+              Pricing Ladder & Offer Stack — Value Ladder 5 Tier
+            </DialogTitle>
+            <DialogDescription className="text-xs">Rancang struktur harga dari Lead Magnet → Tripwire → Core → Upsell → Continuity lengkap dengan copywriting dan revenue projection.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 items-end shrink-0 flex-wrap">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Harga Core Product (opsional)</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Contoh: Rp 297.000"
+                value={pricingCorePrice} onChange={e => setPricingCorePrice(e.target.value)} data-testid="input-pricing-core" />
+            </div>
+            <Button onClick={handlePricingLadder} disabled={pricingLadderLoading} size="sm"
+              className="bg-gradient-to-r from-emerald-700 to-green-700 text-white text-xs shrink-0">
+              {pricingLadderLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">💲</span>}
+              Generate Pricing Ladder
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {pricingLadderLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Merancang struktur harga 5 tier...</span></div>
+            ) : pricingLadderContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{pricingLadderContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(pricingLadderContent); toast({ title: '✅ Pricing Ladder disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat pricing ladder 5 tier</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Launch Checklist D-30 Dialog */}
+      <Dialog open={launchCheckOpen} onOpenChange={setLaunchCheckOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🚀</span>
+              Launch Checklist D-30 — Timeline & Broadcast Template
+            </DialogTitle>
+            <DialogDescription className="text-xs">Timeline launch 30 hari dari persiapan hingga post-launch. Termasuk template WA broadcast siap kirim dan caption IG Stories launch week.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 items-end flex-wrap shrink-0">
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Channel</label>
+              <div className="flex gap-1">
+                {['WhatsApp, Instagram','WhatsApp, Email','Semua Platform'].map(ch => (
+                  <button key={ch} onClick={() => setLaunchChannels(ch)}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-all ${launchChannels === ch ? 'bg-orange-600 text-white border-orange-600' : 'border-border hover:bg-muted/40'}`}>
+                    {ch}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Harga Launch</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Early bird Rp X..."
+                value={launchHarga} onChange={e => setLaunchHarga(e.target.value)} data-testid="input-launch-harga" />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Tanggal Launch</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Contoh: 1 Mei 2026"
+                value={launchTanggal} onChange={e => setLaunchTanggal(e.target.value)} data-testid="input-launch-tanggal" />
+            </div>
+            <Button onClick={handleLaunchChecklist} disabled={launchCheckLoading} size="sm"
+              className="bg-gradient-to-r from-orange-700 to-amber-700 text-white text-xs shrink-0">
+              {launchCheckLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">🚀</span>}
+              Generate Timeline
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {launchCheckLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating timeline launch 30 hari...</span></div>
+            ) : launchCheckContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{launchCheckContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(launchCheckContent); toast({ title: '✅ Launch Checklist disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat launch timeline 30 hari</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* TikTok Ads Script Dialog */}
+      <Dialog open={tikTokAdsOpen} onOpenChange={setTikTokAdsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🎵</span>
+              TikTok Ads Script — 3 Angle Video Ad Script
+            </DialogTitle>
+            <DialogDescription className="text-xs">Script video ads TikTok 3 angle berbeda (Pain / Story / Social Proof) lengkap dengan visual direction, dialog, text overlay, hashtag, dan tips targeting.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 items-end flex-wrap shrink-0">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Masalah Target</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Masalah yang dialami audience..."
+                value={tikTokMasalah} onChange={e => setTikTokMasalah(e.target.value)} data-testid="input-tiktok-masalah" />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">CTA</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Klik link di bio sekarang!"
+                value={tikTokCta} onChange={e => setTikTokCta(e.target.value)} data-testid="input-tiktok-cta" />
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Durasi</label>
+              <div className="flex gap-1">
+                {['15','30','60'].map(d => (
+                  <button key={d} onClick={() => setTikTokDurasi(d)}
+                    className={`text-[10px] px-2 py-0.5 rounded border transition-all ${tikTokDurasi === d ? 'bg-slate-700 text-white border-slate-700' : 'border-border hover:bg-muted/40'}`}>
+                    {d}s
+                  </button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleTikTokAds} disabled={tikTokAdsLoading} size="sm"
+              className="bg-gradient-to-r from-slate-700 to-gray-800 text-white text-xs shrink-0">
+              {tikTokAdsLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">🎵</span>}
+              Generate 3 Script
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {tikTokAdsLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating 3 script TikTok Ads ({tikTokDurasi} detik)...</span></div>
+            ) : tikTokAdsContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{tikTokAdsContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(tikTokAdsContent); toast({ title: '✅ TikTok Ads Script disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat TikTok Ads Script</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Google Search Ads RSA Dialog */}
+      <Dialog open={googleAdsOpen} onOpenChange={setGoogleAdsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🔍</span>
+              Google Search Ads RSA — Responsive Search Ads Lengkap
+            </DialogTitle>
+            <DialogDescription className="text-xs">15 Headline + 4 Description RSA siap pakai, keyword strategy, negative keywords, ad extensions, dan landing page optimization checklist.</DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 items-end flex-wrap shrink-0">
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Target Keywords</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Kata kunci utama yang ingin ditarget..."
+                value={googleKeywords} onChange={e => setGoogleKeywords(e.target.value)} data-testid="input-google-keywords" />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-muted-foreground block mb-1">Manfaat Utama</label>
+              <input className="border rounded px-2 py-1 text-xs w-full" placeholder="Benefit terbesar produk Anda..."
+                value={googleBenefit} onChange={e => setGoogleBenefit(e.target.value)} data-testid="input-google-benefit" />
+            </div>
+            <Button onClick={handleGoogleAds} disabled={googleAdsLoading} size="sm"
+              className="bg-gradient-to-r from-sky-600 to-blue-600 text-white text-xs shrink-0">
+              {googleAdsLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1" /> : <span className="mr-1">🔍</span>}
+              Generate Google Ads
+            </Button>
+          </div>
+          <div className="flex-1 overflow-auto min-h-0">
+            {googleAdsLoading ? (
+              <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating RSA headlines, descriptions, dan extensions...</span></div>
+            ) : googleAdsContent ? (
+              <div className="relative">
+                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{googleAdsContent}</pre>
+                <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
+                  onClick={() => { navigator.clipboard.writeText(googleAdsContent); toast({ title: '✅ Google Ads disalin!' }); }}>
+                  Copy All
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center h-32 text-muted-foreground text-sm">Klik "Generate" untuk membuat Google Search Ads RSA</div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== END 6 NEW FEATURE DIALOGS ===== */}
 
       {/* LP Section Kit Dialog */}
       <Dialog open={lpSectionOpen} onOpenChange={setLpSectionOpen}>

@@ -3302,5 +3302,388 @@ Estimasi posting: ${Math.ceil((angles * perAngle) / 5)} minggu (5 thread/minggu)
     }
   });
 
+  // ===== IG CAPTION PACK =====
+  app.post("/api/generate-ig-caption", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, target, tone = 'casual', jumlah = 7, brand } = req.body;
+      const title = judul || topik || 'produk digital';
+      const systemPrompt = `Kamu adalah copywriter Instagram terbaik Indonesia. Spesialis konten digital product dan ebook. Bahasa conversational, relatable, dan punya daya tarik tinggi. Gunakan emoji secukupnya.`;
+      const userPrompt = `Buat Instagram Caption Pack untuk: "${title}"
+Target audience: ${target || 'pengusaha & pebisnis online Indonesia'}
+Tone: ${tone} | Jumlah caption: ${jumlah} | Brand/nama: ${brand || 'Chaesa AI Studio'}
+
+Format SETIAP caption:
+
+---
+### Caption ${1} — [TIPE: Hook Pain / Curiosity / Story / Edukasi / Testimoni / Meme / CTA]
+
+📣 **HOOK (baris pertama — wajib stop scroll):**
+[1-2 baris pembuka super kuat]
+
+📝 **BODY:**
+[3-5 baris konten, personal & relatable]
+
+🔗 **CTA:**
+[ajakan tindakan spesifik — kunjungi link di bio, dm "INFO", dsb]
+
+#️⃣ **HASHTAG SET:**
+[15-20 hashtag relevan: campuran niche + broad + lokasi]
+
+💡 **BEST TIME TO POST:** [waktu optimal WIB]
+---
+
+(ulangi untuk semua ${jumlah} caption dengan tipe berbeda-beda)
+
+Di akhir, tambahkan:
+## 🎯 STRATEGI POSTING
+- Frekuensi ideal per minggu
+- Mix konten terbaik
+- Tips bio link optimization
+- Ide highlight covers`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.82,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("IG Caption error:", error);
+      res.status(500).json({ error: "Gagal generate IG Caption Pack." });
+    }
+  });
+
+  // ===== REELS / TIKTOK HOOK GENERATOR =====
+  app.post("/api/generate-reel-hook", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, target, jumlahHook = 15 } = req.body;
+      const title = judul || topik || 'produk digital';
+      const systemPrompt = `Kamu adalah viral content creator spesialis Reels Instagram & TikTok Indonesia. Ahli dalam membuat hook 3 detik pertama yang menghentikan scroll. Menulis dengan bahasa Gen Z / millennial Indonesia yang autentik.`;
+      const userPrompt = `Buat ${jumlahHook} Hook Video Reels/TikTok untuk: "${title}"
+Target: ${target || 'pengguna Instagram & TikTok Indonesia 18-35 tahun'}
+
+Kelompokkan per pola. Format setiap hook:
+
+**Hook #[N] — Pola: [NAMA POLA]**
+🎬 **Visual Opening (0-1 detik):** [deskripsi visual/action pembuka]
+🗣️ **Hook Line (1-3 detik):** "[teks yang diucapkan]"
+📝 **Text Overlay:** "[tulisan di layar]"
+🎵 **Audio Vibe:** [jenis musik/sound effect yang cocok]
+📊 **Potensi Viral:** [⭐ 1-5] | **Why:** [alasan singkat]
+
+---
+
+WAJIB buat 3 hook per pola berikut:
+1. 🔥 Pattern Interrupt (bikin otak kaget)
+2. ❓ Curiosity Gap ("Kamu mungkin belum tahu...")
+3. 😱 Controversy/Contrarian ("Semua orang salah soal...")
+4. 📖 Story Hook ("Dulu aku...")
+5. 📊 Data/Angka yang mengejutkan
+
+Di akhir:
+## 🎬 CAPTION + HASHTAG untuk 1 Reel terbaik
+[Tulis caption + 20 hashtag tiktok/reels + waktu post terbaik]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 3500,
+        temperature: 0.85,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Reel Hook error:", error);
+      res.status(500).json({ error: "Gagal generate Reel/TikTok Hook." });
+    }
+  });
+
+  // ===== PRICING LADDER & OFFER STACK =====
+  app.post("/api/generate-pricing-ladder", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, target, corePrice, niche } = req.body;
+      const title = judul || topik || 'ebook digital';
+      const systemPrompt = `Kamu adalah pricing strategist dan offer architect terbaik Indonesia. Spesialis produk digital, ebook, dan online course. Selalu berpikir dari sisi psikologi buyer dan value ladder.`;
+      const userPrompt = `Buat Pricing Ladder & Offer Stack lengkap untuk: "${title}"
+Niche: ${niche || topik || 'bisnis online'} | Target: ${target || 'pebisnis & freelancer Indonesia'}
+Harga core product: ${corePrice || 'sesuaikan dengan pasar Indonesia'}
+
+## 🪜 VALUE LADDER (5 Tier)
+
+### TIER 1 — LEAD MAGNET (GRATIS)
+📦 **Nama Produk:** 
+💰 **Harga:** GRATIS
+📋 **Deliverables:** [3-5 item konkret]
+🎯 **Tujuan:** Build list & pre-sell
+📣 **Positioning Statement:** 
+⚡ **Hook CTA:** 
+
+### TIER 2 — TRIPWIRE (Impulse Buy)
+📦 **Nama Produk:** 
+💰 **Harga:** Rp 47.000 – Rp 97.000
+📋 **Deliverables:** [4-6 item]
+🎯 **Nilai Terasa:** [seberapa mahal terasa vs harganya]
+🔥 **Urgency Trigger:** 
+
+### TIER 3 — CORE PRODUCT (Main Offer)
+📦 **Nama Produk:** ${title}
+💰 **Harga:** ${corePrice || 'Rp 147.000 – Rp 497.000'}
+📋 **Deliverables:** [6-8 item: ebook + bonus]
+⭐ **USP (1 kalimat):**
+🎁 **Bonus Stack:** [3-5 bonus dengan nilai persepsi]
+💎 **Perceived Value Total:** Rp [hitung total]
+
+### TIER 4 — UPSELL / OTO
+📦 **Nama Produk:** 
+💰 **Harga:** [2-4x core]
+📋 **Deliverables:** [eksklusif tambahan]
+⏱️ **Timing OTO:** [kapan ditawarkan]
+📈 **Conversion Rate Ekspektasi:** 
+
+### TIER 5 — CONTINUITY / MEMBERSHIP
+📦 **Nama Produk:** 
+💰 **Harga:** Rp [X]/bulan
+📋 **Deliverables per bulan:**
+🔄 **Retention Hook:** 
+
+---
+## 🧮 REVENUE PROJECTION (100 pembeli/bulan)
+| Tier | Konversi | Revenue/Bulan |
+|------|---------|--------------|
+[tabel proyeksi]
+
+**Total Revenue Potensial:** Rp [X]/bulan
+
+## 🎨 COPYWRITING UNTUK SETIAP TIER
+[Judul + 1-kalimat pitch per tier]
+
+## 💡 TIPS IMPLEMENTASI
+[5 tips praktis launch pricing ladder ini di Indonesia]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.75,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Pricing Ladder error:", error);
+      res.status(500).json({ error: "Gagal generate Pricing Ladder." });
+    }
+  });
+
+  // ===== LAUNCH CHECKLIST D-30 =====
+  app.post("/api/generate-launch-checklist", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, channels = 'WhatsApp, Instagram', hargaLaunch, tanggalLaunch } = req.body;
+      const title = judul || topik || 'ebook digital';
+      const systemPrompt = `Kamu adalah launch strategist produk digital Indonesia. Spesialis pre-launch campaign, warm-up audience, dan product launch sequence. Tahu betul cara kerja market Indonesia di platform WA, IG, Tokopedia, dan Shopee.`;
+      const userPrompt = `Buat Launch Checklist & Timeline untuk: "${title}"
+Channel: ${channels} | Harga launch: ${hargaLaunch || 'early bird'} | Tanggal launch: ${tanggalLaunch || '30 hari ke depan'}
+
+## 📅 TIMELINE LAUNCH — 30 HARI
+
+### 📌 D-30 sampai D-21: FASE PERSIAPAN
+**Minggu 1-2: Foundation**
+[ ] Task 1: [deskripsi + siapa + platform + output]
+(minimal 8 checklist item per minggu dengan detail aksi nyata)
+
+### 📌 D-20 sampai D-8: FASE WARM-UP
+**Konten pre-launch, list building, teaser**
+[ ] Task 1: ...
+(minimal 10 item)
+
+### 📌 D-7 sampai D-2: FASE COUNTDOWN
+**Urgency building, social proof, FOMO creation**
+[ ] Task 1: ...
+(minimal 8 item per hari — spesifik per hari D-7, D-6, D-5, D-4, D-3, D-2)
+
+### 🚀 D-1: FINAL PREP
+[ ] [Checklist persiapan terakhir — 10 item]
+
+### 🔴 D-0: LAUNCH DAY
+**Jam per jam:**
+[ ] 00:00 - 06:00: 
+[ ] 06:00 - 09:00:
+[ ] 09:00 - 12:00:
+[ ] 12:00 - 15:00:
+[ ] 15:00 - 21:00:
+[ ] 21:00 - 24:00:
+
+### 📌 D+1 sampai D+7: FASE POST-LAUNCH
+[ ] [Recovery, testimonial gathering, upsell — 8 item]
+
+---
+## 📝 TEMPLATE WA BROADCAST (3 versi: D-7, D-1, D-0)
+[Tulis template pesan WA siap kirim]
+
+## 📱 CAPTION IG STORIES (5 stories sequence untuk launch week)
+[Tulis per story dengan visual direction]
+
+## 📊 KPI & SUCCESS METRICS
+[Target per fase + cara tracking]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4500,
+        temperature: 0.72,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Launch Checklist error:", error);
+      res.status(500).json({ error: "Gagal generate Launch Checklist." });
+    }
+  });
+
+  // ===== TIKTOK ADS SCRIPT =====
+  app.post("/api/generate-tiktok-ads", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, target, masalah, solusi, cta, durasi = '30' } = req.body;
+      const title = judul || topik || 'produk digital';
+      const systemPrompt = `Kamu adalah TikTok Ads specialist terbaik Indonesia. Ahli membuat script video ads yang stop-scroll dalam 3 detik pertama dan mengkonversi. Tahu tren bahasa, hook, dan format TikTok Indonesia.`;
+      const userPrompt = `Buat TikTok Ads Script untuk: "${title}" (${durasi} detik)
+Target: ${target || 'pengguna TikTok Indonesia 18-35 tahun'}
+Masalah: ${masalah || 'Susah cari penghasilan tambahan dari rumah'}
+Solusi: ${solusi || title}
+CTA: ${cta || 'Klik link di bio sekarang'}
+
+Buat 3 variasi script yang berbeda angle:
+
+---
+## 🎬 SCRIPT 1 — PAIN ANGLE (Sentuh masalah dulu)
+
+**FORMAT: ${durasi} detik**
+
+⏱️ **0-3 detik — HOOK (Pattern Interrupt):**
+👁️ Visual: [deskripsikan action/visual pembuka]
+🗣️ Dialog: "[kalimat pembuka yang menghentikan scroll]"
+📝 Text overlay: "[teks di layar]"
+
+⏱️ **3-${Math.round(parseInt(durasi)*0.35)} detik — PROBLEM:**
+🗣️ Dialog: "[bangun empati, ceritakan masalah]"
+📝 Text overlay:
+
+⏱️ **${Math.round(parseInt(durasi)*0.35)}-${Math.round(parseInt(durasi)*0.75)} detik — SOLUTION + PROOF:**
+🗣️ Dialog: "[perkenalkan solusi + bukti/hasil]"
+📝 Text overlay:
+👁️ Visual: [screen recording / tampilkan produk]
+
+⏱️ **${Math.round(parseInt(durasi)*0.75)}-${durasi} detik — CTA:**
+🗣️ Dialog: "${cta || 'Klik link di bio sekarang!'}"
+📝 Text overlay: "[urgency + CTA tombol]"
+
+🎵 **Musik:** [jenis/vibe musik yang cocok]
+🏷️ **Hashtag:** [10 hashtag TikTok relevan]
+💰 **Budget Awal Disarankan:** Rp [X]/hari | **Objective:** [Traffic/Conversion]
+
+---
+## 🎬 SCRIPT 2 — STORY ANGLE (Personal story)
+[format sama]
+
+---
+## 🎬 SCRIPT 3 — SOCIAL PROOF ANGLE (Testimoni/Result)
+[format sama]
+
+---
+## 📊 TIPS TARGETING TIKTOK ADS INDONESIA
+[5 tips spesifik: interest, behavior, lookalike, retargeting]
+
+## 🧪 A/B TEST PLAN
+[3 elemen yang harus di-test + cara interpretasi hasil]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4500,
+        temperature: 0.8,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("TikTok Ads error:", error);
+      res.status(500).json({ error: "Gagal generate TikTok Ads Script." });
+    }
+  });
+
+  // ===== GOOGLE SEARCH ADS RSA =====
+  app.post("/api/generate-google-ads", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, target, keywords, benefit, landingUrl } = req.body;
+      const title = judul || topik || 'ebook digital';
+      const systemPrompt = `Kamu adalah Google Ads specialist Indonesia berpengalaman. Expert dalam membuat Responsive Search Ads (RSA) yang click-through rate tinggi, Quality Score bagus, dan konversi optimal untuk produk digital.`;
+      const userPrompt = `Buat Google Search Ads RSA untuk: "${title}"
+Target keywords: ${keywords || topik + ', beli ebook online, download ebook'}
+Manfaat utama: ${benefit || 'panduan lengkap, langsung bisa dipraktikkan'}
+Landing page: ${landingUrl || '[URL landing page]'} | Target: ${target || 'pencari solusi di Indonesia'}
+
+## 🔍 KEYWORD STRATEGY
+
+### Primary Keywords (Match Type: Exact + Phrase)
+[10 keyword utama dengan estimasi volume & kompetisi]
+
+### Secondary Keywords (Broad Match Modifier)
+[8 keyword pendukung]
+
+### Negative Keywords (WAJIB exclude)
+[15 negative keyword untuk filter traffic tidak relevan]
+
+---
+## 📝 RSA HEADLINES (Buat 15 headline, maks 30 karakter each)
+
+**Kelompok 1 — Brand/Product (5 headline):**
+1. [≤30 karakter]
+...
+
+**Kelompok 2 — Benefit/Fitur (5 headline):**
+6. [≤30 karakter]
+...
+
+**Kelompok 3 — CTA/Urgency (5 headline):**
+11. [≤30 karakter]
+...
+
+---
+## 📄 RSA DESCRIPTIONS (4 description, maks 90 karakter each)
+1. [≤90 karakter — benefit utama]
+2. [≤90 karakter — social proof / trust]
+3. [≤90 karakter — urgency / scarcity]
+4. [≤90 karakter — CTA + benefit]
+
+---
+## ⚡ AD EXTENSIONS
+
+**Sitelink Extensions (4 sitelink):**
+[Judul (25 kar) | Deskripsi 1 (35 kar) | Deskripsi 2 (35 kar)]
+
+**Callout Extensions (8 callout, ≤25 karakter each):**
+[list]
+
+**Structured Snippets — Jenis Header:** 
+[5-8 item]
+
+---
+## 💰 BIDDING & BUDGET STRATEGY
+- Strategi bid disarankan: [Smart Bidding / Manual CPC]
+- Budget awal harian: Rp [X]
+- Target CPA: Rp [X]
+- Expected CTR: [X]%
+
+## 📊 LANDING PAGE OPTIMIZATION CHECKLIST
+[10 elemen LP yang WAJIB ada untuk maximize Quality Score]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.72,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Google Ads error:", error);
+      res.status(500).json({ error: "Gagal generate Google Search Ads." });
+    }
+  });
+
   return httpServer;
 }
