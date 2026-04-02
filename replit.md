@@ -90,7 +90,16 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
-## New Funnel Pipeline Features (Latest)
+## Iklan Pipeline Features (Latest — tauheed.id/cuan inspired)
+
+### 3 New Pipeline Outputs Added (Iklan Row)
+- **Meta Ads Copy Pack** (`/api/generate-meta-ads`, gpt-4o) — Full FB/IG ads pack: 5 Hook Variations, Primary Text Short (100-150w), Primary Text Long (250-350w), 5 Headline Variations, Link Description, Video Hook 15s Script, Audience Targeting Suggestions, Split Test Matrix (3 angles), Catatan Strategis. Input pain point opsional.
+- **WA Closing Script** (`/api/generate-wa-closing`, gpt-4o) — Script CS WhatsApp lengkap: Opening (3 variasi), Follow-up Sequence 5 pesan (H+1 s/d H+7), Handling 8 Objections, 5 Closing Techniques, Post-Purchase Upsell Script, Broadcast Template (2 variasi), Catatan Closing. Input garansi opsional.
+- **Scarcity & Batch Pricing Pack** (`/api/generate-scarcity-pack`, gpt-4o) — Copy urgency & scarcity: Batch Pricing Announcement (3 variasi), Countdown Copy (pendek/sedang/panjang), Scarcity Copy Slot Terbatas, Harga Naik Notification (5 template WA+Email), Last Call 24 Jam, Social Proof+Scarcity Combo, Batch Closing Announcement, Reopening Waitlist, Psikologi Copy Notes. Input batch number + next batch price.
+- UI: "Iklan" label row baru di pipeline buttons (di atas Funnel row), blue/green/orange gradient buttons
+- Inspired by: tauheed.id/cuan — Bab 6 CS Jago Closing, Bab 8 Ads Creative, Bab 10 Scale Iklan
+
+## New Funnel Pipeline Features
 
 ### 3 New Pipeline Outputs Added (Funnel Row)
 - **VSL Script Generator** (`/api/generate-vsl`, gpt-4o) — Video Sales Letter 10-section: Hook (0-15s) → Masalah → Agitasi → Kisah/Kredensial → Solusi → Apa yang Didapat → Bukti & Testimoni → Penawaran Eksklusif → Garansi → Urgensi → CTA Final + Catatan Produksi. Isi input garansi opsional.

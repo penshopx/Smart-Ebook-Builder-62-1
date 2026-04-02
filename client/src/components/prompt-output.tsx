@@ -212,6 +212,22 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [coverTplAuthor, setCoverTplAuthor] = useState('');
   const [coverTplColorScheme, setCoverTplColorScheme] = useState('professional');
   const [coverTplStyle, setCoverTplStyle] = useState('Modern & Profesional');
+  // Meta Ads Copy Generator
+  const [metaAdsOpen, setMetaAdsOpen] = useState(false);
+  const [metaAdsContent, setMetaAdsContent] = useState('');
+  const [metaAdsLoading, setMetaAdsLoading] = useState(false);
+  const [metaAdsPainPoint, setMetaAdsPainPoint] = useState('');
+  // WA Closing Script
+  const [waClosingOpen, setWaClosingOpen] = useState(false);
+  const [waClosingContent, setWaClosingContent] = useState('');
+  const [waClosingLoading, setWaClosingLoading] = useState(false);
+  const [waClosingGuarantee, setWaClosingGuarantee] = useState('');
+  // Scarcity & Batch Pricing Pack
+  const [scarcityOpen, setScarcityOpen] = useState(false);
+  const [scarcityContent, setScarcityContent] = useState('');
+  const [scarcityLoading, setScarcityLoading] = useState(false);
+  const [scarcityBatch, setScarcityBatch] = useState('4');
+  const [scarcityNextPrice, setScarcityNextPrice] = useState('');
   // VSL Script Generator
   const [vslOpen, setVslOpen] = useState(false);
   const [vslContent, setVslContent] = useState('');
@@ -720,6 +736,77 @@ ${bodyHtml}
       setMockupLoading(false);
     }
   }, [projectTitle, projectTopik, authorName, mockupStyle, toast]);
+
+  const handleGenerateMetaAds = useCallback(async () => {
+    setMetaAdsOpen(true);
+    setMetaAdsContent('');
+    setMetaAdsLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-meta-ads', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        painPoint: metaAdsPainPoint,
+        objective: 'Konversi — mendorong klik ke landing page',
+      });
+      const data = await res.json();
+      setMetaAdsContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat Meta Ads copy', variant: 'destructive' });
+    } finally {
+      setMetaAdsLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, metaAdsPainPoint, toast]);
+
+  const handleGenerateWaClosing = useCallback(async () => {
+    setWaClosingOpen(true);
+    setWaClosingContent('');
+    setWaClosingLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-wa-closing', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        guarantee: waClosingGuarantee,
+      });
+      const data = await res.json();
+      setWaClosingContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat WA closing script', variant: 'destructive' });
+    } finally {
+      setWaClosingLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, waClosingGuarantee, toast]);
+
+  const handleGenerateScarcity = useCallback(async () => {
+    setScarcityOpen(true);
+    setScarcityContent('');
+    setScarcityLoading(true);
+    try {
+      const price = extractMonetizationPrice(monoContent);
+      const res = await apiRequest('POST', '/api/generate-scarcity-pack', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        price,
+        batchNumber: scarcityBatch,
+        nextBatchPrice: scarcityNextPrice,
+        deadline: '48 jam lagi',
+      });
+      const data = await res.json();
+      setScarcityContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat scarcity pack', variant: 'destructive' });
+    } finally {
+      setScarcityLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, scarcityBatch, scarcityNextPrice, toast]);
 
   const handleGenerateVsl = useCallback(async () => {
     setVslOpen(true);
@@ -2328,6 +2415,33 @@ ${bodyHtml}
                     Mode Akurat · {uploadedFiles.length} sumber
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Iklan:</div>
+                <Button
+                  onClick={handleGenerateMetaAds}
+                  className="flex-1 bg-gradient-to-r from-blue-700 to-indigo-700 hover:from-blue-800 hover:to-indigo-800 text-white text-xs h-8"
+                  data-testid="button-meta-ads"
+                >
+                  <span className="mr-1.5 text-sm leading-none">📣</span>
+                  Meta Ads Copy<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateWaClosing}
+                  className="flex-1 bg-gradient-to-r from-green-700 to-emerald-700 hover:from-green-800 hover:to-emerald-800 text-white text-xs h-8"
+                  data-testid="button-wa-closing"
+                >
+                  <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+                  WA Closing<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateScarcity}
+                  className="flex-1 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white text-xs h-8"
+                  data-testid="button-scarcity-pack"
+                >
+                  <span className="mr-1.5 text-sm leading-none">⏳</span>
+                  Scarcity Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Funnel:</div>
@@ -4607,6 +4721,170 @@ ${bodyHtml}
           </div>
         </DialogContent>
       </Dialog>
+      {/* Meta Ads Copy Dialog */}
+      <Dialog open={metaAdsOpen} onOpenChange={setMetaAdsOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">📣</span>
+              Meta Ads Copy Pack — FB/IG
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="text-xs text-muted-foreground">Pain point utama audiens (opsional):</div>
+            <input
+              className="border rounded px-3 py-1.5 text-sm w-full"
+              placeholder="Contoh: susah cari kerja, gaji kurang, ingin kerja dari rumah..."
+              value={metaAdsPainPoint}
+              onChange={e => setMetaAdsPainPoint(e.target.value)}
+              data-testid="input-meta-ads-painpoint"
+            />
+            <Button
+              size="sm"
+              className="w-fit bg-blue-700 hover:bg-blue-800 text-white"
+              onClick={handleGenerateMetaAds}
+              disabled={metaAdsLoading}
+              data-testid="button-regenerate-meta-ads"
+            >
+              {metaAdsLoading ? 'Generating...' : '🔄 Regenerate dengan pain point ini'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {metaAdsLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menulis Meta Ads copy yang scroll-stopping...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {metaAdsContent}
+              </div>
+            )}
+          </div>
+          {!metaAdsLoading && metaAdsContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(metaAdsContent); toast({ title: 'Meta Ads copy tersalin!' }); }} data-testid="button-copy-meta-ads">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* WA Closing Script Dialog */}
+      <Dialog open={waClosingOpen} onOpenChange={setWaClosingOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <MessageSquare className="h-5 w-5 text-green-600" />
+              WA Closing Script — CS WhatsApp
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="text-xs text-muted-foreground">Garansi produk (opsional):</div>
+            <input
+              className="border rounded px-3 py-1.5 text-sm w-full"
+              placeholder="Contoh: garansi uang kembali 7 hari jika tidak puas..."
+              value={waClosingGuarantee}
+              onChange={e => setWaClosingGuarantee(e.target.value)}
+              data-testid="input-wa-guarantee"
+            />
+            <Button
+              size="sm"
+              className="w-fit bg-green-700 hover:bg-green-800 text-white"
+              onClick={handleGenerateWaClosing}
+              disabled={waClosingLoading}
+              data-testid="button-regenerate-wa-closing"
+            >
+              {waClosingLoading ? 'Generating...' : '🔄 Regenerate dengan garansi ini'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {waClosingLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menyusun script closing WhatsApp...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {waClosingContent}
+              </div>
+            )}
+          </div>
+          {!waClosingLoading && waClosingContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(waClosingContent); toast({ title: 'WA Closing Script tersalin!' }); }} data-testid="button-copy-wa-closing">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Scarcity & Batch Pricing Pack Dialog */}
+      <Dialog open={scarcityOpen} onOpenChange={setScarcityOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">⏳</span>
+              Scarcity & Batch Pricing Pack
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mb-3 flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Batch saat ini (angka):</div>
+                <input
+                  className="border rounded px-3 py-1.5 text-sm w-full"
+                  placeholder="Contoh: 4"
+                  value={scarcityBatch}
+                  onChange={e => setScarcityBatch(e.target.value)}
+                  data-testid="input-scarcity-batch"
+                />
+              </div>
+              <div>
+                <div className="text-xs text-muted-foreground mb-1">Harga batch berikutnya:</div>
+                <input
+                  className="border rounded px-3 py-1.5 text-sm w-full"
+                  placeholder="Contoh: Rp189.000"
+                  value={scarcityNextPrice}
+                  onChange={e => setScarcityNextPrice(e.target.value)}
+                  data-testid="input-scarcity-next-price"
+                />
+              </div>
+            </div>
+            <Button
+              size="sm"
+              className="w-fit bg-orange-600 hover:bg-orange-700 text-white"
+              onClick={handleGenerateScarcity}
+              disabled={scarcityLoading}
+              data-testid="button-regenerate-scarcity"
+            >
+              {scarcityLoading ? 'Generating...' : '🔄 Regenerate dengan info ini'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {scarcityLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menyusun copy scarcity & batch pricing...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {scarcityContent}
+              </div>
+            )}
+          </div>
+          {!scarcityLoading && scarcityContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(scarcityContent); toast({ title: 'Scarcity Pack tersalin!' }); }} data-testid="button-copy-scarcity">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* VSL Script Dialog */}
       <Dialog open={vslOpen} onOpenChange={setVslOpen}>
         <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">

@@ -1955,5 +1955,218 @@ Buat detail, spesifik, dan langsung bisa dieksekusi oleh content creator pemula 
     }
   });
 
+  // Generate Meta Ads / FB-IG Ads Copy
+  app.post("/api/generate-meta-ads", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, painPoint, objective } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah Meta Ads copywriter Indonesia expert yang sudah menghasilkan ratusan iklan winning dengan ROAS tinggi.
+Spesialisasi: Facebook Ads + Instagram Ads untuk produk digital (ebook, kursus, info-produk).
+Gaya: Direct response, pattern interrupt, emosi kuat, scroll-stopping, conversational Indonesia.
+Insight: Audiens Indonesia sangat responsif terhadap pain point, angka konkret, FOMO, dan kisah sukses nyata.`;
+
+      const userPrompt = `Buat Meta Ads Copy Pack lengkap untuk:
+- Produk/Ebook: ${topikFallback}
+- Judul: ${judul || topikFallback}  
+- Target Audiens: ${target || 'Masyarakat Indonesia 25-45 tahun yang ingin penghasilan tambahan'}
+- Harga: ${price || 'Rp97.000'}
+- Author: ${authorName || 'Pakar Berpengalaman'}
+- Pain Point Utama: ${painPoint || 'Susah cari penghasilan, tidak tahu harus mulai dari mana'}
+- Objective: ${objective || 'Konversi — mendorong klik ke landing page'}
+
+Format output:
+
+===== HOOK VARIATIONS (5 pilihan) =====
+[5 hook/kalimat pembuka yang scroll-stopping. Masing-masing 1-2 kalimat. Langsung ke pain point atau angka mengejutkan]
+
+===== PRIMARY TEXT — SHORT (100-150 kata) =====
+[Copy pendek untuk mobile. Emotional hook + problem + solusi + CTA singkat. Pakai emoji strategis]
+
+===== PRIMARY TEXT — LONG (250-350 kata) =====  
+[Copy panjang storytelling. Hook → Story → Pain Agitation → Reveal → Social Proof singkat → Offer → CTA]
+
+===== HEADLINE VARIATIONS (5 pilihan) =====
+[Headline 5-10 kata yang clickbait tapi honest. Fokus pada benefit atau angka]
+
+===== DESCRIPTION / LINK DESCRIPTION (3 pilihan) =====
+[Teks di bawah headline, 20-30 kata, reinforce CTA]
+
+===== VIDEO HOOK SCRIPT (15 detik) =====
+[Script video hook untuk Reels/TikTok Ads. Kalimat pembuka 3-5 detik + inti pesan 10 detik. Visual suggestion]
+
+===== AUDIENCE TARGETING SUGGESTIONS =====
+[Rekomendasi interest targeting dan lookalike audience yang relevan untuk Meta Ads]
+
+===== SPLIT TEST MATRIX =====
+[3 variasi angle berbeda untuk split testing: 1) Pain-based 2) Result/Aspiration-based 3) Social proof-based. Masing-masing 1 primary text pendek]
+
+===== CATATAN STRATEGIS =====
+[Tips bidding, budget split test, waktu optimal publish, pixel event yang direkomendasikan]
+
+Buat semua copy dalam Bahasa Indonesia yang natural, tidak kaku, dan sangat relatable untuk audiens Indonesia.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3500,
+        temperature: 0.85,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Meta ads error:", error);
+      res.status(500).json({ error: "Gagal membuat Meta Ads copy. " + (error?.message || '') });
+    }
+  });
+
+  // Generate WA Closing Script (CS WhatsApp Closing)
+  app.post("/api/generate-wa-closing", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, guarantee } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah pakar CS (Customer Service) closing WhatsApp untuk produk digital Indonesia dengan conversion rate tinggi.
+Spesialisasi: teknik closing via WA chat yang natural, tidak pushy, membangun trust, dan mengonversi leads menjadi pembeli.
+Gaya: Bahasa Indonesia conversational, hangat, profesional, empati tinggi, memahami psikologi pembeli Indonesia.`;
+
+      const userPrompt = `Buat WA Closing Script Pack lengkap untuk CS produk digital:
+- Produk/Ebook: ${topikFallback}
+- Judul: ${judul || topikFallback}
+- Target Pembeli: ${target || 'Orang Indonesia yang ingin penghasilan tambahan'}
+- Harga: ${price || 'Rp97.000'}
+- Author: ${authorName || 'Pakar Berpengalaman'}
+- Garansi: ${guarantee || 'Garansi uang kembali jika tidak puas'}
+
+Format output:
+
+===== OPENING SCRIPT (Sambut Leads Baru) =====
+[3 variasi pesan sambutan pertama yang hangat dan profesional ketika ada yang DM/chat setelah klik iklan]
+
+===== FOLLOW-UP SEQUENCE (5 Pesan) =====
+[Follow-up 1: H+1 (tanya kabar/minat)
+Follow-up 2: H+2 (berikan value/info tambahan)
+Follow-up 3: H+3 (social proof baru)
+Follow-up 4: H+5 (penawaran + urgency)
+Follow-up 5: H+7 (last chance)]
+
+===== HANDLING OBJECTIONS =====
+[Script untuk 8 keberatan paling umum:]
+1. "Mahal" / "Kemahalan"
+2. "Nanti dulu" / "Pikir-pikir dulu"
+3. "Saya sudah punya ilmunya"
+4. "Belum ada waktu"
+5. "Apa bedanya dengan yang gratis?"
+6. "Takut scam / tidak percaya"
+7. "Bayarnya ribet"
+8. "Belum yakin hasilnya"
+
+===== CLOSING TECHNIQUES =====
+[5 teknik closing berbeda:]
+1. Assumptive Close
+2. Urgency/Scarcity Close
+3. Social Proof Close
+4. Guarantee Close
+5. Summary/Benefit Close
+
+===== POST-PURCHASE UPSELL SCRIPT =====
+[Script untuk tawaran upsell setelah pembeli konfirmasi bayar — tawarkan produk lain atau paket upgrade]
+
+===== BROADCAST TEMPLATE (untuk existing leads) =====
+[Template pesan broadcast WA untuk dikirim ke semua leads yang belum convert — 2 variasi]
+
+===== CATATAN CLOSING =====
+[Tips waktu terbaik follow up, tone yang tepat, kapan harus stop follow up, etika CS]
+
+Buat semua script dalam Bahasa Indonesia yang sangat natural, seperti obrolan WA sehari-hari.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3500,
+        temperature: 0.8,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("WA closing error:", error);
+      res.status(500).json({ error: "Gagal membuat WA closing script. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Scarcity & Batch Pricing Pack
+  app.post("/api/generate-scarcity-pack", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, price, batchNumber, nextBatchPrice, deadline } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah copywriter Indonesia yang ahli dalam menulis copy scarcity dan urgency untuk produk digital.
+Spesialisasi: Batch pricing strategy, countdown copy, limited offer messaging yang natural dan tidak terkesan palsu.
+Gaya: Honest urgency, FOMO yang logis, bahasa Indonesia yang persuasif tanpa manipulatif berlebihan.`;
+
+      const userPrompt = `Buat Scarcity & Batch Pricing Copy Pack untuk:
+- Produk/Ebook: ${topikFallback}
+- Harga Batch Saat Ini: ${price || 'Rp97.000'}
+- Nomor Batch Saat Ini: ${batchNumber || '4'}
+- Harga Batch Berikutnya: ${nextBatchPrice || 'Rp189.000'}
+- Deadline/Batas Waktu: ${deadline || '48 jam lagi / slot terbatas'}
+
+Format output:
+
+===== BATCH PRICING ANNOUNCEMENT (3 variasi) =====
+[Pengumuman sistem batch pricing. Jelaskan logika kenapa harga naik. Buat calon pembeli paham ini fair, bukan manipulasi]
+
+===== COUNTDOWN COPY (untuk timer di LP) =====
+[Copy di atas/bawah countdown timer. 3 variasi: pendek (1 baris), sedang (3 kalimat), panjang (1 paragraf)]
+
+===== SCARCITY COPY — SLOT TERBATAS =====
+[Copy untuk limited slots / kuota terbatas. 3 variasi untuk berbagai posisi di LP]
+
+===== HARGA NAIK NOTIFICATION =====
+[5 template pesan yang dikirim ke leads ketika harga akan naik besok/sebentar lagi — WA & Email format]
+
+===== LAST CALL COPY (24 JAM TERAKHIR) =====
+[Copy untuk 24 jam terakhir sebelum harga naik. Lebih intens, lebih urgent. Untuk LP banner, popup, WA blast]
+
+===== SOCIAL PROOF + SCARCITY COMBO =====
+[Kombinasi testimoni singkat + scarcity. Contoh: "X orang sudah bergabung, hanya tersisa Y slot..."]
+
+===== BATCH CLOSING ANNOUNCEMENT =====
+[Template pengumuman penutupan batch. Untuk posting sosmed, story IG, caption TikTok]
+
+===== REOPENING WAITLIST COPY =====
+[Copy untuk buka waitlist batch berikutnya setelah batch ini tutup. Bangun antisipasi]
+
+===== PSIKOLOGI COPY NOTES =====
+[Penjelasan singkat mengapa tiap teknik bekerja + kapan harus pakai masing-masing]
+
+Buat semua copy dalam Bahasa Indonesia yang terasa autentik, bukan robot, dan berempati pada pembeli.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.8,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Scarcity pack error:", error);
+      res.status(500).json({ error: "Gagal membuat scarcity pack. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }
