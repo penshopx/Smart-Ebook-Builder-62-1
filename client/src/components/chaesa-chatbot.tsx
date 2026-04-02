@@ -15,21 +15,21 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "Apa itu Pipeline 16-Output?",
+  "Apa itu Pipeline Ebook Ecosystem 9 Langkah?",
   "Apa saja 16 mode generasi yang tersedia?",
-  "Bagaimana cara pakai Mockup 3D DALL-E 3?",
-  "Apa itu Landing Page Generator dan fiturnya?",
-  "Bagaimana Chatbot Demo terintegrasi dengan pipeline?",
-  "Bagaimana Riset Topik bekerja?",
-  "Apa perbedaan Podcast Script vs Audiobook Script?",
+  "Bagaimana cara kerja Export Terproteksi dan Baca Online?",
+  "Jelaskan IG Caption Pack dan Reels/TikTok Hook Generator",
+  "Apa itu Pricing Ladder 5 Tier dan Launch Checklist D-30?",
+  "Bagaimana TikTok Ads Script dan Google Ads RSA bekerja?",
+  "Bagaimana cara mulai untuk pemula?",
   "Tips strategi monetisasi ebook di Indonesia?",
 ];
 
 const FEATURE_CHIPS = [
-  { label: "Pipeline 16", icon: Workflow, question: "Jelaskan Pipeline 16-Output secara detail — semua output dari satu ebook" },
-  { label: "Mockup 3D", icon: BookOpen, question: "Bagaimana fitur Mockup 3D DALL-E 3 bekerja dan bagaimana menggunakannya?" },
-  { label: "Landing Page", icon: Bot, question: "Jelaskan fitur Landing Page Generator dan integrasi dengan data pipeline" },
-  { label: "Chatbot AI", icon: ClipboardList, question: "Bagaimana Chatbot Demo menggunakan data silabus, monetisasi, dan marketing kit?" },
+  { label: "9 Langkah", icon: Workflow, question: "Jelaskan Pipeline Ebook Ecosystem 9 Langkah secara detail — dari Ebook+ sampai Ekosistem" },
+  { label: "Publish", icon: BookOpen, question: "Jelaskan fitur Export Terproteksi dan Baca Online (HTML Reader) di row Publish pipeline" },
+  { label: "Iklan AI", icon: Bot, question: "Bagaimana fitur TikTok Ads Script 3-angle dan Google Search Ads RSA bekerja?" },
+  { label: "Strategi", icon: ClipboardList, question: "Jelaskan Pricing Ladder 5 Tier dan Launch Checklist D-30 di row Strategi+ pipeline" },
 ];
 
 export function ChaesaChatbot() {
@@ -37,13 +37,13 @@ export function ChaesaChatbot() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: `Halo! Saya Chaesa, asisten Ebook Builder Pro.
+      content: `Halo! Saya Chaesa, asisten AI Chaesa AI Studio.
 
-Saya bisa membantu Anda:
-- Memahami 16 mode generasi prompt yang tersedia
-- Memandu Pipeline 16-Output: ebook → chatbot AI, kursus, podcast, audiobook, landing page, mockup 3D DALL-E 3, marketing kit 7 kanal, dan banyak lagi
-- Menjelaskan fitur terintegrasi: Chatbot Demo yang terhubung ke semua data pipeline, Landing Page dengan pre-config, Riset Topik, dan Mockup 3D
-- Tips strategi monetisasi ebook di Indonesia (Tokopedia, Shopee, WhatsApp, TikTok)
+Saya bisa membantu Anda memahami:
+- 16 mode generasi prompt (Brainstorm, Big Idea, Outline, Draft Bab, E-Course, Landing Page, dan lainnya)
+- Pipeline Ebook Ecosystem 9 Langkah: Ebook+ → Publish → Distribusi → Sosmed → Konversi → Strategi+ → Iklan → Funnel → Ekosistem
+- Fitur baru: Export Terproteksi, Baca Online, IG Caption Pack, Reels Hook, Pricing Ladder, Launch D-30, TikTok Ads, Google Ads RSA
+- Tips monetisasi dan strategi ebook di Indonesia
 
 Silakan tanyakan apa saja!`
     }

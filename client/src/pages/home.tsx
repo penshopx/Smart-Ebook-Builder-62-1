@@ -336,7 +336,7 @@ export default function Home() {
             <div className="min-w-0">
               <h1 className="text-sm sm:text-lg font-semibold tracking-tight truncate">Chaesa AI Studio</h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
-                Ebook Builder Pro · AI Ecosystem Generator
+                AI Prompt Generator · Pipeline 9-Langkah · 24 Industri
               </p>
             </div>
           </div>

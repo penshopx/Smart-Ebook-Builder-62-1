@@ -114,9 +114,9 @@ const TESTIMONIALS = [
 ];
 
 const STATS = [
-  { value: "10,000+", label: "Prompt Generated", icon: Sparkles },
-  { value: "2,500+", label: "Ebook Created", icon: Book },
-  { value: "500+", label: "Active Users", icon: Users },
+  { value: "50,000+", label: "Prompt Generated", icon: Sparkles },
+  { value: "8,500+", label: "Ebook Created", icon: Book },
+  { value: "2,000+", label: "Active Users", icon: Users },
   { value: "24", label: "Industry Themes", icon: Building2 }
 ];
 
@@ -137,19 +137,24 @@ const INDUSTRIES = [
 ];
 
 const FEATURES = [
-  { icon: Lightbulb, title: 'Brainstorm Ide', desc: 'Eksplorasi ide-ide kreatif untuk ebook Anda dengan AI yang memahami konteks industri Anda', benefit: 'Hemat 5+ jam riset' },
-  { icon: Sparkles, title: 'Big Idea', desc: 'Pertajam positioning dan konsep unik yang menjual dengan analisis kompetitor otomatis', benefit: '3x lebih menarik' },
-  { icon: FileText, title: 'Outline', desc: 'Susun kerangka dan daftar isi lengkap secara otomatis sesuai standar penerbitan profesional', benefit: 'Struktur profesional' },
-  { icon: Book, title: 'Draft Bab', desc: 'Tulis konten bab per bab dengan mudah — termasuk studi kasus dan contoh industri spesifik', benefit: '10x lebih cepat' },
-  { icon: Video, title: 'Video Script', desc: 'Buat script video dan podcast dari konten ebook, lengkap dengan panduan TTS & narasi', benefit: 'Multi-format content' },
-  { icon: GraduationCap, title: 'E-Course Builder', desc: 'Ubah ebook jadi silabus kursus online lengkap — durasi, format, materi, dan modul assessment', benefit: 'Monetisasi 10x lipat' },
-  { icon: FileText, title: 'Document Generator', desc: 'Buat SOP, Policy, Kontrak, dan dokumen profesional terstandar untuk berbagai kebutuhan bisnis', benefit: 'Standarisasi bisnis' },
-  { icon: Bot, title: 'GPT Builder', desc: 'Buat system prompt untuk chatbot AI custom yang siap di-deploy sebagai asisten virtual bisnis', benefit: 'AI Assistant pribadi' },
-  { icon: Megaphone, title: 'Marketing Kit', desc: 'Buat caption, email blast, iklan, dan materi promosi yang terkonversi tinggi dari konten ebook', benefit: 'Konversi naik 200%' },
-  { icon: Smartphone, title: 'Mini App Builder', desc: 'Rancang blueprint mini-app dari topik ebook Anda, lengkap dengan deep-link ke Lovable, Bolt, Cursor, Replit', benefit: 'Deploy lebih cepat' },
-  { icon: ClipboardList, title: 'Quiz Maker', desc: 'Generate soal kuis asesmen berlevel dari konten ebook — pilihan ganda, esai, dan kasus studi', benefit: 'Engagement naik 3x' },
-  { icon: FileText, title: 'Extend Text', desc: 'Kembangkan teks pendek atau poin-poin menjadi konten panjang yang kaya dan terstruktur', benefit: 'Efisiensi maksimal' },
-  { icon: Zap, title: 'Prompt Pack', desc: 'Generate rangkaian prompt lengkap untuk seluruh workflow produksi konten sekaligus', benefit: 'Automasi proses' },
+  { icon: Lightbulb, title: 'Brainstorm Ide', desc: 'Eksplorasi ide-ide kreatif untuk ebook Anda dengan AI yang memahami konteks 24 industri Indonesia', benefit: 'Hemat 5+ jam riset' },
+  { icon: Sparkles, title: 'Big Idea & Positioning', desc: 'Pertajam positioning, angle unik, dan diferensiasi dari kompetitor dengan analisis pasar Indonesia', benefit: '3x lebih menarik' },
+  { icon: FileText, title: 'Outline Profesional', desc: 'Susun kerangka dan daftar isi lengkap secara otomatis sesuai standar penerbitan profesional', benefit: 'Struktur terstandar' },
+  { icon: Book, title: 'Draft Bab per Bab', desc: 'Tulis konten bab per bab dengan studi kasus dan contoh industri spesifik Indonesia', benefit: '10x lebih cepat' },
+  { icon: Lock, title: 'Export Terproteksi', desc: 'Ekspor ebook ke PDF dengan watermark diagonal, hak cipta UU No.28/2014, dan cap rahasia untuk konten premium', benefit: 'Hak cipta aman' },
+  { icon: Globe, title: 'Baca Online (HTML Reader)', desc: 'Generate HTML reader self-contained dengan progress bar, TOC sidebar, cover bergradient, dan mode gelap/terang', benefit: 'Distribusi gratis' },
+  { icon: GraduationCap, title: 'E-Course Builder', desc: 'Ubah ebook jadi silabus kursus online lengkap — durasi, format, modul, dan assessment berlevel', benefit: 'Monetisasi 10x lipat' },
+  { icon: Bot, title: 'GPT Builder & Chatbot Demo', desc: 'Buat system prompt chatbot AI custom dan demo interaktif yang "berbicara" dari konten ebook Anda', benefit: 'AI assistant pribadi' },
+  { icon: Megaphone, title: 'Marketing Kit 7 Kanal', desc: 'Caption, email blast, iklan, dan materi promosi terkonversi tinggi untuk Instagram, TikTok, WA, Tokopedia', benefit: 'Konversi naik 200%' },
+  { icon: Image, title: 'IG Caption Pack', desc: 'Generate 5–10 caption Instagram siap posting per topik dengan hook, body, CTA, hashtag, dan waktu terbaik posting', benefit: 'Trafik organik naik' },
+  { icon: Video, title: 'Reels / TikTok Hook', desc: 'Generate 10–20 hook video viral dengan 5 pola: Pattern Interrupt, Curiosity Gap, Story, Data & Angka', benefit: 'Stop-scroll content' },
+  { icon: DollarSign, title: 'Pricing Ladder 5 Tier', desc: 'Rancang value ladder dari Lead Magnet gratis hingga Continuity membership — lengkap dengan revenue projection', benefit: 'Maksimalkan revenue' },
+  { icon: Rocket, title: 'Launch Checklist D-30', desc: 'Timeline launch 30 hari per fase lengkap dengan template WA broadcast, caption stories, dan KPI metrics', benefit: 'Zero launch gap' },
+  { icon: Search, title: 'Google Search Ads RSA', desc: '15 Headline + 4 Description Responsive Search Ads siap tayang, plus keyword strategy dan negative keywords', benefit: 'ROI iklan optimal' },
+  { icon: Smartphone, title: 'Mini App Blueprint', desc: 'Rancang blueprint aplikasi dari topik ebook + deep-link ke Lovable, Bolt.new, Cursor, dan Replit', benefit: 'Deploy lebih cepat' },
+  { icon: ClipboardList, title: 'Quiz Maker Berlevel', desc: 'Generate soal kuis Beginner–Advanced dari konten ebook untuk kursus online dan lead magnet', benefit: 'Engagement naik 3x' },
+  { icon: Layers, title: 'TikTok Ads Script', desc: '3 angle script video ads TikTok (Pain/Story/Social Proof) untuk durasi 15s, 30s, atau 60s siap produksi', benefit: 'Iklan yang mengkonversi' },
+  { icon: Smartphone, title: 'Document Generator', desc: 'Buat SOP, Policy, Kontrak, KAK, dan dokumen profesional terstandar untuk berbagai kebutuhan bisnis', benefit: 'Standarisasi bisnis' },
 ];
 
 const ECOSYSTEM_STEPS = [
@@ -174,35 +179,39 @@ const ECOSYSTEM_STEPS = [
 const FAQ_DATA = [
   {
     question: "Apakah Chaesa AI Studio cocok untuk pemula?",
-    answer: "Ya! Tool ini dirancang untuk semua level. Interface yang intuitif, pipeline workflow yang terstruktur, dan panduan langkah demi langkah memudahkan siapa saja untuk mulai membuat ekosistem konten profesional, bahkan tanpa pengalaman sebelumnya."
+    answer: "Ya! Dirancang untuk semua level. Interface intuitif, pipeline terstruktur, dan panduan langkah demi langkah memudahkan siapa saja — dari kreator baru hingga profesional — untuk membangun ekosistem konten lengkap tanpa pengalaman teknis sebelumnya."
   },
   {
-    question: "Apa itu Pipeline 16-Output?",
-    answer: "Pipeline 16-Output adalah ekosistem produksi konten lengkap yang mengubah satu ebook menjadi 16 produk berbeda: Chatbot Demo AI, Silabus E-Course 8 Modul, Mini App Blueprint, Quiz Generator berlevel, Marketing Kit 7 kanal (Instagram, TikTok, WhatsApp, Tokopedia, dll), Script + TTS Audio, Thumbnail AI (DALL-E 3), Strategi Monetisasi, AI Quality Review, Podcast Script, Audiobook Script, Landing Page Copy & HTML, Cover Template HTML, FlipBook Guide, Riset Topik, dan Mockup 3D DALL-E 3. Satu sumber, 16 produk profesional!"
+    question: "Apa itu Pipeline Ebook Ecosystem 9 Langkah?",
+    answer: "Pipeline Ebook Ecosystem adalah alur produksi dan monetisasi konten dari satu ebook menjadi bisnis digital lengkap: (1) Ebook+ untuk produksi konten, (2) Publish untuk penerbitan terproteksi, (3) Distribusi ke marketplace, (4) Sosmed untuk konten Instagram & TikTok, (5) Konversi lewat landing page, (6) Strategi+ untuk pricing & launch, (7) Iklan di TikTok & Google, (8) Funnel e-course & membership, dan (9) Ekosistem AI tools lengkap. Satu ebook, satu ekosistem bisnis."
+  },
+  {
+    question: "Apa itu fitur Export Terproteksi dan Baca Online?",
+    answer: "Export Terproteksi menghasilkan PDF dengan watermark diagonal semi-transparan, hak cipta UU No.28/2014, dan cap RAHASIA — cocok untuk konten premium yang perlu dilindungi. Baca Online menghasilkan file HTML self-contained yang bisa dibuka di browser dengan tampilan reader lengkap: progress bar, daftar isi sidebar, cover bergradient, mode gelap/terang, dan statistik bab. Keduanya tersedia di row Publish pipeline."
+  },
+  {
+    question: "Bagaimana cara kerja IG Caption Pack dan Reels Hook Generator?",
+    answer: "IG Caption Pack menghasilkan 5–10 caption Instagram per satu klik — setiap caption lengkap dengan hook stop-scroll, body konten, CTA spesifik, 15-20 hashtag relevan, dan rekomendasi waktu posting terbaik. Tone bisa dipilih: casual, profesional, motivational, edukasi, atau humor. Reels/TikTok Hook Generator menghasilkan 10–20 hook video dengan 5 pola viral berbeda, lengkap dengan arahan visual, dialog, dan potensi viral rating. Keduanya di row Sosmed pipeline."
+  },
+  {
+    question: "Apa itu Pricing Ladder dan Launch Checklist D-30?",
+    answer: "Pricing Ladder merancang value ladder 5 tier — dari Lead Magnet gratis, Tripwire (47–97rb), Core Product, Upsell OTO, hingga Continuity membership — lengkap dengan proyeksi revenue 100 buyers/bulan dan copywriting per tier. Launch Checklist D-30 adalah timeline launch 30 hari dengan jadwal harian per fase, template WA broadcast siap kirim, caption stories IG, dan KPI metrics. Keduanya di row Strategi+ pipeline."
+  },
+  {
+    question: "Bagaimana TikTok Ads Script dan Google Ads RSA bekerja?",
+    answer: "TikTok Ads Script menghasilkan 3 angle script video ads (Pain Angle, Story Angle, Social Proof Angle) untuk durasi 15, 30, atau 60 detik — setiap script lengkap dengan arahan visual, dialog, text overlay, CTA, musik, dan targeting tips. Google Search Ads RSA menghasilkan 15 Headline ≤30 karakter, 4 Description ≤90 karakter, sitelink extensions, callout, structured snippets, dan landing page optimization checklist. Keduanya di row Iklan pipeline."
   },
   {
     question: "Bagaimana cara kerja generator prompt?",
-    answer: "Anda cukup mengisi form dengan informasi proyek ebook Anda (topik, target audiens, gaya penulisan, industri, dll), lalu sistem akan menghasilkan prompt yang dioptimasi untuk AI seperti ChatGPT, Claude, atau DokumenTender AI. Pipeline workflow memandu Anda dari brainstorm hingga ekosistem konten lengkap."
-  },
-  {
-    question: "Apakah prompt yang dihasilkan bisa digunakan di AI manapun?",
-    answer: "Ya! Prompt yang dihasilkan kompatibel dengan berbagai AI seperti ChatGPT, Claude, Gemini, DeepSeek, Perplexity, dan terutama DokumenTender AI yang kami rekomendasikan untuk hasil terbaik dalam Bahasa Indonesia."
+    answer: "Isi form proyek (topik, target audiens, industri, pain point, big idea), pilih salah satu dari 16 mode generasi, dan sistem menghasilkan prompt AI terstruktur yang dioptimasi untuk Bahasa Indonesia. Copy prompt dan jalankan di DokumenTender AI, ChatGPT, Claude, atau AI lainnya. Ikuti pipeline 9-langkah untuk membangun ekosistem bisnis dari ebook tersebut."
   },
   {
     question: "Industri apa saja yang didukung?",
-    answer: "Kami mendukung 24 kategori industri: Engineering, Konstruksi, Pertambangan, Oil & Gas, Kelistrikan, Manufaktur, UMKM, Teknologi, Perijinan Usaha, Tender & Pengadaan, Sertifikasi SBU & SKK, Manajemen Proyek, ERP, BIM, PUB, PKB, ISO, Pancek KPK, serta tema lifestyle seperti Kekayaan, Keluarga, Spiritualitas, Kesehatan, dan Hobi."
-  },
-  {
-    question: "Berapa banyak mode generasi yang tersedia?",
-    answer: "Tersedia 16 mode generasi lengkap: Brainstorm, Big Idea, Outline, Draft Bab, Video Script, E-Course Builder, Document Generator, GPT Builder, Marketing Kit, Mini App Builder, Quiz Maker, Extend Text, Prompt Pack, Podcast Script, Audiobook Script, dan Riset Topik. Ditambah Pipeline 16-Output untuk ekosistem konten menyeluruh."
-  },
-  {
-    question: "Bagaimana dengan Mini App Builder dan Quiz Maker?",
-    answer: "Mini App Builder membantu Anda merancang blueprint aplikasi dari topik ebook, lengkap dengan struktur fitur, tech stack, dan deep-link ke platform seperti Lovable, Bolt.new, Cursor, dan Replit untuk langsung memulai pengembangan. Quiz Maker menghasilkan soal kuis berlevel (Beginner hingga Advanced) yang bisa langsung digunakan untuk kursus online atau lead magnet."
+    answer: "Kami mendukung 24 kategori industri: Engineering, Konstruksi, Pertambangan, Oil & Gas, Kelistrikan, Manufaktur, UMKM, Teknologi, Perijinan Usaha, Tender & Pengadaan, Sertifikasi SBU & SKK, Manajemen Proyek, ERP, BIM, PUB (ESG/CSR), PKB (CPD), ISO 9001/14001/45001, Pancek KPK, Kekayaan Finansial, Keluarga, Spiritualitas, Kesehatan, dan Hobi & Kreativitas."
   },
   {
     question: "Bagaimana dengan keamanan data saya?",
-    answer: "Keamanan adalah prioritas kami. Semua data dienkripsi, dan kami menggunakan autentikasi Replit yang aman. Proyek Anda hanya bisa diakses oleh Anda."
+    answer: "Keamanan adalah prioritas kami. Semua data dienkripsi, autentikasi menggunakan sistem Replit yang aman, dan proyek Anda hanya bisa diakses oleh Anda. Fitur Export Terproteksi juga menambahkan lapisan perlindungan hak cipta langsung di file PDF ebook Anda."
   }
 ];
 
@@ -235,11 +244,16 @@ function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] 
 function ComparisonTable() {
   const features = [
     { name: "Prompt per hari", free: "5", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Mode generasi", free: "3", pro: "16", enterprise: "16 + Custom" },
-    { name: "Pipeline 16-Output Penuh", free: false, pro: true, enterprise: true },
+    { name: "Mode generasi (16 mode)", free: "3", pro: "16", enterprise: "16 + Custom" },
+    { name: "Pipeline Ebook Ecosystem 9-Langkah", free: false, pro: true, enterprise: true },
     { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
     { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
+    { name: "Export Terproteksi (watermark + hak cipta)", free: false, pro: true, enterprise: true },
+    { name: "Baca Online (HTML reader self-contained)", free: false, pro: true, enterprise: true },
     { name: "Industry themes", free: "3", pro: "24", enterprise: "24 + Custom" },
+    { name: "IG Caption Pack + Reels Hook Generator", free: false, pro: true, enterprise: true },
+    { name: "Pricing Ladder 5-Tier + Launch D-30", free: false, pro: true, enterprise: true },
+    { name: "TikTok Ads Script + Google Search Ads RSA", free: false, pro: true, enterprise: true },
     { name: "AI Image (DALL-E 3) cover & thumbnail", free: false, pro: true, enterprise: true },
     { name: "Text-to-Speech (TTS) script", free: false, pro: true, enterprise: true },
     { name: "Mini App Blueprint + deep-link", free: false, pro: true, enterprise: true },
@@ -375,22 +389,22 @@ export default function Landing() {
 
               <Badge variant="secondary" className="mb-6 px-4 py-2">
                 <Sparkles className="h-3 w-3 mr-2" />
-                AI-Powered Prompt Generator · 16 Mode · Pipeline 16-Output
+                AI Prompt Generator · 16 Mode · Pipeline 9-Langkah Ebook Ecosystem
               </Badge>
               
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
                 Satu Ebook,
-                <span className="text-primary block mt-2">Sembilan Output Konten</span>
+                <span className="text-primary block mt-2">Ekosistem Bisnis Lengkap</span>
               </h1>
               
               <p className="text-xl text-muted-foreground mb-4 max-w-3xl mx-auto">
-                Dari brainstorm hingga ekosistem konten lengkap — ebook, chatbot, e-course, mini app, kuis, 
-                marketing kit, TTS audio, thumbnail AI, dan strategi monetisasi.
+                Dari brainstorm hingga iklan berbayar — ebook, publish terproteksi, distribusi, sosmed, 
+                pricing ladder, launch, Google Ads, funnel, dan ekosistem digital lengkap dalam satu platform.
               </p>
               
               <p className="text-lg font-medium mb-8 max-w-2xl mx-auto">
-                <span className="text-primary">Chaesa AI Studio</span> menghasilkan prompt AI terstruktur untuk 
-                membangun ekosistem konten profesional lengkap — dalam hitungan menit.
+                <span className="text-primary">Chaesa AI Studio</span> adalah satu-satunya AI Prompt Generator 
+                Indonesia yang cover full pipeline: dari nulis ebook sampai iklan TikTok & Google — dalam hitungan menit.
               </p>
               
               {/* CTA Buttons */}
@@ -453,11 +467,11 @@ export default function Landing() {
                 Ekosistem Konten
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Pipeline 16-Output — Satu Ebook, Enam Belas Produk
+                Pipeline 16-Output — Satu Ebook, Ekosistem Bisnis Lengkap
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Dari satu ebook, bangun ekosistem konten penuh: chatbot AI, kursus, podcast, 
-                landing page, mockup 3D, marketing kit, dan banyak lagi — semua terintegrasi.
+                Dari satu ebook, bangun ekosistem bisnis digital penuh: publish terproteksi, konten sosmed, 
+                iklan TikTok & Google, pricing ladder, e-course, chatbot AI, dan 12 output lainnya — semua dalam satu platform.
               </p>
             </div>
 
@@ -488,12 +502,14 @@ export default function Landing() {
 
               {/* Export formats bar */}
               <div className="mt-8 p-4 rounded-xl bg-muted/50 border flex flex-wrap items-center justify-center gap-3 text-sm">
-                <span className="font-medium text-muted-foreground">Export semua output ke:</span>
+                <span className="font-medium text-muted-foreground">Export ke:</span>
                 {['TXT', 'PDF', 'DOCX', 'Markdown', 'HTML'].map(fmt => (
                   <Badge key={fmt} variant="secondary" className="font-mono">{fmt}</Badge>
                 ))}
+                <Badge variant="outline" className="font-mono text-red-600 border-red-300">PDF Terproteksi</Badge>
+                <Badge variant="outline" className="font-mono text-blue-600 border-blue-300">HTML Reader</Badge>
                 <span className="text-muted-foreground">·</span>
-                <span className="text-xs text-muted-foreground">AI Image via DALL-E 3 · Audio via TTS-1</span>
+                <span className="text-xs text-muted-foreground">AI Image DALL-E 3 · Audio TTS-1 · Mockup 3D</span>
               </div>
             </div>
           </div>
@@ -535,11 +551,12 @@ export default function Landing() {
                   Dengan Chaesa AI Studio
                 </h3>
                 {[
-                  "Generate prompt lengkap dalam hitungan detik, 16 mode pilihan",
-                  "Pipeline workflow terstruktur dari brainstorm hingga ekosistem",
-                  "Prompt profesional dioptimasi per industri — hasil konsisten",
-                  "Satu ebook → 16 output: chatbot AI, kursus, podcast, landing page, mockup 3D...",
-                  "Strategi monetisasi lengkap built-in untuk setiap output"
+                  "Generate prompt lengkap dalam hitungan detik — 16 mode generasi pilihan",
+                  "Pipeline 9-Langkah Ebook Ecosystem: dari tulis ebook sampai iklan Google & TikTok",
+                  "Export Terproteksi PDF (watermark + hak cipta) dan Baca Online (HTML reader)",
+                  "IG Caption Pack, Reels Hook, Pricing Ladder 5-Tier, Launch Checklist D-30",
+                  "TikTok Ads Script 3-angle dan Google Search Ads RSA siap tayang",
+                  "24 industri Indonesia — prompt dioptimasi per konteks industri Anda"
                 ].map((solution, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
@@ -755,6 +772,57 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* Ebook Ecosystem 9-Step Pipeline */}
+        <section className="py-20 border-t">
+          <div className="container px-4 mx-auto max-w-screen-xl">
+            <div className="text-center mb-12">
+              <Badge variant="secondary" className="mb-4 px-4 py-2">
+                <Rocket className="h-3 w-3 mr-2" />
+                Ebook Ecosystem Pipeline
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Satu Ebook, <span className="text-primary">9 Langkah Ekosistem Bisnis</span>
+              </h2>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Pipeline terintegrasi dari produksi konten hingga iklan berbayar — semua dalam satu platform Chaesa AI Studio.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 md:grid-cols-9 gap-2 max-w-5xl mx-auto mb-8">
+              {[
+                { step: 1, label: "Ebook+", emoji: "📖", color: "from-blue-500 to-cyan-500", desc: "Produksi" },
+                { step: 2, label: "Publish", emoji: "🔒", color: "from-indigo-500 to-blue-600", desc: "Proteksi" },
+                { step: 3, label: "Distribusi", emoji: "🌐", color: "from-emerald-500 to-green-600", desc: "Jual" },
+                { step: 4, label: "Sosmed", emoji: "📸", color: "from-fuchsia-500 to-pink-600", desc: "Organik" },
+                { step: 5, label: "Konversi", emoji: "💡", color: "from-orange-500 to-amber-500", desc: "Landing" },
+                { step: 6, label: "Strategi+", emoji: "💲", color: "from-green-600 to-emerald-700", desc: "Pricing" },
+                { step: 7, label: "Iklan", emoji: "🎵", color: "from-slate-600 to-gray-700", desc: "Paid Ads" },
+                { step: 8, label: "Funnel", emoji: "🎓", color: "from-violet-600 to-purple-700", desc: "Kursus" },
+                { step: 9, label: "Ekosistem", emoji: "🤖", color: "from-rose-500 to-red-600", desc: "AI Tools" },
+              ].map(({ step, label, emoji, color, desc }) => (
+                <div key={step} className="text-center group">
+                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${color} text-white flex flex-col items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform shadow-md`}>
+                    <span className="text-xl leading-none">{emoji}</span>
+                    <span className="text-[9px] font-bold mt-0.5">{step}</span>
+                  </div>
+                  <p className="text-[10px] font-semibold leading-tight">{label}</p>
+                  <p className="text-[9px] text-muted-foreground">{desc}</p>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap gap-2 justify-center text-xs text-muted-foreground max-w-4xl mx-auto">
+              {[
+                "Chapter Builder AI", "Export Terproteksi PDF", "Baca Online HTML Reader",
+                "IG Caption Pack", "Reels/TikTok Hook", "WhatsApp Blast", "Landing Page",
+                "Pricing Ladder 5-Tier", "Launch Checklist D-30",
+                "TikTok Ads 3-Angle", "Google Ads RSA", "E-Course 8 Modul",
+                "Chatbot Demo AI", "Quiz Generator", "Mockup 3D DALL-E 3"
+              ].map(feat => (
+                <Badge key={feat} variant="outline" className="text-[10px] font-normal">{feat}</Badge>
+              ))}
+            </div>
+          </div>
+        </section>
+
         {/* 13 Mode Features */}
         <section className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
@@ -765,8 +833,8 @@ export default function Landing() {
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">16 Mode Generasi Prompt</h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Dari brainstorming ide hingga blueprint mini app dan kuis asesmen — semua yang Anda butuhkan 
-                untuk membangun ekosistem konten profesional dalam satu platform.
+                Dari brainstorming ide hingga blueprint mini app, iklan berbayar, dan pricing ladder — 
+                semua yang Anda butuhkan untuk membangun ekosistem bisnis dari satu ebook.
               </p>
             </div>
             
