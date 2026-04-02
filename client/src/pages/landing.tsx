@@ -67,7 +67,7 @@ const TESTIMONIALS = [
     name: "Budi Santoso",
     role: "Founder, TechConsult Indonesia",
     avatar: "BS",
-    content: "Ebook Builder Pro mengubah cara saya membuat konten. Dalam 2 minggu, saya berhasil menerbitkan 3 ebook teknis yang sekarang jadi lead magnet utama bisnis saya.",
+    content: "Chaesa AI Studio mengubah cara saya membuat konten. Dalam 2 minggu, saya berhasil menerbitkan 3 ebook teknis yang sekarang jadi lead magnet utama bisnis saya.",
     rating: 5,
     industry: "Teknologi"
   },
@@ -91,7 +91,7 @@ const TESTIMONIALS = [
     name: "Dewi Kusuma",
     role: "HR Director, Manufacturing Corp",
     avatar: "DK",
-    content: "Kami menggunakan Ebook Builder Pro untuk membuat training materials karyawan. Efisiensi meningkat 70% dibanding cara manual sebelumnya.",
+    content: "Kami menggunakan Chaesa AI Studio untuk membuat training materials karyawan. Efisiensi meningkat 70% dibanding cara manual sebelumnya.",
     rating: 5,
     industry: "Manufaktur"
   },
@@ -173,7 +173,7 @@ const ECOSYSTEM_STEPS = [
 
 const FAQ_DATA = [
   {
-    question: "Apakah Ebook Builder Pro cocok untuk pemula?",
+    question: "Apakah Chaesa AI Studio cocok untuk pemula?",
     answer: "Ya! Tool ini dirancang untuk semua level. Interface yang intuitif, pipeline workflow yang terstruktur, dan panduan langkah demi langkah memudahkan siapa saja untuk mulai membuat ekosistem konten profesional, bahkan tanpa pengalaman sebelumnya."
   },
   {
@@ -342,7 +342,7 @@ export default function Landing() {
               <Book className="h-6 w-6" />
             </div>
             <div>
-              <h1 className="text-xl font-bold tracking-tight">Ebook Builder Pro</h1>
+              <h1 className="text-xl font-bold tracking-tight">Chaesa AI Studio</h1>
               <p className="text-[10px] text-muted-foreground leading-none">AI Prompt Generator · 24 Industri</p>
             </div>
           </div>
@@ -389,7 +389,7 @@ export default function Landing() {
               </p>
               
               <p className="text-lg font-medium mb-8 max-w-2xl mx-auto">
-                <span className="text-primary">Ebook Builder Pro</span> menghasilkan prompt AI terstruktur untuk 
+                <span className="text-primary">Chaesa AI Studio</span> menghasilkan prompt AI terstruktur untuk 
                 membangun ekosistem konten profesional lengkap — dalam hitungan menit.
               </p>
               
@@ -512,7 +512,7 @@ export default function Landing() {
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-red-600 dark:text-red-400 mb-6 flex items-center gap-2">
                   <XCircle className="h-6 w-6" />
-                  Tanpa Ebook Builder Pro
+                  Tanpa Chaesa AI Studio
                 </h3>
                 {[
                   "Menghabiskan berminggu-minggu untuk menulis satu ebook",
@@ -532,7 +532,7 @@ export default function Landing() {
               <div className="space-y-4">
                 <h3 className="text-xl font-semibold text-green-600 dark:text-green-400 mb-6 flex items-center gap-2">
                   <CheckCircle2 className="h-6 w-6" />
-                  Dengan Ebook Builder Pro
+                  Dengan Chaesa AI Studio
                 </h3>
                 {[
                   "Generate prompt lengkap dalam hitungan detik, 16 mode pilihan",
@@ -1102,7 +1102,7 @@ export default function Landing() {
                 Dari satu ebook → 16 output konten profesional. Chatbot AI, kursus, podcast, audiobook, landing page, mockup 3D, marketing kit 7 kanal, dan banyak lagi — semua dalam satu pipeline terintegrasi.
               </p>
               <p className="text-base text-muted-foreground mb-8">
-                Bergabung dengan 500+ content creator yang sudah menggunakan Ebook Builder Pro.
+                Bergabung dengan 500+ content creator yang sudah menggunakan Chaesa AI Studio.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
@@ -1143,7 +1143,7 @@ export default function Landing() {
                 <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-600 flex items-center justify-center">
                   <Book className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-bold">Ebook Builder Pro</span>
+                <span className="font-bold">Chaesa AI Studio</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 AI-powered prompt generator untuk membangun ekosistem konten profesional dari satu ebook — 16 output, 16 mode, 24 industri.
@@ -1184,7 +1184,7 @@ export default function Landing() {
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2025 Ebook Builder Pro. All rights reserved.
+              © 2025 Chaesa AI Studio. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="hover:text-foreground cursor-pointer">Terms</span>

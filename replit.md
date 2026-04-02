@@ -90,6 +90,14 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
+## Export Proteksi & Publish / Baca Online Features
+
+### New "Publish:" Row (added between Ebook+ and Distribusi rows)
+- **Baca Online / Ebook Reader** (client-side) — Generates a full self-contained HTML reader with: progress bar, sticky navbar, collapsible TOC sidebar, cover page with gradient + stats (bab count, word count, read time), chapter articles with BAB badge + word/read-time stats, light/dark themes, smooth scroll. Download as .html file. Button triggers dialog with full-screen iframe preview + theme toggle + refresh + download.
+- **Export Terproteksi / PDF+Lock** (client-side jsPDF) — Exports ebook PDF with: dark cover page with indigo accent bar, owner/brand name, anti-copy legal notice (UU No.28/2014), "RAHASIA" red stamp (optional), diagonal transparent watermarks on every content page, branded footer. Dialog has: owner name input, watermark text input, 3 toggle checkboxes (watermark / hak cipta / rahasia label).
+- All state vars declared: `ebProtectionOpen`, `ebWatermarkEnabled`, `ebWatermarkText`, `ebOwnerName`, `ebAntiCopyEnabled`, `ebConfidentialEnabled`, `ebProtectionLoading`, `ebPublishOpen`, `ebPublishHtml`, `ebPublishTheme`.
+- `addWatermark(doc, pageW, pageH, text)` helper function uses `setGState` with opacity 0.08 for subtle diagonal watermarks.
+
 ## Ebook Builder Features (Latest — buatebook.com inspired)
 
 ### 3 New Core Ebook Building Features (Ebook+ row)

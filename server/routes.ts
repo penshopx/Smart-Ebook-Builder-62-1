@@ -1546,7 +1546,7 @@ Detail Ebook:
 - Judul: ${ebookTitle}
 - Topik: ${topik}
 - Target Pembaca: ${target || 'Profesional Indonesia'}
-- Penulis/Brand: ${author || 'Ebook Builder Pro'}
+- Penulis/Brand: ${author || 'Chaesa AI Studio'}
 - Industri: ${industry || 'Umum'}
 - Gaya: ${style || 'Modern & Profesional'}
 
@@ -2714,7 +2714,7 @@ Tulis konten yang kaya, substantif, dan benar-benar bermanfaat. Bukan teori koso
   <div class="footer-note">${judul || 'Ebook'} · Hak cipta dilindungi undang-undang</div>
 </div>
 
-<div class="watermark">Generated with Ebook Builder Pro · AI-Powered Ebook Platform</div>
+<div class="watermark">Generated with Chaesa AI Studio · AI-Powered Ebook Platform</div>
 
 </body>
 </html>`;

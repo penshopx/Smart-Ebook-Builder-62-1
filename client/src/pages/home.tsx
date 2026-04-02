@@ -334,9 +334,9 @@ export default function Home() {
               <Book className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm sm:text-lg font-semibold tracking-tight truncate">Ebook Builder Pro</h1>
+              <h1 className="text-sm sm:text-lg font-semibold tracking-tight truncate">Chaesa AI Studio</h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
-                AI Prompt Generator untuk Ekosistem Ebook
+                Ebook Builder Pro · AI Ecosystem Generator
               </p>
             </div>
           </div>
