@@ -3685,5 +3685,259 @@ Landing page: ${landingUrl || '[URL landing page]'} | Target: ${target || 'penca
     }
   });
 
+  // === SOP PROSEDUR GENERATOR ===
+  app.post("/api/generate-sop", isAuthenticated, async (req, res) => {
+    try {
+      const { projectData, sopType } = req.body;
+      const { topik, judul, target, industry } = projectData || {};
+      const systemPrompt = `Kamu adalah konsultan manajemen dan dokumentasi SOP (Standard Operating Procedure) kelas dunia dengan keahlian khusus di industri Indonesia. Kamu membuat SOP yang profesional, jelas, terstruktur, dan langsung bisa diimplementasikan.`;
+      const userPrompt = `Buat SOP ${sopType || 'Prosedur Kerja'} yang komprehensif dan profesional berdasarkan ebook berikut:
+
+Topik: ${topik}
+Judul Ebook: ${judul}
+Target Pengguna: ${target}
+Industri: ${industry}
+
+FORMAT OUTPUT (gunakan struktur ini PERSIS):
+
+# 📋 SOP: ${sopType || 'Prosedur Kerja'} — ${judul}
+
+## INFORMASI DOKUMEN
+| Kode SOP | Versi | Tanggal Berlaku | Dibuat Oleh |
+|----------|-------|-----------------|-------------|
+| SOP-001  | 1.0   | [Bulan Tahun]   | [Nama Jabatan] |
+
+**Tujuan:** [1-2 kalimat tujuan SOP]
+**Ruang Lingkup:** [Yang dicakup dan tidak dicakup]
+**Referensi:** Ebook "${judul}"
+
+---
+
+## PROSEDUR UTAMA
+
+### 📌 PROSEDUR 1: [Nama Prosedur]
+**Penanggung Jawab:** [Jabatan]
+**Waktu Pelaksanaan:** [Durasi]
+
+**Langkah-Langkah:**
+1. [Langkah detail dengan instruksi operasional yang jelas]
+2. [Langkah berikutnya]
+3. [dst...]
+
+**Output yang Diharapkan:** [Hasil konkret dari prosedur ini]
+**Catatan Penting:** [Hal kritis yang harus diperhatikan]
+
+---
+
+[Buat 4-6 prosedur total dengan format yang sama, sesuai topik ebook]
+
+---
+
+## INDIKATOR KEBERHASILAN (KPI)
+| Indikator | Target | Cara Ukur |
+|-----------|--------|-----------|
+| [KPI 1] | [Target] | [Metode] |
+| [KPI 2] | [Target] | [Metode] |
+| [KPI 3] | [Target] | [Metode] |
+
+## PENANGANAN MASALAH UMUM
+| Masalah | Kemungkinan Penyebab | Solusi |
+|---------|---------------------|--------|
+| [Masalah 1] | [Penyebab] | [Solusi] |
+| [Masalah 2] | [Penyebab] | [Solusi] |
+
+## RIWAYAT PERUBAHAN
+| Versi | Tanggal | Perubahan | Disetujui |
+|-------|---------|-----------|-----------|
+| 1.0   | [Tanggal] | Dokumen awal | [Nama] |
+
+---
+*Dokumen ini bersumber dari kompetensi yang terdokumentasi dalam ebook "${judul}" — bagian dari Ekosistem Kompetensi Digital.*`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.65,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("SOP Generator error:", error);
+      res.status(500).json({ error: "Gagal generate SOP." });
+    }
+  });
+
+  // === LINKEDIN THOUGHT LEADER ARTICLE ===
+  app.post("/api/generate-linkedin", isAuthenticated, async (req, res) => {
+    try {
+      const { projectData, articleAngle } = req.body;
+      const { topik, judul, target, bigIdea, tujuan } = projectData || {};
+      const systemPrompt = `Kamu adalah ghostwriter LinkedIn premium untuk eksekutif, pakar, dan coach Indonesia. Kamu menulis artikel LinkedIn yang viral — informatif, personal, membangun personal brand, dan mendorong engagement. Gaya penulisan: profesional tapi hangat, storytelling, dengan insight yang kuat.`;
+      const userPrompt = `Tulis artikel LinkedIn Thought Leader yang powerful berdasarkan ebook berikut:
+
+Topik: ${topik}
+Judul Ebook: ${judul}
+Target Pembaca: ${target}
+Big Idea: ${bigIdea}
+Sudut Artikel: ${articleAngle || 'Insight Profesional'}
+
+FORMAT OUTPUT:
+
+# 🔵 LINKEDIN ARTICLE — ${judul}
+
+---
+
+## HOOK PEMBUKA (3-5 baris, langsung menarik perhatian)
+[Hook kuat — bisa berupa cerita pendek, statistik mengejutkan, atau pertanyaan provokatif]
+
+---
+
+## ISI UTAMA (700-900 kata)
+
+### [Sub-judul bagian 1]
+[Konten bagian 1 — insight, data, pengalaman praktis]
+
+### [Sub-judul bagian 2]
+[Konten bagian 2 — langkah praktis atau framework]
+
+### [Sub-judul bagian 3]
+[Konten bagian 3 — bukti, contoh nyata, atau pelajaran]
+
+---
+
+## PENUTUP & CTA
+[2-3 paragraf penutup yang menginspirasi + CTA soft untuk download/beli ebook]
+
+---
+
+## HASHTAG PACK (15-20 hashtag relevan untuk Indonesia)
+#[hashtag1] #[hashtag2] ... 
+
+---
+
+## VERSI PENDEK (untuk caption post biasa — 150-200 kata)
+[Ringkasan artikel dalam format post LinkedIn standar]
+
+---
+
+*Artikel ini mentransfer kompetensi dari ebook "${judul}" ke format konten profesional LinkedIn.*`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 3500,
+        temperature: 0.78,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("LinkedIn Article error:", error);
+      res.status(500).json({ error: "Gagal generate LinkedIn Article." });
+    }
+  });
+
+  // === MEMBERSHIP SITE BRIEF ===
+  app.post("/api/generate-membership", isAuthenticated, async (req, res) => {
+    try {
+      const { projectData, membershipModel } = req.body;
+      const { topik, judul, target, bigIdea, produk } = projectData || {};
+      const systemPrompt = `Kamu adalah strategist membership site dan komunitas berbayar Indonesia terdepan. Kamu merancang membership yang punya retention tinggi, nilai jelas, dan sistem monetisasi yang berkelanjutan. Kamu memahami psikologi anggota Indonesia dan bagaimana membangun komunitas yang loyal.`;
+      const userPrompt = `Buat brief membership site lengkap berdasarkan ebook berikut:
+
+Topik: ${topik}
+Judul Ebook: ${judul}
+Target Member: ${target}
+Model Membership: ${membershipModel || 'Komunitas + Konten Eksklusif'}
+Produk yang Dijual: ${produk}
+Big Idea: ${bigIdea}
+
+FORMAT OUTPUT:
+
+# 🏆 MEMBERSHIP SITE BRIEF — "${judul}"
+
+---
+
+## 🎯 KONSEP MEMBERSHIP
+**Nama Membership:** [Nama yang catchy]
+**Tagline:** [1 kalimat value proposition]
+**Model:** ${membershipModel || 'Komunitas + Konten Eksklusif'}
+**Platform Rekomendasi:** [Kartra / Kajabi / Teachable / Grup WA Premium / Circle / custom]
+
+---
+
+## 💎 HALAMAN WELCOME (Copy untuk member baru)
+
+### Headline Selamat Datang:
+[Headline yang membuat member merasa beruntung bergabung]
+
+### Pesan Welcome:
+[250-300 kata — tulus, menginspirasi, menjelaskan apa yang akan mereka dapatkan]
+
+### Quick Start Guide:
+1. [Langkah 1 — hal pertama yang harus dilakukan member]
+2. [Langkah 2]
+3. [Langkah 3]
+
+---
+
+## 💰 STRUKTUR HARGA & PAKET
+
+### Paket Starter — [Harga Rp]
+[3-4 benefit utama]
+
+### Paket Pro (Most Popular) — [Harga Rp]
+[5-6 benefit utama + exclusive bonus]
+
+### Paket VIP — [Harga Rp]  
+[7-8 benefit utama + 1-on-1 access]
+
+**Strategi Harga:** [Penjelasan logika pricing]
+
+---
+
+## ✨ BENEFIT & DELIVERABLES
+
+| Benefit | Starter | Pro | VIP |
+|---------|---------|-----|-----|
+| [Benefit 1] | ✓ | ✓ | ✓ |
+| [Benefit 2] | - | ✓ | ✓ |
+| [Benefit 3] | - | - | ✓ |
+[Buat 8-10 baris benefit]
+
+---
+
+## ❓ FAQ MEMBERSHIP (10 pertanyaan paling sering)
+
+**Q: [Pertanyaan 1]**
+A: [Jawaban ringkas tapi meyakinkan]
+
+[Ulangi untuk 10 FAQ]
+
+---
+
+## 📣 COPY PROMOSI MEMBERSHIP
+
+### Untuk Instagram Story:
+[3 variasi copy promosi 50-70 kata]
+
+### Untuk WhatsApp Broadcast:
+[Template WA 100-150 kata]
+
+---
+
+*Membership ini adalah tahap lanjut dari ekosistem kompetensi yang dimulai dari ebook "${judul}".*`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4500,
+        temperature: 0.72,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Membership Brief error:", error);
+      res.status(500).json({ error: "Gagal generate Membership Brief." });
+    }
+  });
+
   return httpServer;
 }

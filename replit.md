@@ -1,8 +1,24 @@
-# Ebook Builder Pro
+# Chaesa AI Studio
 
 ## Overview
 
-Ebook Builder Pro is an AI prompt generator application designed to help content creators build professional ebook ecosystems. The application generates structured prompts for various content creation tasks including brainstorming, outlining, chapter drafting, video scripts, course creation, and marketing materials. It supports multiple output formats, tones, writing styles, and AI character modes (including an "Agentic Strategist" mode for proactive AI behavior).
+Chaesa AI Studio is an AI Prompt Generator Indonesia-first platform centered on the "Ekosistem Kompetensi Digital" concept. The ebook is Step 1 (foundation) where user competency is documented, then transferred to Chatbot AI, E-Course, Mini App, Document Generator, and other digital products. Full pipeline: Ebook+ → Publish → Distribusi → Sosmed → Konversi → Strategi+ → Iklan → Funnel → Ekosistem. 53 API routes, 21 generator features, 24 industry themes.
+
+## Latest Features (April 2026)
+
+### 3 New Generator Features
+- **SOP Prosedur Generator** (`/api/generate-sop`, gpt-4o) — SOP profesional dari kompetensi ebook. 5 tipe: Prosedur Kerja, SOP Layanan Pelanggan, SOP Produksi, Panduan Onboarding, Kebijakan Perusahaan. Output: informasi dokumen, 4-6 prosedur detail, KPI tabel, penanganan masalah, riwayat perubahan. Button di Ekosistem row. Dialog dengan tipe selector + copy button.
+- **LinkedIn Thought Leader Article** (`/api/generate-linkedin`, gpt-4o) — Artikel LinkedIn 700-900 kata untuk personal brand. 5 sudut artikel: Insight Profesional, Kisah Sukses Klien, Kontroversi & Pendapat, Tutorial Praktis, Tren Industri. Output: hook pembuka, isi utama, CTA, hashtag pack 15-20, versi pendek. Button di Sosmed row.
+- **Membership Site Brief** (`/api/generate-membership`, gpt-4o) — Rancangan lengkap membership site. 5 model: Komunitas + Konten Eksklusif, Subscription Learning, Mastermind Group, SaaS + Coaching, Inner Circle Premium. Output: konsep membership, welcome copy, 3 paket harga, benefit tabel, 10 FAQ, copy promosi. Button di Funnel row.
+
+### Ecosystem Progress Tracker
+- New `EcosystemTracker` component (`client/src/components/ecosystem-tracker.tsx`) — localStorage-based checklist of 11 ecosystem steps (Ebook, Publish, Distribusi, Sosmed, Landing Page, Iklan, Chatbot AI, E-Course, Mini App, SOP/Dokumen, Membership Site). Shows progress bar and percentage. Collapsible. Added to home.tsx left column below the tabs.
+
+### Brand & Concept Deepening
+- Landing page: Competency Transfer visual (Ebook → 4 transfer products), new FAQ entries on Ekosistem Kompetensi
+- Home subtitle: "Ekosistem Kompetensi Digital · Ebook → Chatbot · E-Course · Mini App"
+- Chaesa chatbot: Updated welcome message, quick questions, and feature chips focused on competency ecosystem
+- chaesa.ts: KONSEP INTI section, TIPS SUKSES rewritten with competency-first ordering
 
 ## User Preferences
 

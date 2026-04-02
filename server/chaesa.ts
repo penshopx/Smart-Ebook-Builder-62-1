@@ -76,6 +76,7 @@ ROW 4 — SOSMED (Media Sosial)
 Tools untuk konten media sosial Indonesia:
 - IG Caption Pack: Generate 5/7/10 caption Instagram siap posting. Per caption: hook stop-scroll, body, CTA, hashtag 15-20, best time to post. Tone: casual/profesional/motivational/edukasi/humor.
 - Reels/TikTok Hook: Generate 10/15/20 hook video Reels & TikTok, 5 pola (Pattern Interrupt, Curiosity Gap, Controversy, Story, Data/Angka). Per hook: visual opening, dialog, text overlay, audio vibe, potensi viral ⭐.
+- LinkedIn Thought Leader Article: Artikel LinkedIn 700-900 kata untuk membangun personal brand sebagai pakar — hook pembuka, insight utama, CTA soft, hashtag pack 15-20 hashtag relevan Indonesia, plus versi pendek untuk post biasa. Sudut artikel bisa dipilih: Insight Profesional, Kisah Sukses Klien, Kontroversi & Pendapat, Tutorial Praktis, atau Tren Industri.
 - WhatsApp Blast: Template pesan broadcast WA dengan variasi greeting, body, dan CTA
 - Email Marketing: Email sequence nurturing untuk list building
 
@@ -104,13 +105,14 @@ ROW 8 — FUNNEL (Alur Penjualan)
 Tools untuk membangun sales funnel yang mengkonversi:
 - E-Course Builder: Silabus kursus online 8 modul dari ebook (durasi, format, assessment)
 - Upsell & OTO: Script penawaran upsell dan one-time offer yang meyakinkan
-- Membership Copy: Copy untuk program membership/continuity dari ebook
+- Membership Site Brief: Rancangan lengkap membership site dari ekosistem kompetensi ebook — nama membership, tagline, platform rekomendasi, welcome copy 250-300 kata, quick start guide, struktur 3 paket harga (Starter/Pro/VIP), tabel benefit, 10 FAQ, dan copy promosi (Stories + WA Broadcast). Model membership bisa dipilih: Komunitas + Konten Eksklusif, Subscription Learning, Mastermind Group, SaaS + Coaching, atau Inner Circle Premium.
 - Affiliate Program: Panduan program afiliasi untuk memperluas distribusi
 
 ROW 9 — EKOSISTEM (Ekosistem Lengkap)
 Tools tingkat lanjut untuk membangun ekosistem digital:
 - Mini App Blueprint: Rancangan aplikasi dari topik ebook (web/mobile/bot/dashboard) + deep-link ke Lovable.dev, Bolt.new, Cursor, Replit
 - Quiz Generator: Soal asesmen berlevel untuk kursus online dan lead magnet
+- SOP Prosedur Generator: SOP profesional dari kompetensi ebook — tersedia 5 tipe: Prosedur Kerja, SOP Layanan Pelanggan, SOP Produksi, Panduan Onboarding, dan Kebijakan Perusahaan. Per SOP: informasi dokumen (kode, versi, tanggal berlaku), 4-6 prosedur lengkap (penanggung jawab, waktu, langkah detail, output, catatan), KPI tabel, penanganan masalah, dan riwayat perubahan. Ini adalah implementasi konkret dari "Document Generator" dalam konsep Ekosistem Kompetensi Digital.
 - AI Quality Review: Cek kualitas otomatis: struktur, kejelasan, bahasa, dan saran perbaikan
 - Thumbnail AI (DALL-E 3): Cover ebook dan thumbnail konten AI-generated. 4 varian desain.
 - Mockup 3D (DALL-E 3): Foto produk 3D ebook — Book Only, Book+Phone, Tablet

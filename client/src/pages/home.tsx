@@ -11,6 +11,7 @@ import { ThemeToggle } from '@/components/theme-toggle';
 import { DokumenterChatButton } from '@/components/dokumentender-chat-button';
 import { ChaesaChatbot } from '@/components/chaesa-chatbot';
 import { BookPreview } from '@/components/book-preview';
+import { EcosystemTracker } from '@/components/ecosystem-tracker';
 import { generatePrompt } from '@/lib/prompt-generator';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -471,6 +472,7 @@ export default function Home() {
                 </div>
               </TabsContent>
             </Tabs>
+            <EcosystemTracker />
           </div>
 
           <div className="space-y-4">

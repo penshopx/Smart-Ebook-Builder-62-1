@@ -386,6 +386,21 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [calendarContent, setCalendarContent] = useState('');
   const [calendarLoading, setCalendarLoading] = useState(false);
   const [calendarPlatforms, setCalendarPlatforms] = useState('Instagram, TikTok, LinkedIn, Facebook');
+  // SOP Prosedur Generator
+  const [sopOpen, setSopOpen] = useState(false);
+  const [sopContent, setSopContent] = useState('');
+  const [sopLoading, setSopLoading] = useState(false);
+  const [sopType, setSopType] = useState('Prosedur Kerja');
+  // LinkedIn Thought Leader
+  const [linkedinOpen, setLinkedinOpen] = useState(false);
+  const [linkedinContent, setLinkedinContent] = useState('');
+  const [linkedinLoading, setLinkedinLoading] = useState(false);
+  const [linkedinAngle, setLinkedinAngle] = useState('Insight Profesional');
+  // Membership Site Brief
+  const [membershipOpen, setMembershipOpen] = useState(false);
+  const [membershipContent, setMembershipContent] = useState('');
+  const [membershipLoading, setMembershipLoading] = useState(false);
+  const [membershipModel, setMembershipModel] = useState('Komunitas + Konten Eksklusif');
 
   const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
 
@@ -1702,6 +1717,60 @@ ${bodyHtml}
       setCalendarLoading(false);
     }
   }, [prompt, projectTopik, projectTitle, calendarPlatforms, toast]);
+
+  const handleGenerateSop = useCallback(async () => {
+    setSopOpen(true);
+    setSopContent('');
+    setSopLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-sop', {
+        projectData: { topik: projectTopik, judul: projectTitle, target: '', industry: '' },
+        sopType,
+      });
+      const data = await res.json();
+      setSopContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate SOP', variant: 'destructive' });
+    } finally {
+      setSopLoading(false);
+    }
+  }, [projectTopik, projectTitle, sopType, toast]);
+
+  const handleGenerateLinkedin = useCallback(async () => {
+    setLinkedinOpen(true);
+    setLinkedinContent('');
+    setLinkedinLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-linkedin', {
+        projectData: { topik: projectTopik, judul: projectTitle, target: '', bigIdea: '', tujuan: '' },
+        articleAngle: linkedinAngle,
+      });
+      const data = await res.json();
+      setLinkedinContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate LinkedIn Article', variant: 'destructive' });
+    } finally {
+      setLinkedinLoading(false);
+    }
+  }, [projectTopik, projectTitle, linkedinAngle, toast]);
+
+  const handleGenerateMembership = useCallback(async () => {
+    setMembershipOpen(true);
+    setMembershipContent('');
+    setMembershipLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-membership', {
+        projectData: { topik: projectTopik, judul: projectTitle, target: '', bigIdea: '', produk: '' },
+        membershipModel,
+      });
+      const data = await res.json();
+      setMembershipContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate Membership Brief', variant: 'destructive' });
+    } finally {
+      setMembershipLoading(false);
+    }
+  }, [projectTopik, projectTitle, membershipModel, toast]);
 
   const handleReviewDocument = useCallback(async () => {
     if (!docContent) { toast({ title: 'Generate dokumen dulu sebelum review', variant: 'destructive' }); return; }
@@ -3372,6 +3441,15 @@ ${bodyHtml}
                   {reelHookLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🎬</span>}
                   Reels/TikTok Hook<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
+                <Button
+                  onClick={() => setLinkedinOpen(true)}
+                  disabled={linkedinLoading}
+                  className="flex-1 bg-gradient-to-r from-blue-700 to-sky-700 hover:from-blue-800 hover:to-sky-800 text-white text-xs h-8"
+                  data-testid="button-linkedin-article"
+                >
+                  {linkedinLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🔵</span>}
+                  LinkedIn Article<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
               </div>
               {/* ===== END SOSMED ROW ===== */}
 
@@ -3508,6 +3586,15 @@ ${bodyHtml}
                   <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
                   Kalender Konten<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
+                <Button
+                  onClick={() => setMembershipOpen(true)}
+                  disabled={membershipLoading}
+                  className="flex-1 bg-gradient-to-r from-amber-600 to-yellow-600 hover:from-amber-700 hover:to-yellow-700 text-white text-xs h-8"
+                  data-testid="button-membership-brief"
+                >
+                  {membershipLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🏆</span>}
+                  Membership Brief<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Ekosistem:</div>
@@ -3542,6 +3629,15 @@ ${bodyHtml}
                 >
                   <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
                   Generator Kuis
+                </Button>
+                <Button
+                  onClick={() => setSopOpen(true)}
+                  disabled={sopLoading}
+                  className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800 text-white text-xs h-8"
+                  data-testid="button-sop-generator"
+                >
+                  {sopLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">📋</span>}
+                  SOP Generator<span className="ml-1 text-[7px] opacity-40 font-mono">·Dokumen</span>
                 </Button>
               </div>
             </div>
@@ -7396,6 +7492,186 @@ ${bodyHtml}
                 <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-20" />
                 <p className="text-sm">Klik "Generate" untuk membuat kalender konten 30 hari lengkap</p>
                 <p className="text-xs mt-1 opacity-60">Minggu 1: Awareness · 2: Edukasi · 3: Sosial Proof · 4: Launching</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* SOP Prosedur Generator Dialog */}
+      <Dialog open={sopOpen} onOpenChange={setSopOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">📋</span>
+              SOP Prosedur Generator
+              <Badge variant="secondary" className="text-xs bg-slate-100 text-slate-700">Document Generator · gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              SOP profesional berdasarkan kompetensi dari ebook <strong>{projectTitle || projectTopik}</strong> — langsung bisa digunakan.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground shrink-0">📁 Tipe SOP:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {['Prosedur Kerja', 'SOP Layanan Pelanggan', 'SOP Produksi', 'Panduan Onboarding', 'Kebijakan Perusahaan'].map(t => (
+                  <button
+                    key={t}
+                    onClick={() => setSopType(t)}
+                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${sopType === t ? 'bg-slate-700 text-white border-slate-700' : 'border-border hover:bg-muted'}`}
+                    data-testid={`button-sop-type-${t.replace(/\s/g, '-').toLowerCase()}`}
+                  >{t}</button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleGenerateSop} disabled={sopLoading} className="w-full bg-slate-700 hover:bg-slate-800 text-white h-9 text-sm" data-testid="button-sop-generate">
+              {sopLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Membuat SOP profesional...</> : <><span className="mr-2">📋</span>{sopContent ? 'Generate Ulang' : `Generate SOP: ${sopType}`}</>}
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 mt-2">
+            {sopLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-10 w-10 animate-spin text-slate-500" />
+                <p className="text-sm text-muted-foreground">AI sedang menyusun SOP profesional...</p>
+                <p className="text-xs text-muted-foreground opacity-60">Prosedur · KPI · Penanganan Masalah</p>
+              </div>
+            ) : sopContent ? (
+              <div className="space-y-2">
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(sopContent); toast({ title: 'SOP disalin!' }); }} data-testid="button-sop-copy">
+                    Copy SOP
+                  </Button>
+                </div>
+                <div className="text-xs whitespace-pre-wrap font-mono bg-muted/40 rounded-lg p-4 leading-relaxed">
+                  {sopContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <span className="text-5xl mb-4 block opacity-20">📋</span>
+                <p className="text-sm">Pilih tipe SOP dan klik Generate</p>
+                <p className="text-xs mt-1 opacity-60">Prosedur lengkap · KPI · Penanganan masalah · Riwayat perubahan</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* LinkedIn Thought Leader Dialog */}
+      <Dialog open={linkedinOpen} onOpenChange={setLinkedinOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">🔵</span>
+              LinkedIn Thought Leader Article
+              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">Sosmed · gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              Artikel LinkedIn yang membangun personal brand dari kompetensi ebook <strong>{projectTitle || projectTopik}</strong>.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground shrink-0">🎯 Sudut Artikel:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {['Insight Profesional', 'Kisah Sukses Klien', 'Kontroversi & Pendapat', 'Tutorial Praktis', 'Tren Industri'].map(a => (
+                  <button
+                    key={a}
+                    onClick={() => setLinkedinAngle(a)}
+                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${linkedinAngle === a ? 'bg-blue-700 text-white border-blue-700' : 'border-border hover:bg-muted'}`}
+                    data-testid={`button-linkedin-angle-${a.replace(/\s/g, '-').toLowerCase()}`}
+                  >{a}</button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleGenerateLinkedin} disabled={linkedinLoading} className="w-full bg-blue-700 hover:bg-blue-800 text-white h-9 text-sm" data-testid="button-linkedin-generate">
+              {linkedinLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Menulis artikel LinkedIn...</> : <><span className="mr-2">🔵</span>{linkedinContent ? 'Generate Ulang' : 'Generate LinkedIn Article'}</>}
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 mt-2">
+            {linkedinLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-10 w-10 animate-spin text-blue-500" />
+                <p className="text-sm text-muted-foreground">AI sedang menulis artikel LinkedIn...</p>
+                <p className="text-xs text-muted-foreground opacity-60">Hook · Isi · CTA · Hashtag Pack · Versi Pendek</p>
+              </div>
+            ) : linkedinContent ? (
+              <div className="space-y-2">
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(linkedinContent); toast({ title: 'LinkedIn Article disalin!' }); }} data-testid="button-linkedin-copy">
+                    Copy Artikel
+                  </Button>
+                </div>
+                <div className="text-xs whitespace-pre-wrap bg-muted/40 rounded-lg p-4 leading-relaxed">
+                  {linkedinContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <span className="text-5xl mb-4 block opacity-20">🔵</span>
+                <p className="text-sm">Pilih sudut artikel dan klik Generate</p>
+                <p className="text-xs mt-1 opacity-60">Hook pembuka · Isi 700-900 kata · Hashtag pack · Versi pendek</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Membership Site Brief Dialog */}
+      <Dialog open={membershipOpen} onOpenChange={setMembershipOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              Membership Site Brief
+              <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">Funnel · gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              Rancangan lengkap membership site dari ekosistem kompetensi ebook <strong>{projectTitle || projectTopik}</strong>.
+            </p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-muted-foreground shrink-0">🏛️ Model:</span>
+              <div className="flex gap-1.5 flex-wrap">
+                {['Komunitas + Konten Eksklusif', 'Subscription Learning', 'Mastermind Group', 'SaaS + Coaching', 'Inner Circle Premium'].map(m => (
+                  <button
+                    key={m}
+                    onClick={() => setMembershipModel(m)}
+                    className={`px-2.5 py-1 rounded-full text-xs border transition-colors ${membershipModel === m ? 'bg-amber-600 text-white border-amber-600' : 'border-border hover:bg-muted'}`}
+                    data-testid={`button-membership-model-${m.replace(/\s/g, '-').toLowerCase()}`}
+                  >{m}</button>
+                ))}
+              </div>
+            </div>
+            <Button onClick={handleGenerateMembership} disabled={membershipLoading} className="w-full bg-amber-600 hover:bg-amber-700 text-white h-9 text-sm" data-testid="button-membership-generate">
+              {membershipLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Merancang membership...</> : <><span className="mr-2">🏆</span>{membershipContent ? 'Generate Ulang' : 'Generate Membership Brief'}</>}
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 mt-2">
+            {membershipLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-10 w-10 animate-spin text-amber-500" />
+                <p className="text-sm text-muted-foreground">AI sedang merancang membership site...</p>
+                <p className="text-xs text-muted-foreground opacity-60">Welcome Copy · Pricing · Benefits · FAQ · Promo Copy</p>
+              </div>
+            ) : membershipContent ? (
+              <div className="space-y-2">
+                <div className="flex gap-2 justify-end">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(membershipContent); toast({ title: 'Membership Brief disalin!' }); }} data-testid="button-membership-copy">
+                    Copy Brief
+                  </Button>
+                </div>
+                <div className="text-xs whitespace-pre-wrap bg-muted/40 rounded-lg p-4 leading-relaxed">
+                  {membershipContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <span className="text-5xl mb-4 block opacity-20">🏆</span>
+                <p className="text-sm">Pilih model membership dan klik Generate</p>
+                <p className="text-xs mt-1 opacity-60">Welcome page · Pricing tiers · Benefits tabel · FAQ · Copy promosi</p>
               </div>
             )}
           </ScrollArea>

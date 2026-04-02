@@ -154,7 +154,9 @@ const FEATURES = [
   { icon: Smartphone, title: 'Mini App Blueprint', desc: 'Rancang blueprint aplikasi dari topik ebook + deep-link ke Lovable, Bolt.new, Cursor, dan Replit', benefit: 'Deploy lebih cepat' },
   { icon: ClipboardList, title: 'Quiz Maker Berlevel', desc: 'Generate soal kuis Beginner–Advanced dari konten ebook untuk kursus online dan lead magnet', benefit: 'Engagement naik 3x' },
   { icon: Layers, title: 'TikTok Ads Script', desc: '3 angle script video ads TikTok (Pain/Story/Social Proof) untuk durasi 15s, 30s, atau 60s siap produksi', benefit: 'Iklan yang mengkonversi' },
-  { icon: Smartphone, title: 'Document Generator', desc: 'Buat SOP, Policy, Kontrak, KAK, dan dokumen profesional terstandar untuk berbagai kebutuhan bisnis', benefit: 'Standarisasi bisnis' },
+  { icon: Smartphone, title: 'SOP Generator', desc: 'Buat SOP Prosedur Kerja, SOP Layanan, Panduan Onboarding, dan Kebijakan Perusahaan dari kompetensi ebook', benefit: 'Dokumen profesional' },
+  { icon: FileText, title: 'LinkedIn Article', desc: 'Artikel thought leader 700-900 kata untuk LinkedIn — hook, insight, CTA, dan hashtag pack untuk personal brand', benefit: 'Personal brand naik' },
+  { icon: Crown, title: 'Membership Site Brief', desc: 'Rancangan lengkap membership site — welcome copy, pricing tiers, benefits table, FAQ, dan promo copy', benefit: 'Revenue recurring' },
 ];
 
 const ECOSYSTEM_STEPS = [
