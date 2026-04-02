@@ -53,6 +53,22 @@ const taskConfigSchema = z.object({
   appType: z.string().optional().default('web'),
   appComplexity: z.string().optional().default('simple'),
   quizFocus: z.string().optional().default('komprehensif'),
+  podcastHost: z.string().optional().default('Andi'),
+  podcastGuest: z.string().optional().default('Sari'),
+  podcastStyle: z.string().optional().default('interview'),
+  podcastEpisodeLength: z.string().optional().default('15-20 menit'),
+  podcastSegments: z.string().optional().default('5'),
+  audiobookNarrator: z.string().optional().default(''),
+  audiobookTone: z.string().optional().default('conversational'),
+  audiobookPace: z.string().optional().default('medium'),
+  audiobookChapterFocus: z.string().optional().default('full'),
+  audiobookEmphasis: z.string().optional().default('moderate'),
+  landingPageStyle: z.string().optional().default('long-form'),
+  landingPageGoal: z.string().optional().default('sell'),
+  landingPagePrice: z.string().optional().default(''),
+  landingPageBonuses: z.string().optional().default(''),
+  landingPageCTA: z.string().optional().default('Beli Sekarang'),
+  landingPageOutputFormat: z.string().optional().default('copy'),
 });
 
 const createProjectSchema = z.object({
@@ -1175,6 +1191,293 @@ Format setiap segmen:
         res.end();
       } else {
         res.status(500).json({ error: "Failed to generate document" });
+      }
+    }
+  });
+
+  // ── PODCAST SCRIPT GENERATOR ──────────────────────────────────────────────
+  app.post("/api/generate-podcast-script", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, podcastHost, podcastGuest, podcastStyle, podcastEpisodeLength, podcastSegments, docContent } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const styleDesc: Record<string, string> = {
+        interview: 'format tanya-jawab mendalam antara Host dan narasumber',
+        debate: 'format debat dengan dua sudut pandang berbeda',
+        storytelling: 'format bercerita berdasarkan pengalaman nyata',
+        educational: 'format edukasi step-by-step yang mudah dipahami',
+        casual: 'format obrolan santai namun informatif',
+      };
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Kamu adalah penulis script podcast profesional Indonesia yang ahli membuat konten audio yang natural, engaging, dan informatif. Kamu memahami ritme percakapan, cara membuat dialog yang terasa nyata, dan teknik storytelling dalam format audio.`,
+          },
+          {
+            role: "user",
+            content: `Buatkan SCRIPT PODCAST LENGKAP DAN SIAP REKAM tentang topik: "${topik}"
+
+Detail Produksi:
+- Judul Episode: ${title || topik}
+- Host: ${podcastHost || 'Andi'}
+- Guest/Narasumber: ${podcastGuest || 'Sari'}
+- Format: ${styleDesc[podcastStyle || 'interview']}
+- Durasi Target: ${podcastEpisodeLength || '15-20 menit'}
+- Jumlah Segmen: ${podcastSegments || '5'} segmen
+- Target Pendengar: ${target || 'umum'}
+${docContent ? `\nReferensi konten ebook:\n${docContent.slice(0, 1500)}` : ''}
+
+Format script yang WAJIB digunakan:
+- Dialog ditulis: **[NAMA HOST/GUEST]:** Teks dialog...
+- Notasi produksi dalam kurung siku: [INTRO MUSIK — FADE IN], [JEDA], [TRANSISI], [OUTRO MUSIK]
+- Setiap segmen diberi judul: === SEGMEN N: JUDUL SEGMEN ===
+
+Buat script dengan ${podcastSegments || '5'} segmen. Setiap segmen minimal 200-300 kata dialog.
+Dialog harus terasa NATURAL, tidak kaku, seperti percakapan nyata.
+Gunakan filler words yang wajar: "iya betul", "wah menarik", "hmm", "nah jadi..."`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 4000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate podcast script" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate podcast script" });
+      }
+    }
+  });
+
+  // ── AUDIOBOOK SCRIPT GENERATOR ────────────────────────────────────────────
+  app.post("/api/generate-audiobook-script", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, audiobookNarrator, audiobookTone, audiobookPace, audiobookChapterFocus, audiobookEmphasis, docContent } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const toneDesc: Record<string, string> = {
+        conversational: 'santai dan hangat seperti berbicara langsung kepada pendengar',
+        authoritative: 'tegas dan meyakinkan seperti seorang pakar',
+        warm: 'penuh kehangatan dan empati',
+        dramatic: 'dramatis dan penuh penghayatan',
+        academic: 'formal dan ilmiah',
+        motivational: 'penuh semangat dan energi mendorong tindakan',
+      };
+      const paceDesc: Record<string, string> = {
+        slow: 'lambat dan tenang — banyak [JEDA PENDEK] dan [JEDA PANJANG]',
+        medium: 'sedang — standar audiobook profesional',
+        fast: 'cepat dan ringkas — langsung ke poin utama',
+      };
+      const focusDesc: Record<string, string> = {
+        full: 'seluruh buku dari awal hingga akhir',
+        intro: 'hanya pendahuluan dan bab pertama',
+        summary: 'ringkasan setiap bab: poin utama saja',
+        highlights: 'highlight terbaik: kutipan dan insight paling impactful',
+      };
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Kamu adalah penulis script audiobook profesional Indonesia yang ahli membuat narasi yang enak didengar, mengalir natural, dan mudah dipahami. Kamu mengerti teknik pacing, intonasi, dan cara menulis untuk telinga — bukan untuk mata.`,
+          },
+          {
+            role: "user",
+            content: `Buatkan SCRIPT AUDIOBOOK PROFESIONAL DAN SIAP REKAM untuk buku bertema: "${topik}"
+
+Detail Produksi:
+- Judul Buku: ${title || topik}
+- Narator: ${audiobookNarrator || 'Narator'}
+- Gaya Narasi: ${toneDesc[audiobookTone || 'conversational']}
+- Pacing: ${paceDesc[audiobookPace || 'medium']}
+- Fokus: ${focusDesc[audiobookChapterFocus || 'full']}
+- Penekanan Emosi: ${audiobookEmphasis || 'moderate'}
+- Target Pendengar: ${target || 'umum'}
+${docContent ? `\nReferensi konten ebook:\n${docContent.slice(0, 2000)}` : ''}
+
+NOTASI PRODUKSI yang WAJIB digunakan dalam script:
+- [JEDA PENDEK] → jeda 1-2 detik
+- [JEDA PANJANG] → jeda 3-5 detik (antar bab/bagian penting)
+- [PENEKANAN] → kata berikutnya dibaca lebih pelan dan berat
+- [NADA NAIK] / [NADA TURUN] → variasi intonasi
+- [MUSIK INTRO] / [MUSIK OUTRO] → transisi antar bab
+- [NAPAS] → jeda napas natural narator
+- (huruf miring) → baca lebih lambat/ditekankan
+
+FORMAT setiap BAB:
+[MUSIK INTRO — FADE IN]
+BAB [N]: [JUDUL BAB] (Estimasi durasi: X menit)
+[Kalimat pembuka hook yang kuat]
+[JEDA PANJANG]
+[Narasi isi bab]
+Ringkasan bab: "Dalam bab ini kita telah mempelajari..."
+[JEDA PANJANG]
+"Selanjutnya di bab berikutnya..."
+[MUSIK OUTRO — FADE OUT]
+
+Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max 20-25 kata per kalimat. Gunakan "Anda" (formal).`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 4000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate audiobook script" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate audiobook script" });
+      }
+    }
+  });
+
+  // ── LANDING PAGE GENERATOR ────────────────────────────────────────────────
+  app.post("/api/generate-landing-page", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, landingPageStyle, landingPageGoal, landingPagePrice, landingPageBonuses, landingPageCTA, landingPageOutputFormat, docContent } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const styleMap: Record<string, string> = {
+        'long-form': 'Long-Form Sales Letter yang persuasif dengan formula AIDA+PAS',
+        'short': 'Short Copy yang ringkas dan langsung ke manfaat utama',
+        'vsl': 'VSL Landing Page dengan focus pada video sales letter',
+        'webinar': 'Webinar Registration Page untuk mendorong pendaftaran',
+      };
+      const goalMap: Record<string, string> = {
+        'sell': 'arahkan pembaca untuk membeli langsung',
+        'lead': 'kumpulkan email/WhatsApp sebagai lead magnet',
+        'webinar': 'daftarkan ke webinar/kelas gratis',
+        'waitlist': 'masukkan ke waitlist pre-launch',
+      };
+      const outputInstr: Record<string, string> = {
+        'copy': 'Tulis sebagai COPY BERSIH tanpa HTML — teks siap paste ke builder.',
+        'html': 'Tulis sebagai HTML LENGKAP dengan inline CSS — siap upload. Gunakan desain modern dengan warna, tombol, dan layout yang menarik.',
+        'sections': 'Pisahkan setiap seksi dengan header yang jelas: ===HERO===, ===PROBLEM===, ===SOLUTION===, ===FEATURES===, ===TESTIMONIAL===, ===PRICING===, ===FAQ===, ===CTA===',
+      };
+
+      const bonusList = landingPageBonuses?.trim()
+        ? landingPageBonuses.split('\n').filter(Boolean).map((b: string, i: number) => `${i + 1}. ${b.trim()}`).join('\n')
+        : '';
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Kamu adalah copywriter profesional Indonesia yang ahli dalam direct response marketing, sales letter, dan conversion optimization. Kamu menguasai framework AIDA, PAS, dan teknik copywriting lainnya untuk pasar Indonesia.`,
+          },
+          {
+            role: "user",
+            content: `Buatkan LANDING PAGE ${styleMap[landingPageStyle || 'long-form']} untuk ebook berikut:
+
+Judul Ebook: ${title || topik}
+Topik: ${topik}
+Target Pembaca: ${target || 'umum'}
+Harga: ${landingPagePrice || '(belum ditentukan)'}
+Tujuan: ${goalMap[landingPageGoal || 'sell']}
+Tombol CTA: "${landingPageCTA || 'Beli Sekarang'}"
+${bonusList ? `\nBonus Produk:\n${bonusList}` : ''}
+${docContent ? `\nReferensi konten ebook:\n${docContent.slice(0, 1500)}` : ''}
+
+FORMAT OUTPUT:
+${outputInstr[landingPageOutputFormat || 'copy']}
+
+STRUKTUR WAJIB (sesuaikan dengan gaya ${landingPageStyle || 'long-form'}):
+
+1. HERO SECTION
+- Headline utama: benefit-driven, max 10 kata, langsung menyentuh masalah
+- Subheadline: perjelas proposisi nilai (1-2 kalimat)
+- CTA pertama: "${landingPageCTA || 'Beli Sekarang'}"
+
+2. PROBLEM AGITATION  
+- 3-5 masalah konkret yang dirasakan target pembaca
+- Gunakan teknik "Sebelum vs Sesudah" atau PAS
+
+3. SOLUSI & UNIQUE VALUE PROPOSITION
+- Kenalkan ebook sebagai solusi terbaik
+- Apa yang membuatnya berbeda dari solusi lain
+
+4. ISI EBOOK / FITUR
+- Daftar bab/materi (dengan manfaat, bukan sekadar nama bab)
+- Format: "Di bab ini kamu akan: [manfaat konkret]"
+
+5. UNTUK SIAPA
+- ✅ Cocok untuk: (3-5 profil ideal)
+- ❌ Bukan untuk: (1-2 yang tidak cocok)
+
+6. TESTIMONI (3 contoh template realistis)
+Format: "[Kutipan] — Nama, Pekerjaan"
+
+7. TENTANG PENULIS
+Template bio yang bisa dikustomisasi
+
+${bonusList ? `8. SEKSI BONUS
+Tampilkan setiap bonus dengan nilai yang dirasakan\n` : ''}
+
+${bonusList ? '9' : '8'}. HARGA & PENAWARAN
+- Harga: ${landingPagePrice || '(isi harga Anda)'}
+- Urgency copy (stok/waktu terbatas)
+- CTA utama: "${landingPageCTA || 'Beli Sekarang'}"
+
+${bonusList ? '10' : '9'}. GARANSI
+Template garansi uang kembali
+
+${bonusList ? '11' : '10'}. FAQ (5 pertanyaan + jawaban meyakinkan)
+
+${bonusList ? '12' : '11'}. CLOSING CTA FINAL
+Rangkum nilai + CTA akhir yang kuat
+
+Gunakan bahasa yang natural dan conversational — bukan bahasa brosur.
+Sertakan angka/data konkret untuk meningkatkan kredibilitas.`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 4000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate landing page" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate landing page" });
       }
     }
   });

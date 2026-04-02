@@ -163,6 +163,22 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [quizConfigFocus, setQuizConfigFocus] = useState('komprehensif');
   // Track if next step was dismissed
   const [nextStepDismissed, setNextStepDismissed] = useState(false);
+  // Podcast Script Generator
+  const [podcastOpen, setPodcastOpen] = useState(false);
+  const [podcastContent, setPodcastContent] = useState('');
+  const [podcastLoading, setPodcastLoading] = useState(false);
+  const [podcastTab, setPodcastTab] = useState<'script' | 'segments'>('script');
+  // Audiobook Script Generator
+  const [audiobookOpen, setAudiobookOpen] = useState(false);
+  const [audiobookContent, setAudiobookContent] = useState('');
+  const [audiobookLoading, setAudiobookLoading] = useState(false);
+  const [audiobookTab, setAudiobookTab] = useState<'script' | 'chapters'>('script');
+  // Landing Page Generator
+  const [lpOpen, setLpOpen] = useState(false);
+  const [lpContent, setLpContent] = useState('');
+  const [lpLoading, setLpLoading] = useState(false);
+  const [lpTab, setLpTab] = useState<'copy' | 'preview' | 'sections'>('copy');
+  const [lpOutputFormat, setLpOutputFormat] = useState('copy');
 
   const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
 
@@ -678,6 +694,92 @@ ${bodyHtml}
     } finally { setQuizLoading(false); }
   }, [projectTitle, projectTopik, projectTarget, docContent, quizConfigLevel, quizConfigFocus, fetchSSE, toast]);
 
+  const handleGeneratePodcastScript = useCallback(async (config?: {host?: string; guest?: string; style?: string; length?: string; segments?: string}) => {
+    setPodcastOpen(true);
+    setPodcastContent('');
+    setPodcastLoading(true);
+    setPodcastTab('script');
+    try {
+      await fetchSSE(
+        '/api/generate-podcast-script',
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          docContent: docContent.slice(0, 1500),
+          podcastHost: config?.host,
+          podcastGuest: config?.guest,
+          podcastStyle: config?.style,
+          podcastEpisodeLength: config?.length,
+          podcastSegments: config?.segments,
+        },
+        (chunk) => setPodcastContent(prev => prev + chunk),
+        () => setPodcastLoading(false),
+      );
+    } catch {
+      setPodcastLoading(false);
+      toast({ title: 'Gagal membuat podcast script', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+
+  const handleGenerateAudiobookScript = useCallback(async (config?: {narrator?: string; tone?: string; pace?: string; chapterFocus?: string; emphasis?: string}) => {
+    setAudiobookOpen(true);
+    setAudiobookContent('');
+    setAudiobookLoading(true);
+    setAudiobookTab('script');
+    try {
+      await fetchSSE(
+        '/api/generate-audiobook-script',
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          docContent: docContent.slice(0, 2000),
+          audiobookNarrator: config?.narrator,
+          audiobookTone: config?.tone,
+          audiobookPace: config?.pace,
+          audiobookChapterFocus: config?.chapterFocus,
+          audiobookEmphasis: config?.emphasis,
+        },
+        (chunk) => setAudiobookContent(prev => prev + chunk),
+        () => setAudiobookLoading(false),
+      );
+    } catch {
+      setAudiobookLoading(false);
+      toast({ title: 'Gagal membuat audiobook script', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+
+  const handleGenerateLandingPage = useCallback(async (config?: {style?: string; goal?: string; price?: string; bonuses?: string; cta?: string; outputFormat?: string}) => {
+    setLpOpen(true);
+    setLpContent('');
+    setLpLoading(true);
+    setLpTab('copy');
+    setLpOutputFormat(config?.outputFormat || 'copy');
+    try {
+      await fetchSSE(
+        '/api/generate-landing-page',
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          docContent: docContent.slice(0, 1500),
+          landingPageStyle: config?.style,
+          landingPageGoal: config?.goal,
+          landingPagePrice: config?.price,
+          landingPageBonuses: config?.bonuses,
+          landingPageCTA: config?.cta,
+          landingPageOutputFormat: config?.outputFormat,
+        },
+        (chunk) => setLpContent(prev => prev + chunk),
+        () => setLpLoading(false),
+      );
+    } catch {
+      setLpLoading(false);
+      toast({ title: 'Gagal membuat landing page', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+
   const handleGenerateMonetization = useCallback(async () => {
     setMonoOpen(true);
     setMonoContent('');
@@ -1148,6 +1250,42 @@ ${bodyHtml}
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Generator Kuis</span>
                   <span className="text-[10px] opacity-80">{docContent ? '✓ Berbasis konten ebook' : '19 soal MCQ/esai/kasus'}</span>
+                </span>
+                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+              </Button>
+              <Button
+                onClick={() => handleGeneratePodcastScript()}
+                className="bg-gradient-to-r from-rose-600 to-pink-600 hover:from-rose-700 hover:to-pink-700 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-podcast-main"
+              >
+                <Mic className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Podcast Script</span>
+                  <span className="text-[10px] opacity-80">Dialog 2 orang siap rekam</span>
+                </span>
+                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+              </Button>
+              <Button
+                onClick={() => handleGenerateAudiobookScript()}
+                className="bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-audiobook-main"
+              >
+                <Volume2 className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Audiobook Script</span>
+                  <span className="text-[10px] opacity-80">Narasi solo + production cue</span>
+                </span>
+                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+              </Button>
+              <Button
+                onClick={() => handleGenerateLandingPage()}
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-landing-page-main"
+              >
+                <ExternalLink className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Landing Page</span>
+                  <span className="text-[10px] opacity-80">Copy + HTML siap upload</span>
                 </span>
                 {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
@@ -2782,6 +2920,338 @@ ${bodyHtml}
               Tidak ada gambar yang dihasilkan. Silakan coba lagi.
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ── PODCAST SCRIPT DIALOG ── */}
+      <Dialog open={podcastOpen} onOpenChange={setPodcastOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Mic className="h-5 w-5 text-rose-500" />
+              Podcast Script Generator
+              <Badge className="ml-auto bg-rose-100 text-rose-700 dark:bg-rose-900 dark:text-rose-300 border-0">Dialog 2 Orang</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex border-b px-6 shrink-0">
+            {(['script', 'segments'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setPodcastTab(t)}
+                className={cn(
+                  'px-4 py-2.5 text-xs font-medium border-b-2 transition-colors',
+                  podcastTab === t ? 'border-rose-500 text-rose-600' : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t === 'script' ? '🎙️ Full Script' : '📋 Per Segmen'}
+              </button>
+            ))}
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-6">
+              {podcastLoading ? (
+                <div className="flex flex-col items-center gap-4 py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+                  <p className="text-sm text-muted-foreground">Sedang membuat script podcast...</p>
+                </div>
+              ) : podcastContent ? (
+                <div>
+                  {podcastTab === 'script' ? (
+                    <div className="space-y-2">
+                      {podcastContent.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return <div key={i} className="h-2" />;
+                        if (trimmed.startsWith('===') && trimmed.endsWith('===')) {
+                          return (
+                            <div key={i} className="mt-4 mb-2 px-3 py-1.5 bg-rose-50 dark:bg-rose-950 rounded-lg border border-rose-200 dark:border-rose-800">
+                              <p className="text-xs font-bold text-rose-700 dark:text-rose-300 uppercase tracking-wide">{trimmed.replace(/===/g, '').trim()}</p>
+                            </div>
+                          );
+                        }
+                        if (trimmed.startsWith('[') && trimmed.endsWith(']')) {
+                          return (
+                            <div key={i} className="flex items-center gap-2 my-1">
+                              <span className="text-xs px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded font-mono">{trimmed}</span>
+                            </div>
+                          );
+                        }
+                        const dialogMatch = trimmed.match(/^\*\*\[([^\]]+)\]:\*\*\s*(.+)/);
+                        if (dialogMatch) {
+                          const [, speaker, text] = dialogMatch;
+                          const isHost = !text.startsWith('Sari') && speaker.toLowerCase().includes('host') || !speaker.toLowerCase().includes('guest');
+                          return (
+                            <div key={i} className={cn('flex gap-3 my-2', isHost ? 'flex-row' : 'flex-row-reverse')}>
+                              <div className={cn('h-7 w-7 rounded-full flex items-center justify-center text-white text-[10px] font-bold shrink-0', isHost ? 'bg-rose-500' : 'bg-blue-500')}>
+                                {speaker.charAt(0)}
+                              </div>
+                              <div className={cn('max-w-[85%] rounded-2xl px-3 py-2 text-sm', isHost ? 'bg-rose-50 dark:bg-rose-950 rounded-tl-sm' : 'bg-blue-50 dark:bg-blue-950 rounded-tr-sm')}>
+                                <p className={cn('text-[10px] font-semibold mb-0.5', isHost ? 'text-rose-600' : 'text-blue-600')}>{speaker}</p>
+                                <p className="leading-relaxed">{text}</p>
+                              </div>
+                            </div>
+                          );
+                        }
+                        return <p key={i} className="text-sm leading-relaxed text-muted-foreground">{trimmed}</p>;
+                      })}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {podcastContent.split(/===\s*SEGMEN/i).slice(1).map((seg, i) => {
+                        const lines = seg.split('\n');
+                        const title = lines[0]?.trim() || `Segmen ${i + 1}`;
+                        const content = lines.slice(1).join('\n').trim();
+                        return (
+                          <div key={i} className="border rounded-lg overflow-hidden">
+                            <div className="bg-rose-50 dark:bg-rose-950 px-4 py-2 border-b">
+                              <p className="text-xs font-bold text-rose-700 dark:text-rose-300">SEGMEN {title}</p>
+                            </div>
+                            <div className="p-4 text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{content}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">Script belum dibuat</div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="px-6 py-3 border-t flex items-center gap-2 shrink-0 bg-muted/30">
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(podcastContent); toast({ description: 'Script disalin!' }); }}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Script
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { const b = new Blob([podcastContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='podcast-script.txt'; a.click(); }}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Unduh TXT
+            </Button>
+            <Button size="sm" className="ml-auto bg-rose-600 hover:bg-rose-700 text-white" onClick={() => handleGeneratePodcastScript()} disabled={podcastLoading}>
+              <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Ulang
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── AUDIOBOOK SCRIPT DIALOG ── */}
+      <Dialog open={audiobookOpen} onOpenChange={setAudiobookOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Volume2 className="h-5 w-5 text-amber-500" />
+              Audiobook Script Generator
+              <Badge className="ml-auto bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300 border-0">Narasi Solo</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex border-b px-6 shrink-0">
+            {(['script', 'chapters'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setAudiobookTab(t)}
+                className={cn(
+                  'px-4 py-2.5 text-xs font-medium border-b-2 transition-colors',
+                  audiobookTab === t ? 'border-amber-500 text-amber-600' : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t === 'script' ? '🎧 Full Script' : '📖 Per Bab'}
+              </button>
+            ))}
+          </div>
+          <ScrollArea className="flex-1">
+            <div className="p-6">
+              {audiobookLoading ? (
+                <div className="flex flex-col items-center gap-4 py-12">
+                  <Loader2 className="h-8 w-8 animate-spin text-amber-500" />
+                  <p className="text-sm text-muted-foreground">Sedang membuat script audiobook...</p>
+                </div>
+              ) : audiobookContent ? (
+                <div>
+                  {audiobookTab === 'script' ? (
+                    <div className="space-y-1 font-mono text-sm leading-relaxed">
+                      {audiobookContent.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return <div key={i} className="h-1.5" />;
+                        if (/^\[MUSIK|^\[INTRO|^\[OUTRO/i.test(trimmed)) {
+                          return <p key={i} className="text-purple-600 dark:text-purple-400 font-bold italic text-xs py-0.5">{trimmed}</p>;
+                        }
+                        if (/^\[JEDA|^\[PENEKANAN|^\[NADA|^\[NAPAS/i.test(trimmed)) {
+                          return <span key={i} className="inline-block text-[10px] bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded font-sans my-0.5 mr-1">{trimmed}</span>;
+                        }
+                        if (/^(BAB\s+[0-9IVXLC]+:|===)/i.test(trimmed)) {
+                          return <p key={i} className="text-amber-700 dark:text-amber-400 font-bold text-base mt-4 mb-1 border-b border-amber-200 dark:border-amber-800 pb-1">{trimmed.replace(/===/g,'').trim()}</p>;
+                        }
+                        return <p key={i} className="leading-loose text-foreground">{trimmed}</p>;
+                      })}
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {audiobookContent.split(/\n(?=BAB\s+[0-9]+:)/i).map((chapter, i) => {
+                        const firstLine = chapter.split('\n')[0]?.trim() || `Bab ${i+1}`;
+                        const body = chapter.split('\n').slice(1).join('\n').trim();
+                        return (
+                          <div key={i} className="border rounded-lg overflow-hidden">
+                            <div className="bg-amber-50 dark:bg-amber-950 px-4 py-2.5 border-b">
+                              <p className="text-sm font-bold text-amber-800 dark:text-amber-200">{firstLine}</p>
+                            </div>
+                            <div className="p-4 text-sm leading-loose font-mono whitespace-pre-wrap text-muted-foreground max-h-64 overflow-y-auto">{body}</div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="text-center py-8 text-muted-foreground text-sm">Script belum dibuat</div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="px-6 py-3 border-t flex items-center gap-2 shrink-0 bg-muted/30">
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(audiobookContent); toast({ description: 'Script disalin!' }); }}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Script
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { const b = new Blob([audiobookContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='audiobook-script.txt'; a.click(); }}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> Unduh TXT
+            </Button>
+            <Button size="sm" className="ml-auto bg-amber-600 hover:bg-amber-700 text-white" onClick={() => handleGenerateAudiobookScript()} disabled={audiobookLoading}>
+              <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Ulang
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── LANDING PAGE DIALOG ── */}
+      <Dialog open={lpOpen} onOpenChange={setLpOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <ExternalLink className="h-5 w-5 text-emerald-500" />
+              Landing Page Generator
+              <Badge className="ml-auto bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300 border-0">Copy & HTML</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex border-b px-6 shrink-0">
+            {(['copy', 'preview', 'sections'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setLpTab(t)}
+                className={cn(
+                  'px-4 py-2.5 text-xs font-medium border-b-2 transition-colors',
+                  lpTab === t ? 'border-emerald-500 text-emerald-600' : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t === 'copy' ? '📝 Copy Lengkap' : t === 'preview' ? '🌐 HTML Preview' : '📋 Per Seksi'}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 min-h-0">
+            {lpLoading ? (
+              <div className="flex flex-col items-center gap-4 py-16">
+                <Loader2 className="h-8 w-8 animate-spin text-emerald-500" />
+                <p className="text-sm text-muted-foreground">Sedang membuat landing page copy...</p>
+              </div>
+            ) : lpContent ? (
+              <div className="h-full">
+                {lpTab === 'copy' && (
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-2">
+                      {lpContent.split('\n').map((line, i) => {
+                        const trimmed = line.trim();
+                        if (!trimmed) return <div key={i} className="h-2" />;
+                        if (/^===.*===$/.test(trimmed) || /^\d+\.\s+(HERO|PROBLEM|SOLUSI|FITUR|TESTIMONI|HARGA|FAQ|CLOSING|GARANSI|BONUS|PENULIS)/i.test(trimmed)) {
+                          return (
+                            <div key={i} className="mt-5 mb-2 flex items-center gap-2">
+                              <div className="h-px flex-1 bg-emerald-200 dark:bg-emerald-800" />
+                              <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-widest px-2">{trimmed.replace(/===|^\d+\.\s*/g, '').trim()}</span>
+                              <div className="h-px flex-1 bg-emerald-200 dark:bg-emerald-800" />
+                            </div>
+                          );
+                        }
+                        if (trimmed.startsWith('-') || trimmed.startsWith('•') || trimmed.startsWith('✅') || trimmed.startsWith('❌')) {
+                          return <p key={i} className="text-sm pl-4 text-foreground leading-relaxed">{trimmed}</p>;
+                        }
+                        if (trimmed.startsWith('#') || trimmed.startsWith('**')) {
+                          return <p key={i} className="text-sm font-bold text-foreground leading-relaxed">{trimmed.replace(/^#+\s*|\*\*/g, '')}</p>;
+                        }
+                        return <p key={i} className="text-sm text-muted-foreground leading-relaxed">{trimmed}</p>;
+                      })}
+                    </div>
+                  </ScrollArea>
+                )}
+                {lpTab === 'preview' && (
+                  <div className="h-full flex flex-col">
+                    {lpOutputFormat === 'html' ? (
+                      <iframe
+                        srcDoc={lpContent}
+                        className="flex-1 w-full border-0"
+                        title="Landing Page Preview"
+                        sandbox="allow-same-origin"
+                      />
+                    ) : (
+                      <div className="flex-1 flex items-center justify-center">
+                        <div className="text-center space-y-3 p-8">
+                          <p className="text-sm text-muted-foreground">Preview HTML hanya tersedia jika Format Output diatur ke <strong>HTML</strong></p>
+                          <Button size="sm" variant="outline" onClick={() => handleGenerateLandingPage({ outputFormat: 'html' })}>
+                            <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate ulang sebagai HTML
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+                {lpTab === 'sections' && (
+                  <ScrollArea className="h-full">
+                    <div className="p-6 space-y-3">
+                      {lpContent.split(/===([A-Z_\s]+)===/g).reduce((acc: {title: string; content: string}[], part, i) => {
+                        if (i % 2 === 0) {
+                          if (part.trim()) acc.push({ title: 'Konten', content: part.trim() });
+                        } else {
+                          acc.push({ title: part.trim(), content: '' });
+                        }
+                        return acc;
+                      }, []).filter(s => s.content || s.title !== 'Konten').map((section, i) => (
+                        <div key={i} className="border rounded-lg overflow-hidden">
+                          {section.title !== 'Konten' && (
+                            <div className="bg-emerald-50 dark:bg-emerald-950 px-4 py-2 border-b">
+                              <p className="text-xs font-bold text-emerald-700 dark:text-emerald-300 uppercase tracking-wide">{section.title}</p>
+                            </div>
+                          )}
+                          <div className="p-4 text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{section.content}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </div>
+            ) : (
+              <div className="flex items-center justify-center py-16 text-sm text-muted-foreground">Landing page belum dibuat</div>
+            )}
+          </div>
+          <div className="px-6 py-3 border-t flex flex-wrap items-center gap-2 shrink-0 bg-muted/30">
+            <Button size="sm" variant="outline" onClick={() => { navigator.clipboard.writeText(lpContent); toast({ description: 'Landing page copy disalin!' }); }}>
+              <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => { const b = new Blob([lpContent], {type:'text/plain'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='landing-page-copy.txt'; a.click(); }}>
+              <Download className="h-3.5 w-3.5 mr-1.5" /> TXT
+            </Button>
+            {lpOutputFormat === 'html' && lpContent && (
+              <Button size="sm" variant="outline" onClick={() => { const b = new Blob([lpContent], {type:'text/html'}); const u = URL.createObjectURL(b); const a = document.createElement('a'); a.href=u; a.download='landing-page.html'; a.click(); }}>
+                <FileDown className="h-3.5 w-3.5 mr-1.5" /> HTML
+              </Button>
+            )}
+            <div className="flex items-center gap-1.5 ml-1">
+              <span className="text-xs text-muted-foreground">Format:</span>
+              {(['copy', 'html', 'sections'] as const).map(f => (
+                <button
+                  key={f}
+                  onClick={() => handleGenerateLandingPage({ outputFormat: f })}
+                  className={cn('text-[10px] px-2 py-0.5 rounded border transition-colors', lpOutputFormat === f ? 'bg-emerald-600 text-white border-emerald-600' : 'border-border hover:border-emerald-400')}
+                >
+                  {f === 'copy' ? 'Copy' : f === 'html' ? 'HTML' : 'Seksi'}
+                </button>
+              ))}
+            </div>
+            <Button size="sm" className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleGenerateLandingPage()} disabled={lpLoading}>
+              <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Ulang
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </>
