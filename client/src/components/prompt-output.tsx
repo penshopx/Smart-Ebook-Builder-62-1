@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign, CalendarDays } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign, CalendarDays, BookOpen } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -83,6 +83,8 @@ function getSuggestedQuestions(topik: string): string[] {
     `Apa tools atau resources yang dibutuhkan untuk ${topik}?`,
   ];
 }
+
+interface ChapterItem { id: string; number: number; title: string; subTopics: string; content: string; loading: boolean; }
 
 export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
@@ -212,6 +214,28 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [coverTplAuthor, setCoverTplAuthor] = useState('');
   const [coverTplColorScheme, setCoverTplColorScheme] = useState('professional');
   const [coverTplStyle, setCoverTplStyle] = useState('Modern & Profesional');
+  // ===== EBOOK BUILDER FEATURES =====
+  // Ebook Outline / TOC Generator
+  const [ebOutlineOpen, setEbOutlineOpen] = useState(false);
+  const [ebOutlineContent, setEbOutlineContent] = useState('');
+  const [ebOutlineLoading, setEbOutlineLoading] = useState(false);
+  const [ebOutlineChapters, setEbOutlineChapters] = useState('10');
+  // Chapter Builder
+  const [chapterBuilderOpen, setChapterBuilderOpen] = useState(false);
+  const [chapters, setChapters] = useState<ChapterItem[]>([
+    { id: '1', number: 1, title: '', subTopics: '', content: '', loading: false },
+    { id: '2', number: 2, title: '', subTopics: '', content: '', loading: false },
+    { id: '3', number: 3, title: '', subTopics: '', content: '', loading: false },
+  ]);
+  const [activeChapterId, setActiveChapterId] = useState<string>('1');
+  const [chapterTone, setChapterTone] = useState('informatif dan mudah dipahami');
+  // Ebook Visual Template / Layout Preview
+  const [ebTemplateOpen, setEbTemplateOpen] = useState(false);
+  const [ebTemplateHtml, setEbTemplateHtml] = useState('');
+  const [ebTemplateLoading, setEbTemplateLoading] = useState(false);
+  const [ebTheme, setEbTheme] = useState<'professional' | 'modern' | 'warm' | 'bold' | 'minimal'>('professional');
+  const [ebAccentColor, setEbAccentColor] = useState('');
+  // ===== END EBOOK BUILDER =====
   // LP Section Kit
   const [lpSectionOpen, setLpSectionOpen] = useState(false);
   const [lpSectionContent, setLpSectionContent] = useState('');
@@ -750,6 +774,93 @@ ${bodyHtml}
       setMockupLoading(false);
     }
   }, [projectTitle, projectTopik, authorName, mockupStyle, toast]);
+
+  // ===== EBOOK BUILDER HANDLERS =====
+  const handleGenerateEbOutline = useCallback(async () => {
+    setEbOutlineOpen(true);
+    setEbOutlineContent('');
+    setEbOutlineLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-ebook-outline', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        authorName,
+        totalChapters: ebOutlineChapters,
+      });
+      const data = await res.json();
+      setEbOutlineContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat outline ebook', variant: 'destructive' });
+    } finally {
+      setEbOutlineLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, authorName, ebOutlineChapters, toast]);
+
+  const handleGenerateChapter = useCallback(async (chapterId: string) => {
+    const ch = chapters.find(c => c.id === chapterId);
+    if (!ch) return;
+    setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, loading: true, content: '' } : c));
+    try {
+      const res = await apiRequest('POST', '/api/generate-chapter', {
+        topik: projectTopik,
+        judul: projectTitle,
+        chapterTitle: ch.title || `Bab ${ch.number}`,
+        chapterNumber: ch.number,
+        subTopics: ch.subTopics,
+        target: '',
+        authorName,
+        tone: chapterTone,
+        wordCount: 800,
+      });
+      const data = await res.json();
+      setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, content: data.content || '', loading: false } : c));
+    } catch {
+      toast({ title: `Gagal generate bab ${ch.number}`, variant: 'destructive' });
+      setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, loading: false } : c));
+    }
+  }, [chapters, projectTopik, projectTitle, authorName, chapterTone, toast]);
+
+  const handleAddChapter = useCallback(() => {
+    const newId = String(Date.now());
+    const newNum = chapters.length > 0 ? Math.max(...chapters.map(c => c.number)) + 1 : 1;
+    setChapters(prev => [...prev, { id: newId, number: newNum, title: '', subTopics: '', content: '', loading: false }]);
+    setActiveChapterId(newId);
+  }, [chapters]);
+
+  const handleRemoveChapter = useCallback((id: string) => {
+    setChapters(prev => {
+      const filtered = prev.filter(c => c.id !== id);
+      return filtered.map((c, i) => ({ ...c, number: i + 1 }));
+    });
+  }, []);
+
+  const handleGenerateEbTemplate = useCallback(async () => {
+    setEbTemplateOpen(true);
+    setEbTemplateHtml('');
+    setEbTemplateLoading(true);
+    try {
+      const chaptersForTemplate = chapters
+        .filter(c => c.title.trim())
+        .map(c => ({ number: c.number, title: c.title, preview: c.content }));
+      const res = await apiRequest('POST', '/api/generate-ebook-template', {
+        judul: projectTitle,
+        subJudul: projectTopik,
+        authorName,
+        chapters: chaptersForTemplate.length > 0 ? chaptersForTemplate : undefined,
+        theme: ebTheme,
+        accentColor: ebAccentColor || undefined,
+      });
+      const data = await res.json();
+      setEbTemplateHtml(data.html || '');
+    } catch {
+      toast({ title: 'Gagal generate template ebook', variant: 'destructive' });
+    } finally {
+      setEbTemplateLoading(false);
+    }
+  }, [projectTitle, projectTopik, authorName, chapters, ebTheme, ebAccentColor, toast]);
+  // ===== END EBOOK BUILDER HANDLERS =====
 
   const handleGenerateLpSection = useCallback(async (section: string) => {
     setLpSectionActive(section);
@@ -2499,6 +2610,33 @@ ${bodyHtml}
                     Mode Akurat · {uploadedFiles.length} sumber
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-14 shrink-0">Ebook+:</div>
+                <Button
+                  onClick={handleGenerateEbOutline}
+                  className="flex-1 bg-gradient-to-r from-slate-700 to-slate-800 hover:from-slate-800 hover:to-slate-900 text-white text-xs h-8"
+                  data-testid="button-ebook-outline"
+                >
+                  <ClipboardList className="h-3.5 w-3.5 mr-1.5" />
+                  Outline & TOC<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={() => setChapterBuilderOpen(true)}
+                  className="flex-1 bg-gradient-to-r from-indigo-800 to-blue-800 hover:from-indigo-900 hover:to-blue-900 text-white text-xs h-8"
+                  data-testid="button-chapter-builder"
+                >
+                  <BookOpen className="h-3.5 w-3.5 mr-1.5" />
+                  Chapter Builder<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateEbTemplate}
+                  className="flex-1 bg-gradient-to-r from-pink-700 to-rose-700 hover:from-pink-800 hover:to-rose-800 text-white text-xs h-8"
+                  data-testid="button-ebook-template"
+                >
+                  <Palette className="h-3.5 w-3.5 mr-1.5" />
+                  Layout Preview<span className="ml-1 text-[7px] opacity-40 font-mono">·HTML</span>
+                </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Konversi:</div>
@@ -4849,6 +4987,238 @@ ${bodyHtml}
           </div>
         </DialogContent>
       </Dialog>
+      {/* Ebook Outline & TOC Dialog */}
+      <Dialog open={ebOutlineOpen} onOpenChange={setEbOutlineOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ClipboardList className="h-5 w-5 text-slate-600" />
+              Ebook Outline & Daftar Isi Lengkap
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="text-xs text-muted-foreground shrink-0">Jumlah bab:</div>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={ebOutlineChapters}
+              onChange={e => setEbOutlineChapters(e.target.value)}
+              data-testid="select-outline-chapters"
+            >
+              {['5','7','8','10','12','15'].map(n => <option key={n} value={n}>{n} Bab</option>)}
+            </select>
+            <Button size="sm" className="bg-slate-700 hover:bg-slate-800 text-white" onClick={handleGenerateEbOutline} disabled={ebOutlineLoading} data-testid="button-regen-outline">
+              {ebOutlineLoading ? 'Generating...' : '🔄 Regenerate'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {ebOutlineLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menyusun struktur ebook yang komprehensif...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {ebOutlineContent}
+              </div>
+            )}
+          </div>
+          {!ebOutlineLoading && ebOutlineContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(ebOutlineContent); toast({ title: 'Outline tersalin!' }); }} data-testid="button-copy-outline">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Chapter Builder Dialog */}
+      <Dialog open={chapterBuilderOpen} onOpenChange={setChapterBuilderOpen}>
+        <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <BookOpen className="h-5 w-5 text-indigo-600" />
+              Chapter Builder — Tulis Ebook Bab per Bab
+            </DialogTitle>
+          </DialogHeader>
+          {/* Tone selector + add button */}
+          <div className="flex items-center gap-3 flex-wrap mb-2">
+            <div className="text-xs text-muted-foreground">Gaya tulisan:</div>
+            <select className="border rounded px-2 py-1 text-xs" value={chapterTone} onChange={e => setChapterTone(e.target.value)} data-testid="select-chapter-tone">
+              <option value="informatif dan mudah dipahami">Informatif & Mudah</option>
+              <option value="conversational seperti ngobrol teman">Conversational</option>
+              <option value="akademis dan profesional">Akademis & Profesional</option>
+              <option value="motivatif dan inspiring">Motivatif & Inspiring</option>
+              <option value="praktis dengan banyak contoh nyata">Praktis & Contoh Nyata</option>
+            </select>
+            <Button size="sm" variant="outline" onClick={handleAddChapter} data-testid="button-add-chapter">
+              + Tambah Bab
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                const allContent = chapters.filter(c => c.content).map(c => c.content).join('\n\n---\n\n');
+                if (allContent) { navigator.clipboard.writeText(allContent); toast({ title: 'Semua bab tersalin!' }); }
+              }}
+              data-testid="button-copy-all-chapters"
+            >
+              <Copy className="h-3.5 w-3.5 mr-1" /> Salin Semua Bab
+            </Button>
+          </div>
+          <div className="flex flex-1 gap-3 overflow-hidden min-h-0">
+            {/* Chapter list sidebar */}
+            <div className="w-52 shrink-0 overflow-y-auto border-r pr-3 flex flex-col gap-2">
+              {chapters.map((ch) => (
+                <div
+                  key={ch.id}
+                  className={`rounded-lg p-2 cursor-pointer border transition-all ${activeChapterId === ch.id ? 'border-indigo-500 bg-indigo-50 dark:bg-indigo-950' : 'border-border hover:border-indigo-300'}`}
+                  onClick={() => setActiveChapterId(ch.id)}
+                  data-testid={`chapter-item-${ch.id}`}
+                >
+                  <div className="text-[10px] text-muted-foreground font-mono">BAB {ch.number}</div>
+                  <div className="text-xs font-medium truncate mt-0.5">{ch.title || <span className="opacity-40">Belum diisi...</span>}</div>
+                  {ch.content && <div className="text-[10px] text-green-600 mt-1">✓ Generated</div>}
+                  {ch.loading && <div className="text-[10px] text-blue-500 mt-1">⏳ Generating...</div>}
+                </div>
+              ))}
+            </div>
+            {/* Chapter editor */}
+            <div className="flex-1 overflow-y-auto flex flex-col gap-3">
+              {chapters.filter(c => c.id === activeChapterId).map(ch => (
+                <div key={ch.id} className="flex flex-col gap-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Judul Bab {ch.number}:</div>
+                      <input
+                        className="border rounded px-3 py-1.5 text-sm w-full"
+                        placeholder={`Contoh: Strategi Pemasaran Digital`}
+                        value={ch.title}
+                        onChange={e => setChapters(prev => prev.map(c => c.id === ch.id ? { ...c, title: e.target.value } : c))}
+                        data-testid={`input-chapter-title-${ch.id}`}
+                      />
+                    </div>
+                    <div>
+                      <div className="text-xs text-muted-foreground mb-1">Sub-topik (opsional, pisah koma):</div>
+                      <input
+                        className="border rounded px-3 py-1.5 text-sm w-full"
+                        placeholder="Contoh: definisi, cara kerja, contoh, tips"
+                        value={ch.subTopics}
+                        onChange={e => setChapters(prev => prev.map(c => c.id === ch.id ? { ...c, subTopics: e.target.value } : c))}
+                        data-testid={`input-chapter-subtopics-${ch.id}`}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      className="bg-indigo-700 hover:bg-indigo-800 text-white"
+                      onClick={() => handleGenerateChapter(ch.id)}
+                      disabled={ch.loading}
+                      data-testid={`button-gen-chapter-${ch.id}`}
+                    >
+                      {ch.loading ? <><Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" />Generating...</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" />Generate Bab {ch.number}</>}
+                    </Button>
+                    {chapters.length > 1 && (
+                      <Button size="sm" variant="outline" onClick={() => handleRemoveChapter(ch.id)} className="text-red-500 hover:text-red-600" data-testid={`button-remove-chapter-${ch.id}`}>
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  {ch.content ? (
+                    <div className="flex flex-col gap-2">
+                      <textarea
+                        className="w-full border rounded-lg p-3 text-sm font-mono leading-relaxed min-h-[350px] resize-y"
+                        value={ch.content}
+                        onChange={e => setChapters(prev => prev.map(c => c.id === ch.id ? { ...c, content: e.target.value } : c))}
+                        data-testid={`textarea-chapter-content-${ch.id}`}
+                      />
+                      <div className="flex gap-2 justify-end">
+                        <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(ch.content); toast({ title: `Bab ${ch.number} tersalin!` }); }} data-testid={`button-copy-chapter-${ch.id}`}>
+                          <Copy className="h-3.5 w-3.5 mr-1" /> Salin Bab
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border-2 border-dashed border-border flex items-center justify-center h-48 text-sm text-muted-foreground">
+                      {ch.loading ? 'Sedang menulis bab...' : 'Isi judul bab lalu klik Generate'}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ebook Layout Preview Dialog */}
+      <Dialog open={ebTemplateOpen} onOpenChange={setEbTemplateOpen}>
+        <DialogContent className="max-w-5xl max-h-[92vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <Palette className="h-5 w-5 text-pink-600" />
+              Ebook Layout Preview — Visual Template
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center gap-3 flex-wrap mb-2">
+            <div className="text-xs text-muted-foreground">Tema:</div>
+            {(['professional','modern','warm','bold','minimal'] as const).map(t => (
+              <button
+                key={t}
+                onClick={() => setEbTheme(t)}
+                className={`px-3 py-1 rounded-full text-xs border transition-all capitalize ${ebTheme === t ? 'bg-pink-700 text-white border-pink-700' : 'border-border hover:border-pink-400'}`}
+                data-testid={`button-theme-${t}`}
+              >
+                {t === 'professional' ? '🔵 Professional' : t === 'modern' ? '🟣 Modern' : t === 'warm' ? '🟠 Warm' : t === 'bold' ? '⚫ Bold Dark' : '🟢 Minimal'}
+              </button>
+            ))}
+            <div className="flex items-center gap-2">
+              <div className="text-xs text-muted-foreground">Warna aksen:</div>
+              <input type="color" className="w-8 h-7 rounded cursor-pointer border" value={ebAccentColor || '#1e3a8a'} onChange={e => setEbAccentColor(e.target.value)} data-testid="input-accent-color" />
+            </div>
+            <Button size="sm" className="bg-pink-700 hover:bg-pink-800 text-white" onClick={handleGenerateEbTemplate} disabled={ebTemplateLoading} data-testid="button-regen-template">
+              {ebTemplateLoading ? 'Rendering...' : '🔄 Apply & Preview'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-hidden rounded-lg border">
+            {ebTemplateLoading ? (
+              <div className="flex items-center justify-center h-full gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>Rendering layout ebook...</span>
+              </div>
+            ) : ebTemplateHtml ? (
+              <iframe
+                srcDoc={ebTemplateHtml}
+                className="w-full h-full border-0"
+                title="Ebook Preview"
+                sandbox="allow-same-origin"
+                data-testid="iframe-ebook-preview"
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full text-sm text-muted-foreground">
+                Pilih tema dan klik Apply & Preview untuk melihat tampilan ebook
+              </div>
+            )}
+          </div>
+          {!ebTemplateLoading && ebTemplateHtml && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(ebTemplateHtml); toast({ title: 'HTML template tersalin!' }); }} data-testid="button-copy-template-html">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin HTML
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => {
+                const blob = new Blob([ebTemplateHtml], { type: 'text/html' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url; a.download = `ebook-preview-${ebTheme}.html`; a.click();
+                URL.revokeObjectURL(url);
+              }} data-testid="button-download-template">
+                <Download className="h-4 w-4 mr-1.5" /> Download HTML
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* LP Section Kit Dialog */}
       <Dialog open={lpSectionOpen} onOpenChange={setLpSectionOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">

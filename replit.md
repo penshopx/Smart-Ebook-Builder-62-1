@@ -90,7 +90,17 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
-## Konversi & Strategi Pipeline Features (Latest — tauheed.id/cuan Bab 4 & 3)
+## Ebook Builder Features (Latest — buatebook.com inspired)
+
+### 3 New Core Ebook Building Features (Ebook+ row)
+- **Ebook Outline & TOC Generator** (`/api/generate-ebook-outline`, gpt-4o) — Struktur ebook lengkap: Metadata (judul/sub-judul/tagline/USP/estimasi halaman), Pendahuluan/Sinopsis, Daftar Isi (pilih 5-15 bab) per-bab dengan sub-bab berindentasi + Key Takeaway, Tabel Ringkasan Struktur, Chapter Summary 1-paragraf per-bab, Kata Kunci per-bab.
+- **Chapter Builder** (`/api/generate-chapter`, gpt-4o) — Build ebook bab per bab: sidebar daftar bab (klik untuk switch), input judul + sub-topik per bab, pilih gaya tulisan (5 tone), generate per bab secara individual, edit langsung di textarea, salin per-bab atau semua bab sekaligus. State tersimpan selama session.
+- **Layout Preview / Visual Template** (`/api/generate-ebook-template`, no-AI HTML generation) — Preview visual ebook dengan 5 tema: Professional (navy blue), Modern (violet), Warm (amber), Bold Dark (dark slate), Minimal (green). Color picker untuk accent color custom. Output: HTML lengkap dengan cover page, daftar isi visual, chapter cards. Download HTML atau salin ke clipboard.
+- Interface `ChapterItem` defined outside component to avoid React hooks issue.
+- `BookOpen` icon used (lucide-react compatible, `Book` not available).
+- Inspired by: buatebook.com — Chapter-by-chapter builder, layout visual, export PDF siap jual
+
+## Konversi & Strategi Pipeline Features (tauheed.id/cuan Bab 4 & 3)
 
 ### 3 New Pipeline Outputs Added (Konversi & Strategi+ rows)
 - **LP Section Kit** (`/api/generate-lp-section-kit`, gpt-4o) — 6 section individual LP yang bisa di-generate terpisah: Headline Pack (10 pasang headline+sub), Problems & Agitation, Social Proof Templates (5 format), Bonus Stack Copy, CTA Pack (button text/headline/supporting/micro-commitment/sticky bar), FAQ Section (12 Q&A). UI: 6 mini-buttons di row "Konversi:", dialog dengan tab switching.

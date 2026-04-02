@@ -2400,5 +2400,331 @@ Semua dalam Bahasa Indonesia. Buat yang benar-benar berbeda, bukan variasi yang 
     }
   });
 
+  // Generate Ebook TOC + Chapter Outline
+  app.post("/api/generate-ebook-outline", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, totalChapters, authorName } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Topik Ebook';
+      const chapterCount = parseInt(totalChapters) || 10;
+
+      const systemPrompt = `Anda adalah editor buku profesional Indonesia dengan pengalaman 15+ tahun menyusun ebook berkualitas tinggi.
+Spesialisasi: Struktur ebook yang engaging, logis, dan memberikan value nyata kepada pembaca Indonesia.
+Gaya: Sistematis, komprehensif, dengan alur yang natural dari masalah ke solusi ke action.`;
+
+      const userPrompt = `Buat DAFTAR ISI + OUTLINE LENGKAP untuk ebook:
+- Topik/Judul: ${topikFallback}
+- Target Pembaca: ${target || 'Pemula hingga menengah, masyarakat Indonesia'}
+- Author: ${authorName || 'Penulis Expert'}
+- Jumlah Bab Utama: ${chapterCount} bab
+
+Format output:
+
+===== METADATA EBOOK =====
+Judul Utama: [judul yang menarik dan SEO-friendly]
+Sub-Judul: [kalimat penjelas 10-15 kata]
+Tagline: [satu kalimat promise utama buku ini]
+Target Pembaca: [deskripsi singkat ideal reader]
+Estimasi Halaman: [perkiraan jumlah halaman]
+USP (Unique Selling Point): [apa yang membedakan ebook ini]
+
+===== PENDAHULUAN =====
+[Sinopsis singkat buku 2-3 paragraf — apa yang akan dipelajari dan hasil yang akan dicapai]
+
+===== DAFTAR ISI =====
+BAB 0 — PENDAHULUAN / KATA PENGANTAR
+  0.1 [judul sub-bab]
+  0.2 [judul sub-bab]
+
+BAB 1 — [JUDUL BAB]
+  1.1 [judul sub-bab dengan deskripsi singkat 1 kalimat]
+  1.2 [judul sub-bab]
+  1.3 [judul sub-bab]
+  1.4 [judul sub-bab]
+  💡 Key Takeaway Bab 1
+
+[ulangi untuk BAB 2 sampai BAB ${chapterCount}]
+
+BAB ${chapterCount + 1} — PENUTUP & LANGKAH BERIKUTNYA
+  [sub-bab penutup + CTA/bonus info]
+
+===== RINGKASAN STRUKTUR =====
+[Tabel: No. Bab | Judul | Fokus Utama | Est. Halaman | Tingkat Kesulitan]
+
+===== CHAPTER SUMMARY (1 paragraf per bab) =====
+[Ringkasan singkat tiap bab — apa yang dibahas dan apa yang pembaca dapatkan]
+
+===== KATA-KATA KUNCI PER BAB =====
+[5 keyword/topik utama per bab yang akan dibahas — membantu generate konten nanti]
+
+Buat dalam Bahasa Indonesia yang profesional, bukan terjemahan kaku.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3500,
+        temperature: 0.7,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Ebook outline error:", error);
+      res.status(500).json({ error: "Gagal membuat outline ebook. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Single Chapter Content
+  app.post("/api/generate-chapter", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, judul, chapterTitle, chapterNumber, subTopics, target, authorName, tone, wordCount } = req.body;
+      const topikFallback = topik || judul || 'Topik Ebook';
+      const targetWords = parseInt(wordCount) || 800;
+      const chapterTone = tone || 'informatif dan mudah dipahami';
+
+      const systemPrompt = `Anda adalah penulis ebook Indonesia profesional yang ahli menulis konten informatif, engaging, dan actionable.
+Gaya penulisan: ${chapterTone}, tidak bertele-tele, kaya contoh nyata dari konteks Indonesia, langsung applicable.
+Prinsip: Setiap bab harus memberikan insight baru dan tindakan konkret yang bisa langsung dipraktikkan pembaca.`;
+
+      const userPrompt = `Tulis ISI LENGKAP untuk:
+- Ebook: "${topikFallback}"
+- BAB ${chapterNumber}: ${chapterTitle}
+- Sub-topik yang dibahas: ${subTopics || `Konsep dasar, penerapan praktis, contoh nyata, tips & trik, dan kesimpulan`}
+- Target Pembaca: ${target || 'Pemula hingga menengah, konteks Indonesia'}
+- Panjang target: sekitar ${targetWords} kata
+- Tone: ${chapterTone}
+
+Format penulisan bab:
+
+## BAB ${chapterNumber}: ${chapterTitle.toUpperCase()}
+
+### Pembuka Bab
+[1-2 paragraf opening yang hook — cerita pendek / statistik / pertanyaan menarik yang relevan]
+
+### [Sub-judul 1]
+[Konten substantif 200-300 kata. Gunakan contoh nyata, analogi mudah dipahami]
+
+### [Sub-judul 2]
+[Konten substantif. Sertakan tips/checklist/langkah-langkah jika sesuai]
+
+### [Sub-judul 3]
+[Konten substantif. Tambahkan studi kasus mini atau contoh dari Indonesia]
+
+> 💡 **Insight Penting:** [satu insight kunci bab ini dalam 2-3 kalimat]
+
+### Langkah Aksi
+**Yang bisa kamu lakukan sekarang:**
+[3-5 langkah konkret yang bisa langsung dipraktikkan]
+
+### Ringkasan Bab
+[Bullet poin 4-6 poin kunci dari bab ini]
+
+---
+
+Tulis konten yang kaya, substantif, dan benar-benar bermanfaat. Bukan teori kosong. Gunakan Bahasa Indonesia natural.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 2500,
+        temperature: 0.78,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Chapter generate error:", error);
+      res.status(500).json({ error: "Gagal generate bab. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Ebook Visual HTML Template (Layout Preview)
+  app.post("/api/generate-ebook-template", isAuthenticated, async (req, res) => {
+    try {
+      const { judul, subJudul, authorName, chapters, theme, accentColor, fontStyle } = req.body;
+      const themeConfig: Record<string, { bg: string, text: string, accent: string, headerBg: string, chapterBg: string, fontFamily: string }> = {
+        professional: {
+          bg: '#FFFFFF', text: '#1a1a2e', accent: accentColor || '#1e3a8a',
+          headerBg: '#1e3a8a', chapterBg: '#EFF6FF', fontFamily: '"Georgia", serif'
+        },
+        modern: {
+          bg: '#FAFAFA', text: '#111827', accent: accentColor || '#7C3AED',
+          headerBg: '#7C3AED', chapterBg: '#F5F3FF', fontFamily: '"Inter", sans-serif'
+        },
+        warm: {
+          bg: '#FFFBF5', text: '#1c1917', accent: accentColor || '#D97706',
+          headerBg: '#D97706', chapterBg: '#FFFBEB', fontFamily: '"Merriweather", serif'
+        },
+        bold: {
+          bg: '#0F172A', text: '#F1F5F9', accent: accentColor || '#F59E0B',
+          headerBg: '#1E293B', chapterBg: '#1E293B', fontFamily: '"Roboto", sans-serif'
+        },
+        minimal: {
+          bg: '#FFFFFF', text: '#374151', accent: accentColor || '#10B981',
+          headerBg: '#10B981', chapterBg: '#F0FDF4', fontFamily: '"Helvetica Neue", sans-serif'
+        },
+      };
+
+      const cfg = themeConfig[theme || 'professional'];
+      const chaptersHtml = Array.isArray(chapters) && chapters.length > 0
+        ? chapters.map((ch: { number: string; title: string; preview: string }, i: number) => `
+          <div class="chapter-card">
+            <div class="chapter-number">BAB ${ch.number || i + 1}</div>
+            <div class="chapter-title">${ch.title || 'Judul Bab'}</div>
+            ${ch.preview ? `<div class="chapter-preview">${ch.preview.slice(0, 200)}${ch.preview.length > 200 ? '...' : ''}</div>` : ''}
+          </div>`).join('\n')
+        : `<div class="chapter-card">
+            <div class="chapter-number">BAB 1</div>
+            <div class="chapter-title">Pendahuluan</div>
+            <div class="chapter-preview">Konten bab akan tampil di sini setelah di-generate...</div>
+           </div>`;
+
+      const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${judul || 'Ebook Preview'}</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@300;400;700&family=Roboto:wght@300;400;700&display=swap');
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: ${cfg.bg}; color: ${cfg.text}; font-family: ${cfg.fontFamily}; line-height: 1.7; }
+  
+  /* COVER PAGE */
+  .cover { 
+    min-height: 100vh; background: linear-gradient(135deg, ${cfg.headerBg} 0%, ${cfg.accent}dd 100%);
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 60px 40px; position: relative; overflow: hidden;
+  }
+  .cover::before {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+  }
+  .cover-badge {
+    background: rgba(255,255,255,0.2); border: 1px solid rgba(255,255,255,0.3);
+    color: white; padding: 6px 20px; border-radius: 50px; font-size: 12px;
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 30px;
+  }
+  .cover h1 { 
+    font-size: clamp(28px, 5vw, 52px); color: white; font-weight: 700; 
+    line-height: 1.2; margin-bottom: 20px; text-shadow: 0 2px 20px rgba(0,0,0,0.3);
+  }
+  .cover-subtitle { 
+    font-size: clamp(14px, 2vw, 18px); color: rgba(255,255,255,0.85); 
+    max-width: 600px; margin-bottom: 40px; font-weight: 300;
+  }
+  .cover-divider { width: 60px; height: 3px; background: rgba(255,255,255,0.6); margin: 0 auto 30px; border-radius: 2px; }
+  .cover-author { color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 600; }
+  .cover-author-label { color: rgba(255,255,255,0.6); font-size: 12px; margin-bottom: 6px; letter-spacing: 1px; text-transform: uppercase; }
+  .cover-decoration { 
+    position: absolute; bottom: 30px; right: 40px; 
+    font-size: 80px; opacity: 0.08;
+  }
+  
+  /* MAIN CONTENT */
+  .container { max-width: 800px; margin: 0 auto; padding: 60px 40px; }
+  
+  /* ABOUT SECTION */
+  .about-section { 
+    background: ${cfg.chapterBg}; border-left: 4px solid ${cfg.accent}; 
+    padding: 30px 35px; border-radius: 8px; margin-bottom: 50px;
+  }
+  .section-label { 
+    color: ${cfg.accent}; font-size: 11px; font-weight: 700; 
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px;
+  }
+  .about-section h2 { font-size: 22px; margin-bottom: 12px; }
+  .about-section p { font-size: 15px; opacity: 0.8; }
+  
+  /* TOC */
+  .toc-header { text-align: center; margin-bottom: 40px; }
+  .toc-header h2 { font-size: 28px; color: ${cfg.accent}; margin-bottom: 8px; }
+  .toc-header p { font-size: 14px; opacity: 0.6; }
+  
+  /* CHAPTER CARDS */
+  .chapters-grid { display: grid; gap: 20px; margin-bottom: 60px; }
+  .chapter-card {
+    background: ${cfg.chapterBg}; border: 1px solid ${cfg.accent}22;
+    border-radius: 12px; padding: 24px 28px; 
+    transition: transform 0.2s, box-shadow 0.2s;
+    border-left: 4px solid ${cfg.accent};
+  }
+  .chapter-card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
+  .chapter-number { 
+    color: ${cfg.accent}; font-size: 11px; font-weight: 700; 
+    letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px;
+  }
+  .chapter-title { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+  .chapter-preview { font-size: 13px; opacity: 0.65; line-height: 1.6; }
+  
+  /* FOOTER */
+  .ebook-footer { 
+    text-align: center; padding: 40px; background: ${cfg.headerBg}; color: white;
+    margin-top: 60px;
+  }
+  .ebook-footer .author-name { font-size: 18px; font-weight: 600; margin-bottom: 6px; }
+  .ebook-footer .footer-note { font-size: 12px; opacity: 0.6; }
+  
+  /* WATERMARK */
+  .watermark {
+    text-align: center; padding: 15px; background: ${cfg.chapterBg}; 
+    font-size: 11px; opacity: 0.5; border-top: 1px solid ${cfg.accent}22;
+  }
+  
+  @media print {
+    .cover { page-break-after: always; }
+    .chapter-card { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-badge">📚 E-Book</div>
+  <h1>${judul || 'Judul Ebook Anda'}</h1>
+  ${subJudul ? `<div class="cover-subtitle">${subJudul}</div>` : ''}
+  <div class="cover-divider"></div>
+  <div class="cover-author-label">Ditulis oleh</div>
+  <div class="cover-author">${authorName || 'Nama Penulis'}</div>
+  <div class="cover-decoration">📖</div>
+</div>
+
+<!-- TABLE OF CONTENTS -->
+<div class="container">
+  <div class="toc-header">
+    <div class="section-label">Isi Buku</div>
+    <h2>Daftar Isi</h2>
+    <p>Panduan lengkap yang siap membantu perjalanan Anda</p>
+  </div>
+  
+  <div class="chapters-grid">
+    ${chaptersHtml}
+  </div>
+</div>
+
+<!-- FOOTER -->
+<div class="ebook-footer">
+  <div class="author-name">${authorName || 'Nama Penulis'}</div>
+  <div class="footer-note">${judul || 'Ebook'} · Hak cipta dilindungi undang-undang</div>
+</div>
+
+<div class="watermark">Generated with Ebook Builder Pro · AI-Powered Ebook Platform</div>
+
+</body>
+</html>`;
+
+      res.json({ html });
+    } catch (error: any) {
+      console.error("Ebook template error:", error);
+      res.status(500).json({ error: "Gagal generate template ebook. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }
