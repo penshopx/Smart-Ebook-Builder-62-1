@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign, CalendarDays } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -212,6 +212,20 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [coverTplAuthor, setCoverTplAuthor] = useState('');
   const [coverTplColorScheme, setCoverTplColorScheme] = useState('professional');
   const [coverTplStyle, setCoverTplStyle] = useState('Modern & Profesional');
+  // VSL Script Generator
+  const [vslOpen, setVslOpen] = useState(false);
+  const [vslContent, setVslContent] = useState('');
+  const [vslLoading, setVslLoading] = useState(false);
+  const [vslGuarantee, setVslGuarantee] = useState('');
+  // Email Drip Sequence
+  const [emailSeqOpen, setEmailSeqOpen] = useState(false);
+  const [emailSeqContent, setEmailSeqContent] = useState('');
+  const [emailSeqLoading, setEmailSeqLoading] = useState(false);
+  // Content Calendar 30 Hari
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarContent, setCalendarContent] = useState('');
+  const [calendarLoading, setCalendarLoading] = useState(false);
+  const [calendarPlatforms, setCalendarPlatforms] = useState('Instagram, TikTok, LinkedIn, Facebook');
 
   const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
 
@@ -706,6 +720,74 @@ ${bodyHtml}
       setMockupLoading(false);
     }
   }, [projectTitle, projectTopik, authorName, mockupStyle, toast]);
+
+  const handleGenerateVsl = useCallback(async () => {
+    setVslOpen(true);
+    setVslContent('');
+    setVslLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-vsl', {
+        prompt: prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        guarantee: vslGuarantee,
+        painPoint: '',
+      });
+      const data = await res.json();
+      setVslContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat VSL script', variant: 'destructive' });
+    } finally {
+      setVslLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, vslGuarantee, toast]);
+
+  const handleGenerateEmailSeq = useCallback(async () => {
+    setEmailSeqOpen(true);
+    setEmailSeqContent('');
+    setEmailSeqLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-email-sequence', {
+        prompt: prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        painPoint: '',
+      });
+      const data = await res.json();
+      setEmailSeqContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat email sequence', variant: 'destructive' });
+    } finally {
+      setEmailSeqLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, toast]);
+
+  const handleGenerateCalendar = useCallback(async () => {
+    setCalendarOpen(true);
+    setCalendarContent('');
+    setCalendarLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-content-calendar', {
+        prompt: prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        platforms: calendarPlatforms,
+      });
+      const data = await res.json();
+      setCalendarContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat content calendar', variant: 'destructive' });
+    } finally {
+      setCalendarLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, calendarPlatforms, toast]);
 
   const handleReviewDocument = useCallback(async () => {
     if (!docContent) { toast({ title: 'Generate dokumen dulu sebelum review', variant: 'destructive' }); return; }
@@ -2246,6 +2328,33 @@ ${bodyHtml}
                     Mode Akurat · {uploadedFiles.length} sumber
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Funnel:</div>
+                <Button
+                  onClick={handleGenerateVsl}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-700 hover:to-rose-700 text-white text-xs h-8"
+                  data-testid="button-vsl-script"
+                >
+                  <Video className="h-3.5 w-3.5 mr-1.5" />
+                  VSL Script<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateEmailSeq}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-sky-600 hover:from-blue-700 hover:to-sky-700 text-white text-xs h-8"
+                  data-testid="button-email-sequence"
+                >
+                  <Mail className="h-3.5 w-3.5 mr-1.5" />
+                  Email Sequence<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateCalendar}
+                  className="flex-1 bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white text-xs h-8"
+                  data-testid="button-content-calendar"
+                >
+                  <CalendarDays className="h-3.5 w-3.5 mr-1.5" />
+                  Kalender Konten<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Ekosistem:</div>
@@ -4496,6 +4605,163 @@ ${bodyHtml}
               Tutup Hub
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+      {/* VSL Script Dialog */}
+      <Dialog open={vslOpen} onOpenChange={setVslOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Video className="h-5 w-5 text-red-600" />
+              VSL Script — Video Sales Letter
+              <Badge variant="secondary" className="text-xs bg-red-100 text-red-700">gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              Script video penjualan berstruktur untuk <strong>{projectTitle || projectTopik}</strong>. Cocok untuk TikTok Live, YouTube, Reels, atau webinar.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">🛡️ Garansi:</span>
+              <input
+                className="flex-1 h-8 px-3 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-red-500"
+                placeholder="cth: Garansi uang kembali 30 hari tanpa pertanyaan"
+                value={vslGuarantee}
+                onChange={e => setVslGuarantee(e.target.value)}
+                data-testid="input-vsl-guarantee"
+              />
+              <Button onClick={handleGenerateVsl} disabled={vslLoading} className="shrink-0 bg-red-600 hover:bg-red-700 text-white h-8 text-xs" data-testid="button-vsl-generate">
+                {vslLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Menulis...</> : <><Sparkles className="h-3.5 w-3.5 mr-1.5" />{vslContent ? 'Ulang' : 'Generate VSL'}</>}
+              </Button>
+            </div>
+          </div>
+          <ScrollArea className="flex-1 min-h-0 mt-2">
+            {vslLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-red-600" />
+                <p className="text-sm text-muted-foreground">Menulis VSL script Hook → Masalah → Agitasi → Penawaran → CTA...</p>
+              </div>
+            ) : vslContent ? (
+              <div className="space-y-2">
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(vslContent); toast({ title: 'VSL Script disalin!' }); }} data-testid="button-vsl-copy">
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                  </Button>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4 text-sm font-mono whitespace-pre-wrap leading-relaxed text-foreground">
+                  {vslContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Video className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">Klik "Generate VSL" untuk membuat script video sales letter lengkap</p>
+                <p className="text-xs mt-1 opacity-60">Struktur: Hook → Masalah → Agitasi → Bukti → Penawaran → Garansi → CTA</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Email Drip Sequence Dialog */}
+      <Dialog open={emailSeqOpen} onOpenChange={setEmailSeqOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5 text-blue-600" />
+              Email Drip Sequence — 7 Email
+              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              7 email nurturing sequence untuk <strong>{projectTitle || projectTopik}</strong>. Dari welcome hingga last chance — siap pakai di Mailchimp, Brevo, ConvertKit.
+            </p>
+            <Button onClick={handleGenerateEmailSeq} disabled={emailSeqLoading} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-9 text-sm" data-testid="button-email-seq-generate">
+              {emailSeqLoading ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Menulis 7 email...</> : <><Sparkles className="h-4 w-4 mr-2" />{emailSeqContent ? 'Generate Ulang' : 'Generate Email Sequence'}</>}
+            </Button>
+          </div>
+          <ScrollArea className="flex-1 min-h-0 mt-2">
+            {emailSeqLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
+                <p className="text-sm text-muted-foreground">Menulis 7 email sequence (Welcome → Story → Value → Proof → Offer → Objection → Last Chance)...</p>
+              </div>
+            ) : emailSeqContent ? (
+              <div className="space-y-2">
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(emailSeqContent); toast({ title: 'Email sequence disalin!' }); }} data-testid="button-email-seq-copy">
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                  </Button>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4 text-sm font-mono whitespace-pre-wrap leading-relaxed text-foreground">
+                  {emailSeqContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <Mail className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">Klik "Generate Email Sequence" untuk membuat 7 email nurturing siap kirim</p>
+                <p className="text-xs mt-1 opacity-60">Email 1: Welcome · 2: Story · 3: Value · 4: Proof · 5: Offer · 6: Objection · 7: Last Chance</p>
+              </div>
+            )}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Calendar 30 Hari Dialog */}
+      <Dialog open={calendarOpen} onOpenChange={setCalendarOpen}>
+        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-teal-600" />
+              Content Calendar 30 Hari
+              <Badge variant="secondary" className="text-xs bg-teal-100 text-teal-700">gpt-4o</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 shrink-0">
+            <p className="text-sm text-muted-foreground">
+              Kalender konten 30 hari untuk <strong>{projectTitle || projectTopik}</strong> — Awareness → Education → Social Proof → Launch.
+            </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">📱 Platform:</span>
+              <input
+                className="flex-1 h-8 px-3 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-teal-500"
+                placeholder="cth: Instagram, TikTok, LinkedIn, Facebook, Twitter"
+                value={calendarPlatforms}
+                onChange={e => setCalendarPlatforms(e.target.value)}
+                data-testid="input-calendar-platforms"
+              />
+              <Button onClick={handleGenerateCalendar} disabled={calendarLoading} className="shrink-0 bg-teal-600 hover:bg-teal-700 text-white h-8 text-xs" data-testid="button-calendar-generate">
+                {calendarLoading ? <><Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />Membuat...</> : <><CalendarDays className="h-3.5 w-3.5 mr-1.5" />{calendarContent ? 'Ulang' : 'Generate'}</>}
+              </Button>
+            </div>
+          </div>
+          <ScrollArea className="flex-1 min-h-0 mt-2">
+            {calendarLoading ? (
+              <div className="flex flex-col items-center justify-center py-16 gap-3">
+                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <p className="text-sm text-muted-foreground">Menyusun 30 hari konten (Minggu 1-4 dengan tema dan copy siap pakai)...</p>
+              </div>
+            ) : calendarContent ? (
+              <div className="space-y-2">
+                <div className="flex justify-end gap-2">
+                  <Button variant="outline" size="sm" className="h-7 text-xs" onClick={() => { navigator.clipboard.writeText(calendarContent); toast({ title: 'Content calendar disalin!' }); }} data-testid="button-calendar-copy">
+                    <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                  </Button>
+                </div>
+                <div className="bg-muted/30 rounded-lg p-4 text-sm font-mono whitespace-pre-wrap leading-relaxed text-foreground">
+                  {calendarContent}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-12 text-muted-foreground">
+                <CalendarDays className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">Klik "Generate" untuk membuat kalender konten 30 hari lengkap</p>
+                <p className="text-xs mt-1 opacity-60">Minggu 1: Awareness · 2: Edukasi · 3: Sosial Proof · 4: Launching</p>
+              </div>
+            )}
+          </ScrollArea>
         </DialogContent>
       </Dialog>
     </>

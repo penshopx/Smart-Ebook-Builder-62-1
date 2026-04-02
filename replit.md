@@ -90,6 +90,15 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
+## New Funnel Pipeline Features (Latest)
+
+### 3 New Pipeline Outputs Added (Funnel Row)
+- **VSL Script Generator** (`/api/generate-vsl`, gpt-4o) — Video Sales Letter 10-section: Hook (0-15s) → Masalah → Agitasi → Kisah/Kredensial → Solusi → Apa yang Didapat → Bukti & Testimoni → Penawaran Eksklusif → Garansi → Urgensi → CTA Final + Catatan Produksi. Isi input garansi opsional.
+- **Email Drip Sequence** (`/api/generate-email-sequence`, gpt-4o) — 7-email nurturing sequence: Welcome → Story → Content Value → Social Proof → The Offer → Objection Handler → Last Chance. Setiap email ada 3 pilihan subject line + preview text + body copy.
+- **Content Calendar 30 Hari** (`/api/generate-content-calendar`, gpt-4o) — Kalender konten 30 hari 4 minggu: Awareness → Education → Social Proof → Launch. Input platform fleksibel (Instagram, TikTok, LinkedIn, dll). Setiap hari ada format, hook, caption, CTA, hashtag.
+- UI: "Funnel" label row baru antara baris "Bisnis" dan "Ekosistem" di pipeline buttons
+- Landing page: Section "Kisah Sukses Founder" (VSL-style) ditambahkan dari transcript video Mas Harley
+
 ## Smart Integration System (Latest)
 
 ### Ecosystem Hub

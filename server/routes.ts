@@ -1719,5 +1719,241 @@ Buat analisis yang sangat spesifik dan actionable untuk pasar Indonesia!`,
     }
   });
 
+  // Generate VSL Script (Video Sales Letter)
+  app.post("/api/generate-vsl", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, guarantee, painPoint } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah copywriter VSL (Video Sales Letter) profesional Indonesia kelas dunia. 
+Spesialisasi: naskah video penjualan yang mengonversi penonton menjadi pembeli dalam 5-10 menit.
+Gaya: storytelling emosional, direct response copywriting, bahasa Indonesia conversational, FOMO, urgency.
+Struktur wajib VSL: HOOK → MASALAH → AGITASI → SOLUSI → BUKTI → PENAWARAN → BONUS → GARANSI → URGENSI → CTA.`;
+
+      const userPrompt = `Buat VSL Script (Video Sales Letter) lengkap untuk:
+- Topik/Produk: ${topikFallback}
+- Judul Ebook/Produk: ${judul || topikFallback}
+- Target Audiens: ${target || 'Orang Indonesia yang ingin sukses di bidang ini'}
+- Harga: ${price || 'Rp297.000'}
+- Nama Author/Creator: ${authorName || 'Tim Ahli'}
+- Garansi: ${guarantee || 'Garansi uang kembali 30 hari'}
+- Pain Point Utama: ${painPoint || 'Susah memulai, tidak tahu caranya'}
+
+Format output dengan LABEL SECTION yang jelas:
+
+===== HOOK (0-15 detik) =====
+[Hook kuat yang langsung mengena. Pertanyaan retorik atau statement mengejutkan]
+
+===== MASALAH (15-60 detik) =====
+[Identifikasi masalah utama yang dirasakan target audiens secara spesifik dan relatable]
+
+===== AGITASI (60-120 detik) =====
+[Perbesar rasa sakit dan konsekuensi jika masalah tidak diatasi. Bangun empati mendalam]
+
+===== KISAH/KREDENSIAL (120-180 detik) =====
+[Cerita personal atau kisah klien sukses sebagai bukti sosial. Sertakan angka konkret]
+
+===== SOLUSI (180-240 detik) =====
+[Perkenalkan produk/ebook sebagai solusi. Jelaskan CARA KERJA, bukan fitur]
+
+===== APA YANG DIDAPAT (240-300 detik) =====
+[Detail konten/materi lengkap yang akan didapat. Breakdown tiap bagian + value-nya]
+
+===== BUKTI & TESTIMONI (300-360 detik) =====
+[Social proof: screenshot, angka, hasil nyata, testimonial singkat dari pembeli]
+
+===== PENAWARAN EKSKLUSIF (360-420 detik) =====
+[Harga asli → Harga spesial. Breakdown nilai total vs harga yang dibayar. BONUS items]
+
+===== GARANSI (420-450 detik) =====
+[Garansi berani yang menghilangkan semua risiko di pihak pembeli]
+
+===== URGENSI & KELANGKAAN (450-480 detik) =====
+[Alasan valid kenapa harus beli SEKARANG. Deadline, slot terbatas, harga naik]
+
+===== CTA FINAL (480-500 detik) =====
+[Call-to-action kuat dan jelas. Langkah mudah cara membeli/daftar. Ulangi manfaat utama]
+
+===== CATATAN PRODUKSI =====
+[Tips delivery: kapan harus pause, penekanan kata, ekspresi, tempo bicara]
+
+Buat selengkap mungkin, natural, persuasif, dan cocok untuk audiens Indonesia.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.8,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("VSL error:", error);
+      res.status(500).json({ error: "Gagal membuat VSL script. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Email Drip Sequence (7 emails)
+  app.post("/api/generate-email-sequence", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, painPoint } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah email marketing specialist Indonesia dengan keahlian drip campaign dan copywriting konversi tinggi.
+Spesialisasi: email sequence yang membangun trust, memberikan value, lalu mengonversi pembaca jadi pembeli.
+Gaya: personal, warm, storytelling, tidak terlalu salesy di awal, natural conversation Indonesia.`;
+
+      const userPrompt = `Buat Email Drip Sequence 7 Email untuk promosi:
+- Topik/Produk: ${topikFallback}
+- Judul: ${judul || topikFallback}
+- Target Pembaca: ${target || 'Orang Indonesia yang tertarik dengan topik ini'}
+- Harga: ${price || 'Rp297.000'}
+- Author: ${authorName || 'Penulis Ahli'}
+- Pain Point: ${painPoint || 'Belum punya panduan yang tepat'}
+
+Buat 7 email dengan format:
+
+===== EMAIL 1: WELCOME & HOOK (Hari 1) =====
+Subject: [3 pilihan subject line A/B/C]
+Preview Text: [Preview text menarik]
+---
+[Isi email: Perkenalan personal, berikan 1 quick win/value gratis, setting ekspektasi series ini]
+
+===== EMAIL 2: STORY & PROBLEM (Hari 2) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Cerita relatable tentang masalah yang dihadapi target audiens. Empati penuh]
+
+===== EMAIL 3: CONTENT VALUE (Hari 3) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Berikan tip/insight berharga dari ebook. Soft mention produk di akhir]
+
+===== EMAIL 4: SOCIAL PROOF (Hari 5) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Kisah sukses/testimoni, angka konkret, hasil nyata. Mulai singgung solusi]
+
+===== EMAIL 5: THE OFFER (Hari 7) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Perkenalkan produk secara langsung. Full offer dengan harga, bonus, garansi]
+
+===== EMAIL 6: OBJECTION HANDLER (Hari 8) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Jawab 3-5 keberatan/pertanyaan paling umum dengan logika dan empati]
+
+===== EMAIL 7: LAST CHANCE (Hari 9) =====
+Subject: [3 pilihan subject line]
+Preview Text: [Preview text]
+---
+[Isi email: Urgency + deadline. Ringkasan semua yang didapat. CTA final yang kuat]
+
+===== TIPS IMPLEMENTASI =====
+[Platform yang direkomendasikan: MailChimp, ConvertKit, Brevo, dll. Setup automation flow]
+
+Buat setiap email minimal 200-300 kata, natural, persuasif, tidak spam, cocok untuk audiens Indonesia.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 4000,
+        temperature: 0.75,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Email sequence error:", error);
+      res.status(500).json({ error: "Gagal membuat email sequence. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Content Calendar 30 Hari
+  app.post("/api/generate-content-calendar", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, platforms } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+      const platformList = platforms || 'Instagram, TikTok, LinkedIn, Facebook';
+
+      const systemPrompt = `Anda adalah social media strategist Indonesia yang spesialis dalam content marketing untuk produk digital.
+Keahlian: content calendar yang seimbang antara edukasi, entertaining, dan selling (80/20 rule).
+Output: kalender konten yang actionable, spesifik, dan siap eksekusi.`;
+
+      const userPrompt = `Buat Content Calendar 30 Hari untuk promosi ebook/produk digital:
+- Topik/Produk: ${topikFallback}
+- Judul: ${judul || topikFallback}
+- Target Audiens: ${target || 'Masyarakat Indonesia yang ingin belajar dan berkembang'}
+- Platform: ${platformList}
+
+Format kalender dengan tema mingguan:
+
+===== MINGGU 1: AWARENESS & HOOK (Hari 1-7) =====
+TEMA: Kenalkan masalah dan bangun awareness
+
+Hari 1 | [Platform]:
+- Format: [Reels/Carousel/Thread/Post]
+- Hook: [Kalimat pembuka]
+- Konten: [Deskripsi isi konten]
+- Caption: [Caption siap pakai]
+- CTA: [Call to action]
+- Hashtag: [5-10 hashtag relevan]
+
+[Hari 2-7 dengan format sama]
+
+===== MINGGU 2: EDUCATION & VALUE (Hari 8-14) =====
+TEMA: Berikan nilai, bangun trust
+
+[Hari 8-14]
+
+===== MINGGU 3: SOCIAL PROOF & STORYTELLING (Hari 15-21) =====
+TEMA: Bukti, testimoni, dan kisah inspiratif
+
+[Hari 15-21]
+
+===== MINGGU 4: LAUNCH & KONVERSI (Hari 22-30) =====
+TEMA: Launching, penawaran, dan urgensi
+
+[Hari 22-30]
+
+===== CATATAN STRATEGI =====
+- Jadwal posting optimal per platform
+- Tips untuk re-purpose konten lintas platform
+- Metrik yang harus dipantau
+- Tools gratis yang direkomendasikan
+
+Buat detail, spesifik, dan langsung bisa dieksekusi oleh content creator pemula sekalipun.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 4000,
+        temperature: 0.7,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Content calendar error:", error);
+      res.status(500).json({ error: "Gagal membuat content calendar. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }
