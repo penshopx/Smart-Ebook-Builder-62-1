@@ -1027,7 +1027,7 @@ Bundle Idea:
 
       const systemPrompt = `Kamu adalah copywriter dan marketing strategist profesional Indonesia yang ahli dalam membuat materi pemasaran produk digital (ebook, e-course, info produk). Tulis dengan gaya yang meyakinkan, emosional, dan persuasif khas market Indonesia. Gunakan bahasa yang hangat dan natural.`;
 
-      const userPrompt = `Buat Marketing Kit lengkap untuk ebook/produk digital berikut:
+      const userPrompt = `Buat Marketing Kit LENGKAP 7 bagian untuk ebook/produk digital berikut:
 
 Judul: ${title || topik}
 Topik: ${topik}
@@ -1035,34 +1035,60 @@ Target Pembaca: ${target || 'umum'}
 Industri/Niche: ${industry || 'umum'}
 ${docSummary ? `Ringkasan konten: ${docSummary.slice(0, 500)}` : ''}
 
-Buat SEMUA bagian berikut secara lengkap (JANGAN dipersingkat):
+Buat SEMUA 7 bagian berikut secara lengkap (JANGAN dipersingkat, JANGAN lewati satu pun):
 
 ===== SALES PAGE COPY =====
-Headline utama (powerful, problem-aware)
+Headline utama (powerful, problem-aware, max 10 kata)
 Sub-headline (promise + timeframe)
 3 Pain Points yang dirasakan target pembaca
-5 Benefit utama ebook ini (dengan format: BENEFIT → PENJELASAN 1 kalimat)
-Social proof placeholder (format testimoni)
-Call to Action (CTA utama + urgency)
+5 Benefit utama ebook ini (format: BENEFIT → PENJELASAN 1 kalimat)
+Social proof placeholder (format 3 testimoni)
+Call to Action (CTA utama + urgency copy)
 
 ===== POSTINGAN INSTAGRAM =====
-Caption panjang (hook + cerita + value + CTA + hashtag)
-Ide 5 konten carousel (judul slide 1-5)
+Caption panjang (hook + cerita + value + CTA + hashtag 10-15 tagar relevan)
+Ide 5 konten carousel (judul slide 1-5 dengan deskripsi singkat)
+Story poll idea: 2 opsi yang relevan
+Bio link copy yang menarik
 
 ===== POSTINGAN LINKEDIN =====
 Post profesional (hook + problem + solusi + value + CTA)
+Format: paragraf pendek, no bullet, personal tone, 200-300 kata
+Hashtag 5 profesional
 
 ===== EMAIL MARKETING =====
-Subject line (5 variasi A/B test)
-Email nurturing sequence #1: "Perkenalan" (subjek + body lengkap)
-Email nurturing sequence #2: "Value/Tips" (subjek + body lengkap)
-Email nurturing sequence #3: "Hard Sell" (subjek + body lengkap)
+Subject line (5 variasi A/B test dengan preview text)
+Email #1 — "Perkenalan" (subjek + body lengkap 150-200 kata)
+Email #2 — "Value/Tips Gratis" (subjek + body lengkap 150-200 kata)
+Email #3 — "Hard Sell" (subjek + body lengkap dengan urgensi)
 
 ===== BROADCAST WHATSAPP =====
-Pesan WA broadcast pendek (maks 200 kata, personal, CTA jelas)
-Pesan WA follow-up (maks 150 kata)
+Pesan WA broadcast utama (maks 200 kata, personal, CTA jelas dengan link placeholder)
+Pesan WA follow-up hari ke-3 (maks 150 kata)
+Pesan WA closing/last chance (maks 120 kata, urgensi tinggi)
 
-Tulis semuanya dalam Bahasa Indonesia yang natural dan menjual.`;
+===== TIKTOK SCRIPT =====
+Script video TikTok pendek (30-60 detik):
+• Hook 3 detik pertama (kata pembuka yang bikin orang berhenti scroll)
+• Body (nilai utama yang diberikan, 20-40 detik)
+• CTA akhir (arahkan ke link bio, 5-10 detik)
+• Caption TikTok dengan hashtag trending Indonesia (#bukudigital #ebookgratis #jualan dll)
+• Ide 3 variasi hook alternatif untuk A/B test
+• Saran audio/sound TikTok yang trending
+
+===== TOKOPEDIA SHOPEE LISTING =====
+Judul produk SEO-optimized (maks 70 karakter, sertakan kata kunci utama)
+Deskripsi produk lengkap:
+• Paragraf pembuka (hook + janji utama)
+• Isi/konten ebook (bullet poin 5-7 item)
+• Untuk siapa ebook ini (3 profil ideal)
+• Apa yang akan didapat pembaca (5 manfaat konkret)
+• Spesifikasi produk (format: PDF/digital, jumlah halaman estimasi, bahasa)
+• Garansi & cara pengiriman digital
+Tag/keyword toko (15-20 kata kunci relevan, pisah dengan koma)
+Harga coret suggestion dan strategi bundling
+
+Tulis SEMUA 7 bagian lengkap dalam Bahasa Indonesia yang natural dan menjual.`;
 
       const stream = await openai.chat.completions.create({
         model: "gpt-4o-mini",
@@ -1071,7 +1097,7 @@ Tulis semuanya dalam Bahasa Indonesia yang natural dan menjual.`;
           { role: "user", content: userPrompt },
         ],
         stream: true,
-        max_completion_tokens: 4096,
+        max_completion_tokens: 6000,
       });
 
       for await (const chunk of stream) {
