@@ -1482,5 +1482,83 @@ Sertakan angka/data konkret untuk meningkatkan kredibilitas.`,
     }
   });
 
+  // Cover HTML Template Generator
+  app.post("/api/generate-cover-template", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, author, industry, colorScheme, style } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      const ebookTitle = title || topik;
+      const colorMap: Record<string, string> = {
+        professional: '#1a1a2e, #16213e, #0f3460, #e94560',
+        warm: '#2d1b69, #11998e, #38ef7d',
+        corporate: '#1f2937, #374151, #6366f1, #ffffff',
+        energetic: '#f12711, #f5af19',
+        nature: '#134e5e, #71b280',
+        luxury: '#2c1810, #c9a227, #f5f5dc',
+      };
+      const paletteName = colorScheme || 'professional';
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Kamu adalah web designer profesional yang ahli membuat landing page dan ebook cover dalam HTML+CSS. Kamu menghasilkan HTML yang indah, modern, dan siap digunakan.`,
+          },
+          {
+            role: "user",
+            content: `Buatkan COVER EBOOK sebagai HALAMAN HTML LENGKAP dengan inline CSS yang indah dan profesional.
+
+Detail Ebook:
+- Judul: ${ebookTitle}
+- Topik: ${topik}
+- Target Pembaca: ${target || 'Profesional Indonesia'}
+- Penulis/Brand: ${author || 'Ebook Builder Pro'}
+- Industri: ${industry || 'Umum'}
+- Gaya: ${style || 'Modern & Profesional'}
+
+INSTRUKSI TEKNIS:
+- Buat file HTML lengkap dengan <!DOCTYPE html>, <head>, <style>, <body>
+- Gunakan HANYA inline CSS dan CSS dalam tag <style> — tidak ada eksternal stylesheet
+- Ukuran canvas: 800px lebar × 1131px tinggi (A4 portrait)
+- Desain cover harus: gradient background yang menarik, typography hierarchy jelas, ornamen/geometri dekoratif
+- Wajib ada: Judul besar (font 52-72px), Subtitle/topik (font 20-28px), nama penulis (font 16-18px), ornamen visual
+- Tambahkan badge/label relevan (contoh: "Panduan Lengkap", "Edisi 2025", "Industri Indonesia")
+- Gunakan Google Fonts via link (pilih 1-2 font premium: Playfair Display, Montserrat, Inter, Raleway, dll)
+- Pastikan ada elemen visual: garis dekoratif, shape geometri, ikon sederhana (unicode/emoji OK)
+- Footer cover: website/brand, tahun
+- JANGAN tambahkan JavaScript
+- Hasil harus SANGAT INDAH dan siap cetak/publish
+
+Gunakan palet warna yang elegan dan sesuai industri ${industry || 'umum'}. Buat desain yang benar-benar WOW dan profesional setara Canva.
+
+Output: HANYA kode HTML lengkap, tidak ada teks lain di luar HTML.`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 3000,
+      });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate cover" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate cover template" });
+      }
+    }
+  });
+
   return httpServer;
 }

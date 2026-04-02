@@ -85,14 +85,15 @@ const PRICING_PLANS = [
     desc: 'Untuk content creator serius',
     features: [
       'Unlimited prompt',
-      'Semua 13 mode generasi',
-      'Ekosistem 9-Langkah penuh',
+      'Semua 16 mode generasi',
+      'Ekosistem 10-Langkah penuh',
+      'Podcast Script + Audiobook Script',
+      'Landing Page + Cover HTML Generator',
       'Unlimited proyek',
       'Export TXT/PDF/DOCX/MD/HTML',
       '24 industry themes',
       'AI Image via DALL-E 3',
       'Text-to-Speech (TTS)',
-      'Mini App Blueprint + deep-link',
       'Priority support',
     ],
     cta: 'Upgrade ke Pro',
@@ -256,7 +257,7 @@ export default function Account() {
                           Mode generasi
                         </span>
                         <span className="font-medium">
-                          {planData?.allowedModes === 'all' ? '13 mode' : `${(planData?.allowedModes as string[])?.length ?? 3} mode`}
+                          {planData?.allowedModes === 'all' ? '16 mode' : `${(planData?.allowedModes as string[])?.length ?? 3} mode`}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-sm">
@@ -415,11 +416,11 @@ export default function Account() {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { icon: Layers, title: "13 Mode Generasi", desc: "Akses semua mode termasuk Mini App Builder & Quiz Maker" },
+                    { icon: Layers, title: "16 Mode Generasi", desc: "Semua mode termasuk Podcast, Audiobook, Landing Page, Cover HTML" },
                     { icon: Zap, title: "Unlimited Prompt", desc: "Generate prompt sebanyak yang Anda mau tanpa batas harian" },
                     { icon: Download, title: "5 Format Export", desc: "TXT, PDF, DOCX, Markdown, dan HTML siap pakai" },
-                    { icon: Star, title: "Ekosistem 9-Langkah", desc: "Pipeline lengkap dari ebook ke 9 output konten" },
-                    { icon: Shield, title: "24 Industry Themes", desc: "Template prompt untuk semua 24 industri dan tema" },
+                    { icon: Star, title: "Ekosistem 10-Langkah", desc: "Pipeline lengkap dari ebook ke 10 output konten & aset digital" },
+                    { icon: Shield, title: "24 Industry Themes", desc: "Template prompt untuk semua 24 industri Indonesia" },
                     { icon: Users, title: "Priority Support", desc: "Bantuan prioritas via WhatsApp/email" },
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
@@ -432,6 +433,63 @@ export default function Account() {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Competitor Comparison */}
+            <Card className="border-primary/30">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
+                  Mengapa Ebook Builder Pro vs Kompetitor?
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-xs">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-2 pr-3 font-medium text-muted-foreground w-48">Fitur</th>
+                        {[
+                          { name: 'FlipHTML5', price: '$14/bln', color: 'text-blue-500' },
+                          { name: 'Canva', price: '$17/bln', color: 'text-purple-500' },
+                          { name: 'Visme', price: '$12/bln', color: 'text-green-600' },
+                          { name: '⭐ Pro (Kita)', price: 'Rp99K/bln', color: 'text-primary font-bold' },
+                        ].map(c => (
+                          <th key={c.name} className={`text-center py-2 px-2 ${c.color}`}>
+                            <div>{c.name}</div>
+                            <div className="font-normal text-muted-foreground">{c.price}</div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[
+                        ['Pipeline Ekosistem (10 output)', '❌', '❌', '❌', '✅'],
+                        ['Podcast & Audiobook Script', '❌', '❌', '❌', '✅'],
+                        ['Landing Page Copy (4 style)', '❌', '❌', '❌', '✅'],
+                        ['Cover HTML Generator', '⚠️', '✅', '✅', '✅'],
+                        ['Quiz & Silabus Kursus', '❌', '❌', '❌', '✅'],
+                        ['Konteks Industri Indonesia', '❌', '❌', '❌', '✅'],
+                        ['Agentic AI Prompting', '❌', '❌', '❌', '✅'],
+                        ['Export HTML + DOCX + MD', '⚠️', '❌', '⚠️', '✅'],
+                      ].map(([feature, ...vals]) => (
+                        <tr key={feature as string} className="border-b border-border/50 hover:bg-muted/30">
+                          <td className="py-2 pr-3 text-muted-foreground">{feature}</td>
+                          {vals.map((v, i) => (
+                            <td key={i} className={`text-center py-2 px-2 ${i === 3 ? 'bg-primary/5 font-medium' : ''}`}>{v}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800">
+                  <Star className="h-4 w-4 text-amber-500 fill-amber-400 shrink-0 mt-0.5" />
+                  <p className="text-xs text-amber-800 dark:text-amber-200">
+                    <strong>Satu-satunya di Indonesia</strong> yang punya pipeline lengkap dari 1 ebook → 10 output aset digital, dengan konteks 24 industri lokal. Canva & Visme fokus desain, bukan pipeline konten.
+                  </p>
                 </div>
               </CardContent>
             </Card>

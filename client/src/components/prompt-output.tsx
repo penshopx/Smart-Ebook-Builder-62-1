@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
@@ -179,6 +179,14 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpLoading, setLpLoading] = useState(false);
   const [lpTab, setLpTab] = useState<'copy' | 'preview' | 'sections'>('copy');
   const [lpOutputFormat, setLpOutputFormat] = useState('copy');
+  // Cover HTML Template Generator
+  const [coverTplOpen, setCoverTplOpen] = useState(false);
+  const [coverTplContent, setCoverTplContent] = useState('');
+  const [coverTplLoading, setCoverTplLoading] = useState(false);
+  const [coverTplTab, setCoverTplTab] = useState<'preview' | 'code'>('preview');
+  const [coverTplAuthor, setCoverTplAuthor] = useState('');
+  const [coverTplColorScheme, setCoverTplColorScheme] = useState('professional');
+  const [coverTplStyle, setCoverTplStyle] = useState('Modern & Profesional');
 
   const selectedModel = AI_MODEL_RECOMMENDATIONS.find(m => m.id === selectedAiModel) || AI_MODEL_RECOMMENDATIONS[0];
 
@@ -780,6 +788,35 @@ ${bodyHtml}
     }
   }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
 
+  const handleGenerateCoverTemplate = useCallback(async (opts?: {author?: string; colorScheme?: string; style?: string}) => {
+    setCoverTplOpen(true);
+    setCoverTplContent('');
+    setCoverTplLoading(true);
+    setCoverTplTab('preview');
+    const author = opts?.author ?? coverTplAuthor;
+    const colorScheme = opts?.colorScheme ?? coverTplColorScheme;
+    const style = opts?.style ?? coverTplStyle;
+    try {
+      await fetchSSE(
+        '/api/generate-cover-template',
+        {
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          author: author || 'Ebook Builder Pro',
+          industry: projectTopik,
+          colorScheme,
+          style,
+        },
+        (chunk) => setCoverTplContent(prev => prev + chunk),
+        () => setCoverTplLoading(false),
+      );
+    } catch {
+      setCoverTplLoading(false);
+      toast({ title: 'Gagal generate cover template', variant: 'destructive' });
+    }
+  }, [projectTitle, projectTopik, projectTarget, coverTplAuthor, coverTplColorScheme, coverTplStyle, fetchSSE, toast]);
+
   const handleGenerateMonetization = useCallback(async () => {
     setMonoOpen(true);
     setMonoContent('');
@@ -1288,6 +1325,17 @@ ${bodyHtml}
                   <span className="text-[10px] opacity-80">Copy + HTML siap upload</span>
                 </span>
                 {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+              </Button>
+              <Button
+                onClick={() => handleGenerateCoverTemplate()}
+                className="bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-cover-template-main"
+              >
+                <Palette className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Cover Template</span>
+                  <span className="text-[10px] opacity-80">HTML/CSS siap cetak</span>
+                </span>
               </Button>
             </div>
             {docContent && (
@@ -3250,6 +3298,146 @@ ${bodyHtml}
             </div>
             <Button size="sm" className="ml-auto bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => handleGenerateLandingPage()} disabled={lpLoading}>
               <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Ulang
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── COVER HTML TEMPLATE DIALOG ── */}
+      <Dialog open={coverTplOpen} onOpenChange={setCoverTplOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-6 pb-3 shrink-0 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Palette className="h-5 w-5 text-teal-500" />
+              Cover Ebook HTML Generator
+              <Badge className="ml-auto bg-teal-100 text-teal-700 dark:bg-teal-900 dark:text-teal-300 border-0">HTML Siap Cetak</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {/* Config bar */}
+          {!coverTplLoading && (
+            <div className="px-6 py-3 border-b bg-muted/30 flex flex-wrap gap-2 items-center shrink-0">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground">Penulis:</span>
+                <input
+                  type="text"
+                  value={coverTplAuthor}
+                  onChange={e => setCoverTplAuthor(e.target.value)}
+                  placeholder="Nama penulis / brand"
+                  className="text-xs border rounded px-2 py-1 bg-background w-36 focus:outline-none focus:ring-1 focus:ring-teal-400"
+                />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground">Warna:</span>
+                {(['professional','warm','corporate','energetic','nature','luxury'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setCoverTplColorScheme(s)}
+                    className={cn('text-[10px] px-2 py-0.5 rounded border transition-colors capitalize', coverTplColorScheme === s ? 'bg-teal-600 text-white border-teal-600' : 'border-border hover:border-teal-400')}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] text-muted-foreground">Style:</span>
+                {(['Modern & Profesional','Elegan & Mewah','Bold & Energetik','Minimalis Clean'] as const).map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setCoverTplStyle(s)}
+                    className={cn('text-[10px] px-2 py-0.5 rounded border transition-colors', coverTplStyle === s ? 'bg-teal-600 text-white border-teal-600' : 'border-border hover:border-teal-400')}
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Tabs */}
+          <div className="flex border-b px-6 shrink-0">
+            {(['preview', 'code'] as const).map((t) => (
+              <button
+                key={t}
+                onClick={() => setCoverTplTab(t)}
+                className={cn(
+                  'px-4 py-2.5 text-xs font-medium border-b-2 transition-colors',
+                  coverTplTab === t ? 'border-teal-500 text-teal-600' : 'border-transparent text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t === 'preview' ? '🖼️ Preview Cover' : '💻 Kode HTML'}
+              </button>
+            ))}
+          </div>
+          <div className="flex-1 min-h-0 overflow-hidden">
+            {coverTplLoading ? (
+              <div className="flex flex-col items-center gap-4 py-16">
+                <div className="relative">
+                  <div className="h-20 w-14 rounded-lg bg-gradient-to-br from-teal-400 to-cyan-500 animate-pulse shadow-lg" />
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <Loader2 className="h-6 w-6 animate-spin text-white" />
+                  </div>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-medium">AI sedang mendesain cover ebook...</p>
+                  <p className="text-xs text-muted-foreground mt-1">Membuat HTML + CSS yang indah dan profesional</p>
+                </div>
+                <div className="flex gap-1.5">
+                  {[0,1,2,3].map(i => (
+                    <div key={i} className="h-1.5 w-1.5 rounded-full bg-teal-500 animate-bounce" style={{ animationDelay: `${i * 0.15}s` }} />
+                  ))}
+                </div>
+              </div>
+            ) : coverTplContent ? (
+              <div className="h-full">
+                {coverTplTab === 'preview' ? (
+                  <iframe
+                    srcDoc={coverTplContent.replace(/```html\n?/g, '').replace(/```\n?/g, '')}
+                    className="w-full h-full border-0"
+                    title="Ebook Cover Preview"
+                    sandbox="allow-same-origin"
+                  />
+                ) : (
+                  <ScrollArea className="h-full">
+                    <pre className="p-6 text-xs font-mono text-muted-foreground leading-relaxed whitespace-pre-wrap break-all">
+                      {coverTplContent}
+                    </pre>
+                  </ScrollArea>
+                )}
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center gap-3 py-16 text-muted-foreground">
+                <Palette className="h-10 w-10 opacity-20" />
+                <p className="text-sm">Cover belum dibuat — klik Generate</p>
+              </div>
+            )}
+          </div>
+          <div className="px-6 py-3 border-t flex flex-wrap items-center gap-2 shrink-0 bg-muted/30">
+            <Button
+              size="sm" variant="outline"
+              onClick={() => {
+                const clean = coverTplContent.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+                const b = new Blob([clean], { type: 'text/html' });
+                const u = URL.createObjectURL(b);
+                const a = document.createElement('a');
+                a.href = u; a.download = 'ebook-cover.html'; a.click();
+              }}
+              disabled={!coverTplContent}
+            >
+              <FileDown className="h-3.5 w-3.5 mr-1.5" /> Unduh HTML
+            </Button>
+            <Button
+              size="sm" variant="outline"
+              onClick={() => { navigator.clipboard.writeText(coverTplContent); toast({ description: 'Kode HTML disalin!' }); }}
+              disabled={!coverTplContent}
+            >
+              <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Kode
+            </Button>
+            <Button
+              size="sm"
+              className="ml-auto bg-teal-600 hover:bg-teal-700 text-white"
+              onClick={() => handleGenerateCoverTemplate()}
+              disabled={coverTplLoading}
+            >
+              <Zap className="h-3.5 w-3.5 mr-1.5" /> {coverTplContent ? 'Generate Ulang' : 'Generate Cover'}
             </Button>
           </div>
         </DialogContent>
