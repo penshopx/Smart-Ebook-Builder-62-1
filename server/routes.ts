@@ -2726,5 +2726,149 @@ Tulis konten yang kaya, substantif, dan benar-benar bermanfaat. Bukan teori koso
     }
   });
 
+  // Perpanjang Isi Bab (Expand Chapter by X words)
+  app.post("/api/expand-chapter", isAuthenticated, async (req, res) => {
+    try {
+      const { existingContent, chapterTitle, chapterNumber, wordCount, tone, topik } = req.body;
+      const wordsToAdd = parseInt(wordCount) || 150;
+
+      const systemPrompt = `Anda adalah penulis ebook Indonesia profesional. Tugas Anda adalah memperluas isi bab yang sudah ada dengan menambahkan konten baru yang relevan, mengalir natural, dan memperkaya pembahasan.
+Gaya penulisan: ${tone || 'informatif dan mudah dipahami'}.
+Aturan: Jangan mengulang konten yang sudah ada. Tambahkan insight baru, contoh nyata, atau penjelasan lebih dalam.`;
+
+      const userPrompt = `Perpanjang isi bab berikut dengan menambahkan sekitar ${wordsToAdd} kata baru:
+
+Konteks Ebook: ${topik || 'Ebook Informatif'}
+BAB ${chapterNumber || ''}: ${chapterTitle || 'Bab Ebook'}
+
+KONTEN YANG SUDAH ADA:
+---
+${existingContent || ''}
+---
+
+Tambahkan konten lanjutan yang:
+1. Mengalir natural dari konten sebelumnya (jangan buat heading baru yang terputus)
+2. Memperdalam pembahasan dengan contoh nyata dari Indonesia
+3. Memberikan insight atau perspektif baru
+4. Menggunakan bahasa yang sama dengan konten yang ada
+5. Sekitar ${wordsToAdd} kata tambahan
+
+Output: Hanya tulis TAMBAHAN konten baru saja (bukan ulang semua konten lama).`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 1500,
+        temperature: 0.78,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Expand chapter error:", error);
+      res.status(500).json({ error: "Gagal memperpanjang bab. " + (error?.message || '') });
+    }
+  });
+
+  // Custom Regenerate Chapter (tambahkan poin/tabel/data/contoh)
+  app.post("/api/regenerate-chapter-custom", isAuthenticated, async (req, res) => {
+    try {
+      const { existingContent, chapterTitle, chapterNumber, additions, topik, tone, wordCount } = req.body;
+      const addList: string[] = Array.isArray(additions) ? additions : [];
+      const targetWords = parseInt(wordCount) || 800;
+
+      const additionsText = addList.length > 0
+        ? `\nTambahkan elemen berikut ke dalam bab:\n${addList.map(a => `- ${a}`).join('\n')}`
+        : '';
+
+      const systemPrompt = `Anda adalah penulis ebook Indonesia profesional yang ahli membuat konten struktural dan visual dalam teks.
+Gaya penulisan: ${tone || 'informatif dan mudah dipahami'}.
+Keahlian: menulis bullet point, tabel markdown, data statistik, dan studi kasus yang relevan untuk Indonesia.`;
+
+      const userPrompt = `Tulis ulang dan tingkatkan bab berikut dengan konten yang lebih kaya:
+
+Konteks Ebook: ${topik || 'Ebook Informatif'}
+BAB ${chapterNumber || ''}: ${chapterTitle || 'Bab Ebook'}
+
+KONTEN ASLI (sebagai referensi):
+---
+${existingContent || 'Belum ada konten. Buat dari awal berdasarkan judul bab.'}
+---
+${additionsText}
+
+Buat versi yang lebih lengkap (sekitar ${targetWords} kata) dengan:
+${addList.includes('poin_bullet') ? '✅ Gunakan bullet poin (- poin) untuk list items yang relevan\n' : ''}
+${addList.includes('tabel') ? '✅ Sertakan minimal 1 TABEL MARKDOWN yang relevan (| Header | Header |)\n' : ''}
+${addList.includes('data_riset') ? '✅ Tambahkan data, angka, statistik, atau fakta riset yang kredibel\n' : ''}
+${addList.includes('contoh_kasus') ? '✅ Sertakan minimal 1 contoh kasus nyata atau studi kasus dari Indonesia\n' : ''}
+${addList.includes('tips_praktis') ? '✅ Tambahkan bagian "Tips Praktis" dengan langkah-langkah actionable\n' : ''}
+${addList.includes('faq_mini') ? '✅ Tambahkan 3 FAQ singkat yang relevan di akhir bab\n' : ''}
+
+Format: Gunakan Markdown headers (##, ###), bold (**teks**), dan struktur yang rapi.
+Bahasa: Indonesia natural, bukan terjemahan kaku.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 2500,
+        temperature: 0.78,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Custom regenerate error:", error);
+      res.status(500).json({ error: "Gagal regenerate bab. " + (error?.message || '') });
+    }
+  });
+
+  // Stok Gambar — Openverse free image search (Creative Commons, no API key needed)
+  app.get("/api/search-images", isAuthenticated, async (req, res) => {
+    try {
+      const { q, page } = req.query;
+      const query = String(q || 'business').replace(/[^a-zA-Z0-9 ]/g, ' ').trim().slice(0, 100);
+      const pageNum = parseInt(String(page || '1'));
+
+      const url = `https://api.openverse.org/v1/images/?q=${encodeURIComponent(query)}&page_size=12&page=${pageNum}&license_type=commercial&mature=false`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 8000);
+
+      const response = await fetch(url, {
+        headers: { 'User-Agent': 'EbookBuilderPro/1.0 (educational tool)', 'Accept': 'application/json' },
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        return res.status(502).json({ error: 'Gagal mengambil gambar dari Openverse', results: [] });
+      }
+
+      const data: any = await response.json();
+      const results = (data.results || []).map((img: any) => ({
+        id: img.id,
+        title: img.title || query,
+        thumbnail: img.thumbnail || img.url,
+        url: img.url,
+        source: img.source,
+        creator: img.creator || 'Unknown',
+        license: img.license || 'CC',
+        width: img.width,
+        height: img.height,
+      }));
+
+      res.json({ results, total: data.result_count || 0, page: pageNum });
+    } catch (error: any) {
+      console.error("Image search error:", error);
+      res.status(500).json({ error: "Gagal mencari gambar.", results: [] });
+    }
+  });
+
   return httpServer;
 }

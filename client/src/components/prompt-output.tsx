@@ -235,6 +235,19 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [ebTemplateLoading, setEbTemplateLoading] = useState(false);
   const [ebTheme, setEbTheme] = useState<'professional' | 'modern' | 'warm' | 'bold' | 'minimal'>('professional');
   const [ebAccentColor, setEbAccentColor] = useState('');
+  // Expand Chapter
+  const [expandWordsCount, setExpandWordsCount] = useState('150');
+  const [expandLoading, setExpandLoading] = useState<string | null>(null);
+  // Custom Regenerate Chapter
+  const [customRegenAdditions, setCustomRegenAdditions] = useState<string[]>([]);
+  const [customRegenLoading, setCustomRegenLoading] = useState<string | null>(null);
+  // Stok Gambar (Free image search via Openverse)
+  const [imageSearchOpen, setImageSearchOpen] = useState(false);
+  const [imageQuery, setImageQuery] = useState('');
+  const [imageResults, setImageResults] = useState<{id:string;title:string;thumbnail:string;url:string;creator:string;source:string;license:string}[]>([]);
+  const [imageSearchLoading, setImageSearchLoading] = useState(false);
+  const [imageSearchPage, setImageSearchPage] = useState(1);
+  const [imageTotal, setImageTotal] = useState(0);
   // ===== END EBOOK BUILDER =====
   // LP Section Kit
   const [lpSectionOpen, setLpSectionOpen] = useState(false);
@@ -835,6 +848,80 @@ ${bodyHtml}
       return filtered.map((c, i) => ({ ...c, number: i + 1 }));
     });
   }, []);
+
+  const handleExpandChapter = useCallback(async (chapterId: string) => {
+    const ch = chapters.find(c => c.id === chapterId);
+    if (!ch || !ch.content) { toast({ title: 'Generate bab dulu sebelum memperpanjang', variant: 'destructive' }); return; }
+    setExpandLoading(chapterId);
+    try {
+      const res = await apiRequest('POST', '/api/expand-chapter', {
+        existingContent: ch.content,
+        chapterTitle: ch.title,
+        chapterNumber: ch.number,
+        wordCount: expandWordsCount,
+        tone: chapterTone,
+        topik: projectTopik,
+      });
+      const data = await res.json();
+      if (data.content) {
+        setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, content: c.content + '\n\n' + data.content } : c));
+        toast({ title: `Bab ${ch.number} berhasil diperpanjang!` });
+      }
+    } catch {
+      toast({ title: 'Gagal memperpanjang bab', variant: 'destructive' });
+    } finally {
+      setExpandLoading(null);
+    }
+  }, [chapters, expandWordsCount, chapterTone, projectTopik, toast]);
+
+  const handleCustomRegenChapter = useCallback(async (chapterId: string) => {
+    const ch = chapters.find(c => c.id === chapterId);
+    if (!ch) return;
+    if (customRegenAdditions.length === 0) { toast({ title: 'Pilih minimal 1 elemen yang ingin ditambahkan', variant: 'destructive' }); return; }
+    setCustomRegenLoading(chapterId);
+    setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, loading: true } : c));
+    try {
+      const res = await apiRequest('POST', '/api/regenerate-chapter-custom', {
+        existingContent: ch.content,
+        chapterTitle: ch.title || `Bab ${ch.number}`,
+        chapterNumber: ch.number,
+        additions: customRegenAdditions,
+        topik: projectTopik,
+        tone: chapterTone,
+        wordCount: 900,
+      });
+      const data = await res.json();
+      setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, content: data.content || c.content, loading: false } : c));
+      toast({ title: `Bab ${ch.number} berhasil di-upgrade!` });
+    } catch {
+      toast({ title: 'Gagal regenerate bab', variant: 'destructive' });
+      setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, loading: false } : c));
+    } finally {
+      setCustomRegenLoading(null);
+    }
+  }, [chapters, customRegenAdditions, chapterTone, projectTopik, toast]);
+
+  const toggleCustomAddition = useCallback((key: string) => {
+    setCustomRegenAdditions(prev => prev.includes(key) ? prev.filter(k => k !== key) : [...prev, key]);
+  }, []);
+
+  const handleImageSearch = useCallback(async (query?: string, page = 1) => {
+    const q = query ?? imageQuery;
+    if (!q.trim()) return;
+    setImageQuery(q);
+    setImageSearchLoading(true);
+    setImageSearchPage(page);
+    try {
+      const res = await fetch(`/api/search-images?q=${encodeURIComponent(q)}&page=${page}`);
+      const data = await res.json();
+      setImageResults(data.results || []);
+      setImageTotal(data.total || 0);
+    } catch {
+      toast({ title: 'Gagal mencari gambar', variant: 'destructive' });
+    } finally {
+      setImageSearchLoading(false);
+    }
+  }, [imageQuery, toast]);
 
   const handleGenerateEbTemplate = useCallback(async () => {
     setEbTemplateOpen(true);
@@ -2636,6 +2723,14 @@ ${bodyHtml}
                 >
                   <Palette className="h-3.5 w-3.5 mr-1.5" />
                   Layout Preview<span className="ml-1 text-[7px] opacity-40 font-mono">·HTML</span>
+                </Button>
+                <Button
+                  onClick={() => { setImageSearchOpen(true); if (!imageQuery) { setImageQuery(projectTopik || projectTitle || ''); } }}
+                  className="flex-1 bg-gradient-to-r from-teal-700 to-emerald-700 hover:from-teal-800 hover:to-emerald-800 text-white text-xs h-8"
+                  data-testid="button-stok-gambar"
+                >
+                  <ImagePlus className="h-3.5 w-3.5 mr-1.5" />
+                  Stok Gambar<span className="ml-1 text-[7px] opacity-40 font-mono">·CC</span>
                 </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
@@ -5128,11 +5223,47 @@ ${bodyHtml}
                   {ch.content ? (
                     <div className="flex flex-col gap-2">
                       <textarea
-                        className="w-full border rounded-lg p-3 text-sm font-mono leading-relaxed min-h-[350px] resize-y"
+                        className="w-full border rounded-lg p-3 text-sm font-mono leading-relaxed min-h-[280px] resize-y"
                         value={ch.content}
                         onChange={e => setChapters(prev => prev.map(c => c.id === ch.id ? { ...c, content: e.target.value } : c))}
                         data-testid={`textarea-chapter-content-${ch.id}`}
                       />
+                      {/* Perpanjang Isi Bab toolbar */}
+                      <div className="flex items-center gap-2 p-2 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-100 dark:border-blue-900">
+                        <span className="text-xs text-blue-700 dark:text-blue-400 font-medium shrink-0">📝 Perpanjang:</span>
+                        <select className="border rounded px-2 py-1 text-xs" value={expandWordsCount} onChange={e => setExpandWordsCount(e.target.value)} data-testid="select-expand-words">
+                          {['100','150','200','300','500'].map(n => <option key={n} value={n}>+{n} kata</option>)}
+                        </select>
+                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white text-xs h-7 px-3" onClick={() => handleExpandChapter(ch.id)} disabled={expandLoading === ch.id} data-testid={`button-expand-chapter-${ch.id}`}>
+                          {expandLoading === ch.id ? <><Loader2 className="animate-spin h-3 w-3 mr-1" />Expanding...</> : '+ Perpanjang Bab'}
+                        </Button>
+                      </div>
+                      {/* Custom Regenerate toolbar */}
+                      <div className="p-2 bg-purple-50 dark:bg-purple-950/30 rounded-lg border border-purple-100 dark:border-purple-900">
+                        <div className="text-xs text-purple-700 dark:text-purple-400 font-medium mb-2">⚙️ Custom Upgrade Bab — pilih elemen yang ingin ditambahkan:</div>
+                        <div className="flex flex-wrap gap-2 mb-2">
+                          {[
+                            { key: 'poin_bullet', label: '☑ Poin Bullet' },
+                            { key: 'tabel', label: '📊 Tabel' },
+                            { key: 'data_riset', label: '📈 Data/Statistik' },
+                            { key: 'contoh_kasus', label: '💼 Contoh Kasus' },
+                            { key: 'tips_praktis', label: '💡 Tips Praktis' },
+                            { key: 'faq_mini', label: '❓ FAQ Mini' },
+                          ].map(opt => (
+                            <button
+                              key={opt.key}
+                              onClick={() => toggleCustomAddition(opt.key)}
+                              className={`px-2.5 py-1 rounded-full text-xs border transition-all ${customRegenAdditions.includes(opt.key) ? 'bg-purple-600 text-white border-purple-600' : 'border-border hover:border-purple-400'}`}
+                              data-testid={`toggle-addition-${opt.key}`}
+                            >
+                              {opt.label}
+                            </button>
+                          ))}
+                        </div>
+                        <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white text-xs h-7 px-3" onClick={() => handleCustomRegenChapter(ch.id)} disabled={customRegenLoading === ch.id || ch.loading} data-testid={`button-custom-regen-${ch.id}`}>
+                          {(customRegenLoading === ch.id || ch.loading) ? <><Loader2 className="animate-spin h-3 w-3 mr-1" />Upgrading...</> : <><Sparkles className="h-3 w-3 mr-1" />Upgrade Bab</>}
+                        </Button>
+                      </div>
                       <div className="flex gap-2 justify-end">
                         <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(ch.content); toast({ title: `Bab ${ch.number} tersalin!` }); }} data-testid={`button-copy-chapter-${ch.id}`}>
                           <Copy className="h-3.5 w-3.5 mr-1" /> Salin Bab
@@ -5216,6 +5347,117 @@ ${bodyHtml}
               </Button>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Stok Gambar — Free Image Search (Openverse Creative Commons) */}
+      <Dialog open={imageSearchOpen} onOpenChange={setImageSearchOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <ImagePlus className="h-5 w-5 text-teal-600" />
+              Stok Gambar Gratis — Creative Commons (Openverse)
+            </DialogTitle>
+          </DialogHeader>
+          {/* Search bar */}
+          <div className="flex gap-2 mb-2">
+            <input
+              className="flex-1 border rounded-lg px-3 py-2 text-sm"
+              placeholder="Cari gambar... (contoh: bisnis, teknologi, pertanian, kesehatan)"
+              value={imageQuery}
+              onChange={e => setImageQuery(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleImageSearch(undefined, 1)}
+              data-testid="input-image-search"
+            />
+            <Button className="bg-teal-700 hover:bg-teal-800 text-white" onClick={() => handleImageSearch(undefined, 1)} disabled={imageSearchLoading} data-testid="button-search-images">
+              {imageSearchLoading ? <Loader2 className="animate-spin h-4 w-4" /> : <Search className="h-4 w-4" />}
+            </Button>
+          </div>
+          {/* Quick keyword suggestions from ebook topic */}
+          {(projectTopik || projectTitle) && (
+            <div className="flex gap-1 flex-wrap mb-3">
+              <span className="text-xs text-muted-foreground">Saran:</span>
+              {[
+                projectTitle?.split(' ').slice(0,2).join(' '),
+                projectTopik?.split(' ').slice(0,2).join(' '),
+                'Indonesia business',
+                'people working',
+                'technology office',
+                'success achievement',
+              ].filter(Boolean).slice(0,6).map((kw, i) => (
+                <button key={i} className="text-xs px-2 py-0.5 rounded-full border hover:bg-teal-50 dark:hover:bg-teal-950 hover:border-teal-400 transition-all" onClick={() => handleImageSearch(kw!, 1)} data-testid={`button-keyword-${i}`}>
+                  {kw}
+                </button>
+              ))}
+            </div>
+          )}
+          {/* Results grid */}
+          <div className="flex-1 overflow-y-auto">
+            {imageSearchLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>Mencari gambar Creative Commons...</span>
+              </div>
+            ) : imageResults.length > 0 ? (
+              <>
+                <div className="text-xs text-muted-foreground mb-3">{imageTotal.toLocaleString()} gambar ditemukan · Lisensi Creative Commons · Gratis untuk digunakan</div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {imageResults.map(img => (
+                    <div key={img.id} className="group relative rounded-lg overflow-hidden border bg-muted aspect-[4/3] flex flex-col" data-testid={`image-result-${img.id}`}>
+                      <img
+                        src={img.thumbnail || img.url}
+                        alt={img.title}
+                        className="w-full h-full object-cover group-hover:opacity-90 transition-opacity"
+                        loading="lazy"
+                        onError={e => { (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="150"><rect fill="%23e5e7eb" width="200" height="150"/><text fill="%236b7280" font-size="12" x="50%" y="50%" dominant-baseline="middle" text-anchor="middle">No Preview</text></svg>'; }}
+                      />
+                      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all flex items-end opacity-0 group-hover:opacity-100">
+                        <div className="p-2 w-full flex gap-1">
+                          <button
+                            className="flex-1 bg-white/90 hover:bg-white text-gray-800 text-xs rounded px-2 py-1 transition-all"
+                            onClick={() => { navigator.clipboard.writeText(img.url); toast({ title: 'URL gambar tersalin!' }); }}
+                            data-testid={`button-copy-img-url-${img.id}`}
+                          >
+                            📋 Salin URL
+                          </button>
+                          <a
+                            href={img.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-teal-600 hover:bg-teal-700 text-white text-xs rounded px-2 py-1 transition-all"
+                            data-testid={`button-open-img-${img.id}`}
+                          >
+                            ↗
+                          </a>
+                        </div>
+                      </div>
+                      <div className="absolute top-1 right-1 bg-black/50 text-white text-[9px] rounded px-1 py-0.5 uppercase">{img.license}</div>
+                    </div>
+                  ))}
+                </div>
+                {/* Pagination */}
+                <div className="flex justify-center gap-2 mt-4">
+                  {imageSearchPage > 1 && (
+                    <Button variant="outline" size="sm" onClick={() => handleImageSearch(undefined, imageSearchPage - 1)} data-testid="button-prev-page">
+                      ← Sebelumnya
+                    </Button>
+                  )}
+                  <span className="text-xs text-muted-foreground self-center">Halaman {imageSearchPage}</span>
+                  {imageResults.length === 12 && (
+                    <Button variant="outline" size="sm" onClick={() => handleImageSearch(undefined, imageSearchPage + 1)} data-testid="button-next-page">
+                      Berikutnya →
+                    </Button>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-3">
+                <ImagePlus className="h-10 w-10 opacity-20" />
+                <div className="text-sm">Ketik kata kunci dan tekan Enter untuk mencari gambar</div>
+                <div className="text-xs opacity-60">Semua gambar berlisensi Creative Commons — bebas digunakan</div>
+              </div>
+            )}
+          </div>
         </DialogContent>
       </Dialog>
 
