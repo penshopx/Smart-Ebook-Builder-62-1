@@ -336,7 +336,7 @@ export default function Home() {
             <div className="min-w-0">
               <h1 className="text-sm sm:text-lg font-semibold tracking-tight truncate">Chaesa AI Studio</h1>
               <p className="text-xs text-muted-foreground hidden sm:block">
-                AI Prompt Generator · Pipeline 9-Langkah · 24 Industri
+                Ekosistem Kompetensi Digital · Ebook → Chatbot · E-Course · Mini App
               </p>
             </div>
           </div>

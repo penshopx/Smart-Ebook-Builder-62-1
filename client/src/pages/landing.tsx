@@ -178,12 +178,16 @@ const ECOSYSTEM_STEPS = [
 
 const FAQ_DATA = [
   {
-    question: "Apakah Chaesa AI Studio cocok untuk pemula?",
-    answer: "Ya! Dirancang untuk semua level. Interface intuitif, pipeline terstruktur, dan panduan langkah demi langkah memudahkan siapa saja — dari kreator baru hingga profesional — untuk membangun ekosistem konten lengkap tanpa pengalaman teknis sebelumnya."
+    question: "Apa itu Ekosistem Kompetensi Digital?",
+    answer: "Ekosistem Kompetensi Digital adalah konsep inti Chaesa AI Studio: keahlian atau kompetensi Anda pertama-tama didokumentasikan dalam bentuk Ebook (Langkah 1 / Fondasi). Dari ebook tersebut, kompetensi kemudian ditransfer ke produk digital lain — Chatbot AI yang menjawab pertanyaan audiens 24 jam, E-Course yang mengajarkan kompetensi secara terstruktur, Mini App yang mewujudkan kompetensi dalam tools praktis, dan Document Generator yang menghasilkan template profesional. Satu kompetensi, satu ebook sebagai sumber, banyak produk digital sebagai turunannya."
   },
   {
-    question: "Apa itu Pipeline Ebook Ecosystem 9 Langkah?",
-    answer: "Pipeline Ebook Ecosystem adalah alur produksi dan monetisasi konten dari satu ebook menjadi bisnis digital lengkap: (1) Ebook+ untuk produksi konten, (2) Publish untuk penerbitan terproteksi, (3) Distribusi ke marketplace, (4) Sosmed untuk konten Instagram & TikTok, (5) Konversi lewat landing page, (6) Strategi+ untuk pricing & launch, (7) Iklan di TikTok & Google, (8) Funnel e-course & membership, dan (9) Ekosistem AI tools lengkap. Satu ebook, satu ekosistem bisnis."
+    question: "Mengapa ebook harus jadi langkah pertama?",
+    answer: "Ebook adalah fondasi dokumentasi kompetensi — sebelum kompetensi bisa ditransfer ke produk lain, ia harus ada dalam bentuk tertulis yang terstruktur. Chatbot AI membutuhkan konten ebook sebagai 'basis pengetahuan'. E-Course membutuhkan materi ebook sebagai silabus. Mini App membutuhkan konsep dari ebook sebagai blueprint. Tanpa ebook yang kuat, ekosistem kompetensi tidak bisa dibangun dengan kokoh. Inilah mengapa Chaesa AI Studio selalu dimulai dari Ebook+ di step pertama pipeline."
+  },
+  {
+    question: "Apakah Chaesa AI Studio cocok untuk pemula?",
+    answer: "Ya! Dirancang untuk semua level. Interface intuitif, pipeline terstruktur, dan panduan langkah demi langkah memudahkan siapa saja — dari kreator baru hingga profesional — untuk membangun ekosistem kompetensi digital lengkap tanpa pengalaman teknis sebelumnya."
   },
   {
     question: "Apa itu fitur Export Terproteksi dan Baca Online?",
@@ -389,22 +393,24 @@ export default function Landing() {
 
               <Badge variant="secondary" className="mb-6 px-4 py-2">
                 <Sparkles className="h-3 w-3 mr-2" />
-                AI Prompt Generator · 16 Mode · Pipeline 9-Langkah Ebook Ecosystem
+                AI Prompt Generator · Ekosistem Kompetensi Digital · 24 Industri Indonesia
               </Badge>
               
               <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-                Satu Ebook,
-                <span className="text-primary block mt-2">Ekosistem Bisnis Lengkap</span>
+                Dari Kompetensi Anda,
+                <span className="text-primary block mt-2">Lahirkan Ekosistem Digital</span>
               </h1>
               
               <p className="text-xl text-muted-foreground mb-4 max-w-3xl mx-auto">
-                Dari brainstorm hingga iklan berbayar — ebook, publish terproteksi, distribusi, sosmed, 
-                pricing ladder, launch, Google Ads, funnel, dan ekosistem digital lengkap dalam satu platform.
+                Ebook adalah langkah pertama — fondasi di mana kompetensi Anda didokumentasikan. 
+                Dari sana, transferkan ke chatbot AI, e-course, mini app, dan document generator 
+                yang memperluas jangkauan keahlian Anda.
               </p>
               
               <p className="text-lg font-medium mb-8 max-w-2xl mx-auto">
-                <span className="text-primary">Chaesa AI Studio</span> adalah satu-satunya AI Prompt Generator 
-                Indonesia yang cover full pipeline: dari nulis ebook sampai iklan TikTok & Google — dalam hitungan menit.
+                <span className="text-primary">Chaesa AI Studio</span> memandu Anda membangun 
+                <span className="text-primary"> Ekosistem Kompetensi Digital</span> — dari satu ebook 
+                menjadi berbagai produk digital yang bekerja 24 jam untuk Anda.
               </p>
               
               {/* CTA Buttons */}
@@ -520,7 +526,7 @@ export default function Landing() {
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-16">
               <Badge variant="outline" className="mb-4">Masalah Umum</Badge>
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Apakah Anda Mengalami Ini?</h2>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">Kompetensi Anda Terlalu Berharga untuk Disimpan Sendiri</h2>
             </div>
             
             <div className="grid md:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
@@ -531,11 +537,11 @@ export default function Landing() {
                   Tanpa Chaesa AI Studio
                 </h3>
                 {[
-                  "Menghabiskan berminggu-minggu untuk menulis satu ebook",
-                  "Bingung struktur konten dan tidak tahu harus mulai dari mana",
-                  "Prompt AI asal-asalan dengan hasil yang tidak konsisten",
-                  "Ebook hanya jadi PDF — tidak ada ekosistem konten turunan",
-                  "Kehilangan peluang monetisasi dari konten yang sudah ada"
+                  "Keahlian bertahun-tahun hanya tersimpan di kepala — tidak pernah terdokumentasi",
+                  "Bingung bagaimana mengemas kompetensi menjadi produk digital yang bisa dijual",
+                  "Ebook selesai dibuat tapi tidak tahu cara transfer kompetensi ke produk lain",
+                  "Chatbot, e-course, mini app terasa jauh dan butuh keahlian teknis khusus",
+                  "Kompetensi tidak pernah bekerja 24 jam menghasilkan revenue untuk Anda"
                 ].map((problem, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-red-500/5 border border-red-500/10">
                     <XCircle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
@@ -551,12 +557,12 @@ export default function Landing() {
                   Dengan Chaesa AI Studio
                 </h3>
                 {[
-                  "Generate prompt lengkap dalam hitungan detik — 16 mode generasi pilihan",
-                  "Pipeline 9-Langkah Ebook Ecosystem: dari tulis ebook sampai iklan Google & TikTok",
-                  "Export Terproteksi PDF (watermark + hak cipta) dan Baca Online (HTML reader)",
-                  "IG Caption Pack, Reels Hook, Pricing Ladder 5-Tier, Launch Checklist D-30",
-                  "TikTok Ads Script 3-angle dan Google Search Ads RSA siap tayang",
-                  "24 industri Indonesia — prompt dioptimasi per konteks industri Anda"
+                  "Dokumentasikan kompetensi Anda menjadi Ebook profesional — langkah pertama ekosistem",
+                  "Transfer kompetensi ke Chatbot AI yang menjawab audiens 24 jam otomatis",
+                  "Ubah kompetensi menjadi E-Course terstruktur — sumber revenue berkelanjutan",
+                  "Wujudkan kompetensi dalam Mini App praktis dan Document Generator siap pakai",
+                  "Bangun ekosistem digital yang bekerja untuk Anda bahkan saat Anda tidur",
+                  "16 mode AI + pipeline 9-langkah — semua dalam bahasa Indonesia, 24 industri"
                 ].map((solution, idx) => (
                   <div key={idx} className="flex items-start gap-3 p-4 rounded-lg bg-green-500/5 border border-green-500/10">
                     <CheckCircle2 className="h-5 w-5 text-green-500 shrink-0 mt-0.5" />
@@ -778,47 +784,89 @@ export default function Landing() {
             <div className="text-center mb-12">
               <Badge variant="secondary" className="mb-4 px-4 py-2">
                 <Rocket className="h-3 w-3 mr-2" />
-                Ebook Ecosystem Pipeline
+                Ekosistem Kompetensi Digital
               </Badge>
               <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Satu Ebook, <span className="text-primary">9 Langkah Ekosistem Bisnis</span>
+                Ebook adalah Fondasi — <span className="text-primary">Kompetensi adalah Produknya</span>
               </h2>
               <p className="text-muted-foreground max-w-2xl mx-auto">
-                Pipeline terintegrasi dari produksi konten hingga iklan berbayar — semua dalam satu platform Chaesa AI Studio.
+                Mulai dari ebook sebagai dokumentasi kompetensi, lalu transferkan ke chatbot, e-course, 
+                mini app, dan produk digital lain yang terus menghasilkan — mengikuti pipeline 9 langkah yang terstruktur.
               </p>
             </div>
-            <div className="grid grid-cols-3 md:grid-cols-9 gap-2 max-w-5xl mx-auto mb-8">
-              {[
-                { step: 1, label: "Ebook+", emoji: "📖", color: "from-blue-500 to-cyan-500", desc: "Produksi" },
-                { step: 2, label: "Publish", emoji: "🔒", color: "from-indigo-500 to-blue-600", desc: "Proteksi" },
-                { step: 3, label: "Distribusi", emoji: "🌐", color: "from-emerald-500 to-green-600", desc: "Jual" },
-                { step: 4, label: "Sosmed", emoji: "📸", color: "from-fuchsia-500 to-pink-600", desc: "Organik" },
-                { step: 5, label: "Konversi", emoji: "💡", color: "from-orange-500 to-amber-500", desc: "Landing" },
-                { step: 6, label: "Strategi+", emoji: "💲", color: "from-green-600 to-emerald-700", desc: "Pricing" },
-                { step: 7, label: "Iklan", emoji: "🎵", color: "from-slate-600 to-gray-700", desc: "Paid Ads" },
-                { step: 8, label: "Funnel", emoji: "🎓", color: "from-violet-600 to-purple-700", desc: "Kursus" },
-                { step: 9, label: "Ekosistem", emoji: "🤖", color: "from-rose-500 to-red-600", desc: "AI Tools" },
-              ].map(({ step, label, emoji, color, desc }) => (
-                <div key={step} className="text-center group">
-                  <div className={`h-14 w-14 rounded-2xl bg-gradient-to-br ${color} text-white flex flex-col items-center justify-center mx-auto mb-2 group-hover:scale-110 transition-transform shadow-md`}>
-                    <span className="text-xl leading-none">{emoji}</span>
-                    <span className="text-[9px] font-bold mt-0.5">{step}</span>
+            {/* Competency Transfer Visual */}
+            <div className="max-w-5xl mx-auto">
+              {/* Ebook = Foundation */}
+              <div className="flex justify-center mb-6">
+                <div className="relative">
+                  <div className="absolute -inset-2 bg-gradient-to-r from-primary to-purple-600 rounded-2xl blur-lg opacity-25" />
+                  <div className="relative flex items-center gap-4 px-8 py-4 rounded-2xl bg-gradient-to-r from-primary to-purple-600 text-white shadow-xl">
+                    <span className="text-4xl">📖</span>
+                    <div>
+                      <div className="font-black text-xl">EBOOK</div>
+                      <div className="text-xs text-white/80 font-medium">Langkah 1 · Fondasi Kompetensi</div>
+                      <div className="text-[10px] text-white/60">Dokumentasikan keahlian Anda di sini terlebih dahulu</div>
+                    </div>
+                    <div className="ml-4 px-3 py-1 rounded-full bg-white/20 text-xs font-bold">SUMBER UTAMA</div>
                   </div>
-                  <p className="text-[10px] font-semibold leading-tight">{label}</p>
-                  <p className="text-[9px] text-muted-foreground">{desc}</p>
                 </div>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-2 justify-center text-xs text-muted-foreground max-w-4xl mx-auto">
-              {[
-                "Chapter Builder AI", "Export Terproteksi PDF", "Baca Online HTML Reader",
-                "IG Caption Pack", "Reels/TikTok Hook", "WhatsApp Blast", "Landing Page",
-                "Pricing Ladder 5-Tier", "Launch Checklist D-30",
-                "TikTok Ads 3-Angle", "Google Ads RSA", "E-Course 8 Modul",
-                "Chatbot Demo AI", "Quiz Generator", "Mockup 3D DALL-E 3"
-              ].map(feat => (
-                <Badge key={feat} variant="outline" className="text-[10px] font-normal">{feat}</Badge>
-              ))}
+              </div>
+
+              {/* Transfer arrows visual */}
+              <div className="flex justify-center mb-4">
+                <div className="flex flex-col items-center gap-0">
+                  <div className="w-px h-6 bg-gradient-to-b from-primary to-transparent" />
+                  <div className="text-xs text-muted-foreground font-medium px-3 py-1 rounded-full border bg-background">Transfer Kompetensi ke →</div>
+                  <div className="w-px h-4 bg-gradient-to-b from-transparent to-muted-foreground/30" />
+                </div>
+              </div>
+
+              {/* Transfer Products */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+                {[
+                  { emoji: "🤖", title: "Chatbot AI", desc: "Audiens bertanya, AI menjawab dari kompetensi Anda — 24 jam otomatis", color: "from-violet-500 to-purple-600", badge: "Interactive" },
+                  { emoji: "🎓", title: "E-Course", desc: "Kompetensi diajarkan secara terstruktur dalam 8 modul — revenue berkelanjutan", color: "from-emerald-500 to-green-600", badge: "Monetisasi" },
+                  { emoji: "📱", title: "Mini App", desc: "Kompetensi digunakan dalam tools & aplikasi praktis yang bisa diakses kapan saja", color: "from-orange-500 to-amber-500", badge: "Tools" },
+                  { emoji: "📄", title: "Document Generator", desc: "Template SOP, kebijakan, dan dokumen profesional dari kompetensi Anda", color: "from-cyan-500 to-blue-600", badge: "Automation" },
+                ].map(({ emoji, title, desc, color, badge }) => (
+                  <div key={title} className="group relative">
+                    <div className={`absolute -inset-0.5 bg-gradient-to-br ${color} rounded-xl blur opacity-0 group-hover:opacity-30 transition-opacity`} />
+                    <Card className="relative hover-elevate h-full">
+                      <CardContent className="pt-5 pb-4 px-4">
+                        <div className="text-3xl mb-3">{emoji}</div>
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-bold text-sm">{title}</h4>
+                          <Badge variant="secondary" className="text-[9px] ml-1 shrink-0">{badge}</Badge>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">{desc}</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pipeline steps */}
+              <div className="p-4 rounded-xl bg-muted/40 border">
+                <p className="text-xs text-center text-muted-foreground font-medium mb-3">Pipeline 9-Langkah untuk distribusi & monetisasi ekosistem kompetensi</p>
+                <div className="grid grid-cols-9 gap-1">
+                  {[
+                    { n: 1, label: "Ebook+", color: "bg-blue-500" },
+                    { n: 2, label: "Publish", color: "bg-indigo-500" },
+                    { n: 3, label: "Distribusi", color: "bg-emerald-500" },
+                    { n: 4, label: "Sosmed", color: "bg-fuchsia-500" },
+                    { n: 5, label: "Konversi", color: "bg-orange-500" },
+                    { n: 6, label: "Strategi+", color: "bg-green-600" },
+                    { n: 7, label: "Iklan", color: "bg-slate-600" },
+                    { n: 8, label: "Funnel", color: "bg-violet-600" },
+                    { n: 9, label: "Ekosistem", color: "bg-rose-500" },
+                  ].map(({ n, label, color }) => (
+                    <div key={n} className="text-center">
+                      <div className={`${color} text-white text-[9px] font-bold rounded-full w-6 h-6 flex items-center justify-center mx-auto mb-1`}>{n}</div>
+                      <p className="text-[8px] text-muted-foreground leading-tight">{label}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -877,7 +925,7 @@ export default function Landing() {
                 { step: 1, title: "Isi Form Proyek", desc: "Masukkan topik, target audiens, industri, dan preferensi gaya ebook Anda.", icon: FileText },
                 { step: 2, title: "Pilih Mode Generasi", desc: "Pilih dari 13 mode: brainstorm, outline, draft bab, GPT Builder, Mini App, Quiz, dan lainnya.", icon: Target },
                 { step: 3, title: "Eksekusi di AI", desc: "Copy prompt dan jalankan di DokumenTender AI, ChatGPT, atau AI favorit Anda.", icon: Rocket },
-                { step: 4, title: "Bangun Ekosistem", desc: "Ikuti pipeline 9-langkah: dari ebook ke chatbot, kursus, mini app, kuis, dan revenue stream.", icon: Workflow }
+                { step: 4, title: "Transfer Kompetensi", desc: "Ikuti pipeline 9-langkah: dari ebook ke chatbot AI, e-course, mini app, document generator — satu kompetensi, banyak produk digital.", icon: Workflow }
               ].map((item, idx) => (
                 <div key={idx} className="relative text-center group">
                   <div className="inline-flex items-center justify-center h-16 w-16 rounded-full bg-primary text-white text-2xl font-bold mb-4 group-hover:scale-110 transition-transform">

@@ -15,21 +15,21 @@ interface Message {
 }
 
 const QUICK_QUESTIONS = [
-  "Apa itu Pipeline Ebook Ecosystem 9 Langkah?",
-  "Apa saja 16 mode generasi yang tersedia?",
-  "Bagaimana cara kerja Export Terproteksi dan Baca Online?",
-  "Jelaskan IG Caption Pack dan Reels/TikTok Hook Generator",
-  "Apa itu Pricing Ladder 5 Tier dan Launch Checklist D-30?",
-  "Bagaimana TikTok Ads Script dan Google Ads RSA bekerja?",
-  "Bagaimana cara mulai untuk pemula?",
-  "Tips strategi monetisasi ebook di Indonesia?",
+  "Apa itu Ekosistem Kompetensi Digital di Chaesa AI Studio?",
+  "Mengapa ebook harus jadi langkah pertama sebelum chatbot atau e-course?",
+  "Bagaimana cara transfer kompetensi dari ebook ke Chatbot AI?",
+  "Bagaimana mengubah ebook menjadi E-Course 8 modul?",
+  "Apa perbedaan Mini App Builder dan Document Generator?",
+  "Bagaimana pipeline 9-langkah bekerja dari Ebook+ sampai Ekosistem?",
+  "Bagaimana cara mulai membangun ekosistem untuk pemula?",
+  "Tips monetisasi ekosistem kompetensi digital di Indonesia?",
 ];
 
 const FEATURE_CHIPS = [
-  { label: "9 Langkah", icon: Workflow, question: "Jelaskan Pipeline Ebook Ecosystem 9 Langkah secara detail — dari Ebook+ sampai Ekosistem" },
-  { label: "Publish", icon: BookOpen, question: "Jelaskan fitur Export Terproteksi dan Baca Online (HTML Reader) di row Publish pipeline" },
-  { label: "Iklan AI", icon: Bot, question: "Bagaimana fitur TikTok Ads Script 3-angle dan Google Search Ads RSA bekerja?" },
-  { label: "Strategi", icon: ClipboardList, question: "Jelaskan Pricing Ladder 5 Tier dan Launch Checklist D-30 di row Strategi+ pipeline" },
+  { label: "Ekosistem", icon: Workflow, question: "Jelaskan konsep Ekosistem Kompetensi Digital — mengapa ebook adalah langkah 1 dan bagaimana transfer ke chatbot, e-course, mini app, dan document generator" },
+  { label: "Chatbot AI", icon: Bot, question: "Bagaimana transfer kompetensi dari ebook ke Chatbot Demo AI yang bisa menjawab audiens 24 jam otomatis?" },
+  { label: "E-Course", icon: BookOpen, question: "Bagaimana mengubah ebook menjadi E-Course terstruktur — silabus, modul, dan strategi monetisasi?" },
+  { label: "Mini App", icon: ClipboardList, question: "Apa itu Mini App Builder dan Document Generator sebagai produk digital turunan dari ekosistem kompetensi ebook?" },
 ];
 
 export function ChaesaChatbot() {
@@ -39,13 +39,17 @@ export function ChaesaChatbot() {
       role: 'assistant',
       content: `Halo! Saya Chaesa, asisten AI Chaesa AI Studio.
 
-Saya bisa membantu Anda memahami:
-- 16 mode generasi prompt (Brainstorm, Big Idea, Outline, Draft Bab, E-Course, Landing Page, dan lainnya)
-- Pipeline Ebook Ecosystem 9 Langkah: Ebook+ → Publish → Distribusi → Sosmed → Konversi → Strategi+ → Iklan → Funnel → Ekosistem
-- Fitur baru: Export Terproteksi, Baca Online, IG Caption Pack, Reels Hook, Pricing Ladder, Launch D-30, TikTok Ads, Google Ads RSA
-- Tips monetisasi dan strategi ebook di Indonesia
+Konsep utama kami: Ekosistem Kompetensi Digital.
 
-Silakan tanyakan apa saja!`
+Ebook adalah Langkah 1 — fondasi tempat Anda mendokumentasikan kompetensi/keahlian. Dari ebook, kompetensi ditransfer ke produk digital lain: Chatbot AI, E-Course, Mini App, dan Document Generator.
+
+Saya bisa membantu Anda:
+- Memahami konsep transfer kompetensi dari ebook ke produk digital lain
+- Memilih mode generasi yang tepat (16 mode tersedia)
+- Mengikuti pipeline 9-langkah untuk distribusi dan monetisasi
+- Tips membangun ekosistem digital di 24 industri Indonesia
+
+Mulai dari mana dulu?`
     }
   ]);
   const [input, setInput] = useState('');
