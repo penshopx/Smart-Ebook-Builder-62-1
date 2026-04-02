@@ -90,6 +90,36 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
+## Smart Integration System (Latest)
+
+### Ecosystem Hub
+- **Ecosystem Hub Dialog** — Pusat kontrol integrasi 4 quadrant: Content Core, Monetization Engine, Sales Funnel, Engagement Layer
+- **Integration Score** (0-100) — Otomatis dihitung: docContent=15, syllabusContent=10, monoContent=15, lpContent=20, mktContent=15, chatMessages>0=10, lpPrice+monoContent=5, mockupImages+lpContent=5, quizContent+syllabusContent=5
+- **Data Connection Map** — 8 koneksi aktif ditampilkan: Monetisasi→LP, LP→Chatbot, E-Course→Bonus LP, dll.
+- **Next Step Recommendations** — Auto-saran langkah berikutnya berdasarkan state pipeline
+
+### Smart Integration Helpers (in prompt-output.tsx)
+- `extractMonetizationPrice()` — Parses monoContent for "PAKET STANDAR — Rp X" pattern
+- `getSmartBonuses()` — Suggests bonuses from syllabusContent/quizContent/podcastContent/audiobookContent/mockupImages/mktContent/coverTplContent
+- `getLpSummary()` — Returns price|CTA|bonuses summary for chatbot
+- `integrationScore` — 0-100 computed metric shown in pipeline progress bar
+
+### LP Config Auto-Sync
+- Smart auto-detect price from monoContent → "Terapkan" button
+- Smart bonus suggestions from generated outputs → "Isi Otomatis" button  
+- 7 data source badges (Konten Ebook, Silabus, Monetisasi, Mockup 3D, Penulis, Kuis, Podcast)
+
+### Chatbot LP-Aware
+- System prompt includes: lpContent, lpPrice, lpCTA, lpBonuses
+- Greeting shows detected price from Monetisasi or lpPrice
+- Data sources list includes "landing page & info beli"
+- 6 data source badges in system prompt
+
+### Marketing Kit Auto-Price
+- Price auto-detected from lpPrice || monoContent PAKET STANDAR pattern
+- authorName and bonuses passed to `/api/generate-marketing-kit`
+- Backend uses price/authorName/bonuses in all 7 marketing sections
+
 ## Application Features
 
 ### 11 Generation Modes

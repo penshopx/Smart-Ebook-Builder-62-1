@@ -188,6 +188,8 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpGoal, setLpGoal] = useState('sell');
   // FlipBook Guide
   const [flipbookOpen, setFlipbookOpen] = useState(false);
+  // Ecosystem Hub
+  const [ecoHubOpen, setEcoHubOpen] = useState(false);
   // Riset Ebook (Research Center)
   const [risetOpen, setRisetOpen] = useState(false);
   const [risetContent, setRisetContent] = useState('');
@@ -227,6 +229,57 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   useEffect(() => {
     localStorage.setItem('ebb_author_name', authorName);
   }, [authorName]);
+
+  // ── SMART INTEGRATION HELPERS ──────────────────────────────────────────────
+  // Extract recommended price from monetization content
+  const extractMonetizationPrice = useCallback((): string => {
+    if (!monoContent) return '';
+    const standarMatch = monoContent.match(/PAKET STANDAR[^R\n]*Rp\s*([0-9.,]+(?:\s*(?:rb|ribu|juta|k|K))?)/i);
+    if (standarMatch) return `Rp ${standarMatch[1].trim()}`;
+    const anyPrice = monoContent.match(/Rp\s*([0-9.,]+(?:\s*(?:rb|ribu|juta|k|K))?)/);
+    if (anyPrice) return `Rp ${anyPrice[1].trim()}`;
+    return '';
+  }, [monoContent]);
+
+  // Smart bonus suggestions based on what's already generated
+  const getSmartBonuses = useCallback((): string => {
+    const bonuses: string[] = [];
+    if (syllabusContent) {
+      const courseName = syllabusContent.match(/NAMA KURSUS:\s*([^\n]+)/)?.[1]?.trim() || 'E-Course Lengkap';
+      bonuses.push(`Akses E-Course: ${courseName}`);
+    }
+    if (quizContent) bonuses.push('19 Soal Kuis Interaktif (PDF)');
+    if (podcastContent) bonuses.push('Podcast Script Siap Rekam');
+    if (audiobookContent) bonuses.push('Script Audiobook Profesional');
+    if (mockupImages.length > 0) bonuses.push('3D Mockup untuk Promosi (PNG)');
+    if (mktContent) bonuses.push('Marketing Kit Lengkap (7 Platform)');
+    if (coverTplContent) bonuses.push('Cover HTML Template Siap Pakai');
+    return bonuses.join('\n');
+  }, [syllabusContent, quizContent, podcastContent, audiobookContent, mockupImages, mktContent, coverTplContent]);
+
+  // Extract a short price + CTA summary from LP for chatbot
+  const getLpSummary = useCallback((): string => {
+    const parts: string[] = [];
+    if (lpPrice) parts.push(`Harga: ${lpPrice}`);
+    if (lpCTA) parts.push(`Tombol beli: "${lpCTA}"`);
+    if (lpBonuses) parts.push(`Bonus: ${lpBonuses.split('\n').slice(0, 3).join(', ')}`);
+    return parts.join(' | ');
+  }, [lpPrice, lpCTA, lpBonuses]);
+
+  // Compute integration score (0-100) based on key pipeline connections
+  const integrationScore = (() => {
+    let score = 0;
+    if (docContent) score += 15;
+    if (syllabusContent) score += 10;
+    if (monoContent) score += 15;
+    if (lpContent) score += 20;
+    if (mktContent) score += 15;
+    if (chatMessages.length > 0) score += 10;
+    if (lpPrice && monoContent) score += 5;
+    if (mockupImages.length > 0 && lpContent) score += 5;
+    if (quizContent && syllabusContent) score += 5;
+    return Math.min(score, 100);
+  })();
 
   // Computed: pipeline completion
   const pipelineItems = [
@@ -521,6 +574,8 @@ ${bodyHtml}
     setMktOpen(true);
     setMktContent('');
     setMktLoading(true);
+    // Auto-detect price from monetization content or LP config
+    const detectedPrice = lpPrice || (monoContent ? monoContent.match(/PAKET STANDAR[^R\n]*Rp\s*([0-9.,]+(?:\s*(?:rb|ribu|juta|k|K))?)/i)?.[0]?.match(/Rp\s*[0-9.,]+/)?.[0] || '' : '');
     try {
       await streamSSE(
         '/api/generate-marketing-kit',
@@ -528,6 +583,9 @@ ${bodyHtml}
           title: projectTitle || projectTopik,
           topik: projectTopik,
           docSummary: docContent.slice(0, 600),
+          price: detectedPrice || 'Hubungi penjual',
+          authorName: authorName || '',
+          bonuses: lpBonuses ? lpBonuses.split('\n').filter(Boolean).slice(0, 5).join(', ') : '',
         },
         (chunk) => setMktContent(prev => prev + chunk),
         () => setMktLoading(false),
@@ -537,7 +595,7 @@ ${bodyHtml}
       setMktLoading(false);
       toast({ title: 'Gagal membuat Marketing Kit', variant: 'destructive' });
     }
-  }, [projectTitle, projectTopik, docContent, toast]);
+  }, [projectTitle, projectTopik, docContent, lpPrice, monoContent, authorName, lpBonuses, toast]);
 
   const handleGenerateScript = useCallback(async () => {
     if (!docContent) return;
@@ -742,27 +800,44 @@ ${bodyHtml}
 
   const handleChatDemo = useCallback(async () => {
     const parts: string[] = [];
-    parts.push(`Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}".`);
+    parts.push(`Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}". Bantu calon pembeli, peserta kursus, atau siapa pun yang penasaran dengan produk digital ini.`);
     if (authorName) parts.push(`Ebook ini ditulis oleh ${authorName}.`);
     if (docContent) parts.push(`\n📖 KONTEN EBOOK:\n${docContent.slice(0, 2500)}`);
     if (syllabusContent) parts.push(`\n🎓 STRUKTUR E-COURSE:\n${syllabusContent.slice(0, 800)}`);
-    if (quizContent) parts.push(`\n❓ KUIS & SOAL:\n${quizContent.slice(0, 600)}`);
-    if (monoContent) parts.push(`\n💰 STRATEGI MONETISASI & HARGA:\n${monoContent.slice(0, 600)}`);
-    if (mktContent) parts.push(`\n📣 MARKETING & PROMOSI:\n${mktContent.slice(0, 500)}`);
-    parts.push(`\nJawab pertanyaan pengguna dengan ramah, informatif, dan berbasis data di atas. Jika ditanya soal harga, berikan info dari strategi monetisasi. Jika ditanya soal kursus, berikan info dari silabus. Selalu fokus pada topik ebook.`);
-    if (!docContent && !syllabusContent && !monoContent) {
+    if (quizContent) parts.push(`\n❓ KUIS & SOAL:\n${quizContent.slice(0, 400)}`);
+    if (monoContent) parts.push(`\n💰 STRATEGI MONETISASI & HARGA:\n${monoContent.slice(0, 700)}`);
+    if (mktContent) parts.push(`\n📣 MARKETING & PROMOSI:\n${mktContent.slice(0, 400)}`);
+    // Landing Page integration: provide price, bonuses, CTA info
+    if (lpContent || lpPrice) {
+      const lpSummary: string[] = [];
+      if (lpPrice) lpSummary.push(`Harga produk: ${lpPrice}`);
+      if (lpCTA) lpSummary.push(`Tombol pembelian: "${lpCTA}"`);
+      if (lpBonuses) lpSummary.push(`Bonus yang ditawarkan: ${lpBonuses.split('\n').slice(0, 5).join(', ')}`);
+      if (lpContent) lpSummary.push(`\nKonten landing page:\n${lpContent.slice(0, 600)}`);
+      parts.push(`\n🌐 INFO LANDING PAGE & PEMBELIAN:\n${lpSummary.join('\n')}`);
+    }
+    parts.push(`\n---\nInstruksi: Jawab pertanyaan dengan ramah, informatif, dan berbasis data di atas. Jika ditanya soal harga → info dari monetisasi/landing page. Jika ditanya soal kursus → info dari silabus. Jika ditanya cara beli → berikan info CTA dan harga. Selalu fokus pada topik "${projectTitle || projectTopik}".`);
+    if (!docContent && !syllabusContent && !monoContent && !lpContent) {
       parts.length = 0;
       parts.push(`Kamu adalah AI Assistant ahli tentang "${projectTitle || projectTopik}". ${prompt.slice(0, 1000)}`);
     }
     const sysPrompt = parts.join(' ');
     setChatSystemPrompt(sysPrompt);
-    const dataSources = [docContent && 'konten ebook', syllabusContent && 'silabus', quizContent && 'kuis', monoContent && 'harga & monetisasi', mktContent && 'marketing kit'].filter(Boolean);
+    const dataSources = [
+      docContent && 'konten ebook',
+      syllabusContent && 'silabus e-course',
+      quizContent && 'kuis',
+      monoContent && 'harga & monetisasi',
+      mktContent && 'marketing kit',
+      (lpContent || lpPrice) && 'landing page & info beli',
+    ].filter(Boolean);
+    const detectedPrice = extractMonetizationPrice() || lpPrice;
     const greeting = dataSources.length > 0
-      ? `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**${authorName ? ` oleh ${authorName}` : ''}.\n\nSaya sudah terhubung dengan: ${dataSources.join(', ')}. Tanyakan apa saja tentang materi, harga, kursus, atau cara pemasarannya! 😊`
-      : `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**. Saya siap menjawab pertanyaan kamu tentang topik ini. Ada yang ingin kamu tanyakan? 😊`;
+      ? `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**${authorName ? ` oleh ${authorName}` : ''}.\n\nSaya sudah terhubung dengan: **${dataSources.join(', ')}**.\n\n${detectedPrice ? `💰 Harga: **${detectedPrice}**` : ''}\n\nTanyakan apa saja tentang materi, harga, cara beli, kursus, atau pemasarannya! 😊`
+      : `Halo! Saya AI Assistant untuk ebook **"${projectTitle || projectTopik}"**. Saya siap menjawab pertanyaan kamu. Ada yang ingin ditanyakan? 😊`;
     setChatMessages([{ role: 'assistant', content: greeting }]);
     setChatOpen(true);
-  }, [docContent, syllabusContent, quizContent, monoContent, mktContent, projectTitle, projectTopik, prompt, authorName]);
+  }, [docContent, syllabusContent, quizContent, monoContent, mktContent, lpContent, lpPrice, lpCTA, lpBonuses, projectTitle, projectTopik, prompt, authorName, extractMonetizationPrice]);
 
   const handleSendChat = useCallback(async () => {
     if (!chatInput.trim() || chatLoading) return;
@@ -1400,21 +1475,35 @@ ${bodyHtml}
               <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200/50 dark:border-indigo-800/50 px-3 py-2">
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
-                    Pipeline Progress: {completedCount}/{pipelineItems.length} output selesai
+                    Pipeline: {completedCount}/{pipelineItems.length} output
+                    {integrationScore >= 60 && <span className="ml-1 text-[9px] bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 px-1 py-0.5 rounded">⚡ Skor Integrasi {integrationScore}%</span>}
                   </span>
-                  {completedCount > 0 && (
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
-                      onClick={handleExportBundle}
-                      disabled={exportLoading}
-                      data-testid="button-export-bundle"
-                    >
-                      {exportLoading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Download className="h-3 w-3 mr-1" />}
-                      Unduh Bundle
-                    </Button>
-                  )}
+                  <div className="flex gap-1">
+                    {completedCount > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px] text-purple-600 hover:text-purple-700 hover:bg-purple-100 dark:hover:bg-purple-900/40"
+                        onClick={() => setEcoHubOpen(true)}
+                        data-testid="button-eco-hub"
+                      >
+                        🔗 Ecosystem Hub
+                      </Button>
+                    )}
+                    {completedCount > 0 && (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                        onClick={handleExportBundle}
+                        disabled={exportLoading}
+                        data-testid="button-export-bundle"
+                      >
+                        {exportLoading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Download className="h-3 w-3 mr-1" />}
+                        Unduh
+                      </Button>
+                    )}
+                  </div>
                 </div>
                 <div className="w-full bg-indigo-200/50 dark:bg-indigo-800/30 rounded-full h-2 overflow-hidden">
                   <div
@@ -1422,11 +1511,24 @@ ${bodyHtml}
                     style={{ width: `${(completedCount / pipelineItems.length) * 100}%` }}
                   />
                 </div>
-                {completedCount > 0 && (
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {pipelineItems.filter(i => i.done).map(i => (
-                      <span key={i.key} className="text-[9px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full">✓ {i.label}</span>
-                    ))}
+                {/* Integration connections display */}
+                {integrationScore > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <div className="flex flex-wrap gap-1">
+                      {pipelineItems.filter(i => i.done).map(i => (
+                        <span key={i.key} className="text-[9px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full">✓ {i.label}</span>
+                      ))}
+                    </div>
+                    {/* Show active data connections */}
+                    {(monoContent && lpContent) && (
+                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400">🔗 Monetisasi → Landing Page tersinkronisasi</p>
+                    )}
+                    {(lpContent && chatMessages.length > 0) && (
+                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400">🔗 Landing Page → Chatbot Demo terhubung</p>
+                    )}
+                    {(syllabusContent && lpBonuses) && (
+                      <p className="text-[9px] text-emerald-600 dark:text-emerald-400">🔗 E-Course → Bonus LP terintegrasi</p>
+                    )}
                   </div>
                 )}
               </div>
@@ -3470,22 +3572,55 @@ ${bodyHtml}
           </DialogHeader>
           <div className="space-y-4 py-2">
             {/* Data sync info */}
-            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-1.5">
-              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline Terdeteksi:</p>
+            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2">
+              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline Tersinkronisasi:</p>
               <div className="flex flex-wrap gap-1.5">
                 {[
                   { label: 'Konten Ebook', active: !!docContent },
-                  { label: 'Silabus E-Course', active: !!syllabusContent },
+                  { label: 'Silabus', active: !!syllabusContent },
                   { label: 'Monetisasi', active: !!monoContent },
-                  { label: 'Mockup', active: mockupImages.length > 0 },
+                  { label: 'Mockup 3D', active: mockupImages.length > 0 },
                   { label: 'Penulis', active: !!authorName },
+                  { label: 'Kuis', active: !!quizContent },
+                  { label: 'Podcast', active: !!podcastContent },
                 ].map(d => (
-                  <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700' : 'bg-muted border-border text-muted-foreground opacity-50 line-through')}>
+                  <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700 dark:text-green-400' : 'bg-muted border-border text-muted-foreground opacity-40')}>
                     {d.active ? '✓' : '○'} {d.label}
                   </span>
                 ))}
               </div>
-              <p className="text-[10px] text-muted-foreground">Semua data aktif akan otomatis disertakan ke landing page.</p>
+              {/* Smart auto-sync from Monetization */}
+              {monoContent && extractMonetizationPrice() && (
+                <div className="rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-2 flex items-center gap-2">
+                  <span className="text-xs text-amber-700 dark:text-amber-400 flex-1">
+                    💡 Harga terdeteksi dari Monetisasi: <strong>{extractMonetizationPrice()}</strong>
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[10px] px-2 border-amber-300 text-amber-700 hover:bg-amber-100"
+                    onClick={() => setLpPrice(extractMonetizationPrice())}
+                  >
+                    Terapkan
+                  </Button>
+                </div>
+              )}
+              {/* Smart bonus suggestions */}
+              {getSmartBonuses() && !lpBonuses && (
+                <div className="rounded bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-2 flex items-start gap-2">
+                  <span className="text-xs text-blue-700 dark:text-blue-400 flex-1">
+                    🎁 {getSmartBonuses().split('\n').length} bonus terdeteksi dari output yang sudah di-generate
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-6 text-[10px] px-2 shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100"
+                    onClick={() => setLpBonuses(getSmartBonuses())}
+                  >
+                    Isi Otomatis
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
@@ -3518,7 +3653,14 @@ ${bodyHtml}
               </div>
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium">Bonus Produk (satu per baris)</label>
+              <label className="text-xs font-medium flex items-center gap-2">
+                Bonus Produk (satu per baris)
+                {getSmartBonuses() && (
+                  <button onClick={() => setLpBonuses(prev => prev ? prev : getSmartBonuses())} className="text-[10px] text-blue-600 hover:underline">
+                    + auto-isi dari pipeline
+                  </button>
+                )}
+              </label>
               <Textarea
                 placeholder={"Contoh:\nBonus Template Canva\nBonus Video Tutorial\nBonus Konsultasi 1 Jam"}
                 value={lpBonuses}
@@ -4142,6 +4284,204 @@ ${bodyHtml}
                 <li><span className="font-medium text-foreground">5.</span> Kustomisasi desain → Share link atau embed di website</li>
               </ol>
             </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── ECOSYSTEM HUB DIALOG ── */}
+      <Dialog open={ecoHubOpen} onOpenChange={setEcoHubOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="px-6 pt-5 pb-4 shrink-0 border-b bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/40 dark:to-purple-950/40">
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">🔗</span>
+              Ecosystem Hub — Pusat Integrasi
+              <Badge className="ml-auto bg-gradient-to-r from-indigo-500 to-purple-500 text-white border-0 text-xs">
+                Skor Integrasi: {integrationScore}%
+              </Badge>
+            </DialogTitle>
+            <p className="text-xs text-muted-foreground mt-1">Semua output saling terhubung dan bertukar data secara otomatis</p>
+          </DialogHeader>
+          <ScrollArea className="flex-1">
+            <div className="p-6 space-y-6">
+              {/* Integration Score Visual */}
+              <div className="rounded-xl border bg-gradient-to-br from-indigo-50/50 to-purple-50/50 dark:from-indigo-950/20 dark:to-purple-950/20 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-sm font-semibold">Tingkat Integrasi Ekosistem</h3>
+                  <span className={cn(
+                    "text-xs font-bold px-2 py-1 rounded-full",
+                    integrationScore >= 80 ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-400" :
+                    integrationScore >= 50 ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-400" :
+                    "bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400"
+                  )}>
+                    {integrationScore >= 80 ? '🚀 Ekosistem Penuh' : integrationScore >= 50 ? '⚡ Setengah Jalan' : '🔧 Mulai Bangun'}
+                  </span>
+                </div>
+                <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-3 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-1000"
+                    style={{ width: `${integrationScore}%` }}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{integrationScore}% dari potensi integrasi maksimal tercapai</p>
+              </div>
+
+              {/* 4 Quadrant Connections */}
+              <div className="grid grid-cols-2 gap-4">
+                {/* CONTENT CORE */}
+                <div className={cn("rounded-xl border p-4 space-y-2", docContent ? "border-blue-300 bg-blue-50 dark:bg-blue-950/20" : "border-border")}>
+                  <h4 className="text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wide">📖 Content Core</h4>
+                  <div className="space-y-1">
+                    {[
+                      { label: 'Konten Ebook', done: !!docContent, desc: docContent ? `${Math.round(docContent.length/5)} kata` : 'Belum di-generate' },
+                      { label: 'Silabus E-Course', done: !!syllabusContent, desc: syllabusContent ? '8 modul' : 'Generate dari ebook' },
+                      { label: 'Kuis & Asesmen', done: !!quizContent, desc: quizContent ? '19 soal' : 'Generate dari ebook' },
+                      { label: 'Script Narasi', done: !!scriptContent, desc: scriptContent ? 'Siap TTS' : 'Butuh konten ebook' },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0", item.done ? "bg-blue-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400")}>
+                          {item.done ? '✓' : '○'}
+                        </span>
+                        <span className={cn("text-xs", item.done ? "text-foreground font-medium" : "text-muted-foreground")}>{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {docContent && <p className="text-[10px] text-blue-600 dark:text-blue-400 pt-1 border-t border-blue-200 dark:border-blue-800">→ Mengalir ke: Monetisasi, Landing Page, Chatbot</p>}
+                </div>
+
+                {/* MONETIZATION ENGINE */}
+                <div className={cn("rounded-xl border p-4 space-y-2", monoContent ? "border-amber-300 bg-amber-50 dark:bg-amber-950/20" : "border-border")}>
+                  <h4 className="text-xs font-bold text-amber-700 dark:text-amber-400 uppercase tracking-wide">💰 Monetization Engine</h4>
+                  <div className="space-y-1">
+                    {[
+                      { label: 'Strategi Harga', done: !!monoContent, desc: monoContent ? (extractMonetizationPrice() || 'Harga terdeteksi') : 'Generate strategi' },
+                      { label: 'Paket Produk', done: !!monoContent, desc: monoContent ? '3 paket (Basic/Standar/Premium)' : 'Butuh strategi monetisasi' },
+                      { label: 'Platform Jualan', done: !!monoContent, desc: monoContent ? 'Tokopedia/Shopee/dll' : 'Butuh strategi monetisasi' },
+                      { label: 'Harga di LP', done: !!(lpPrice || (monoContent && extractMonetizationPrice())), desc: lpPrice || extractMonetizationPrice() || 'Sync dari Monetisasi' },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0", item.done ? "bg-amber-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400")}>
+                          {item.done ? '✓' : '○'}
+                        </span>
+                        <span className={cn("text-xs", item.done ? "text-foreground font-medium" : "text-muted-foreground")}>{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto truncate max-w-24">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {monoContent && !lpPrice && extractMonetizationPrice() && (
+                    <div className="pt-1 border-t border-amber-200 dark:border-amber-800">
+                      <Button size="sm" className="h-6 text-[10px] w-full bg-amber-500 hover:bg-amber-600 text-white" onClick={() => { setLpPrice(extractMonetizationPrice()); setEcoHubOpen(false); setLpConfigOpen(true); }}>
+                        ⚡ Sync Harga ke Landing Page ({extractMonetizationPrice()})
+                      </Button>
+                    </div>
+                  )}
+                  {monoContent && <p className="text-[10px] text-amber-600 dark:text-amber-400 pt-1 border-t border-amber-200 dark:border-amber-800">→ Mengalir ke: Landing Page, Chatbot, Marketing Kit</p>}
+                </div>
+
+                {/* SALES FUNNEL */}
+                <div className={cn("rounded-xl border p-4 space-y-2", lpContent ? "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/20" : "border-border")}>
+                  <h4 className="text-xs font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide">🌐 Sales Funnel</h4>
+                  <div className="space-y-1">
+                    {[
+                      { label: 'Landing Page', done: !!lpContent, desc: lpContent ? (lpPrice ? `Harga: ${lpPrice}` : 'Copy selesai') : 'Config + Generate' },
+                      { label: 'Marketing Kit', done: !!mktContent, desc: mktContent ? '7 platform (TikTok, Tokped...)' : 'Generate dari ebook' },
+                      { label: 'Mockup 3D', done: mockupImages.length > 0, desc: mockupImages.length > 0 ? `${mockupImages.length} gambar` : 'Untuk visual produk' },
+                      { label: 'Thumbnail YouTube', done: thumbImages.length > 0, desc: thumbImages.length > 0 ? `${thumbImages.length} variasi` : 'Opsional' },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0", item.done ? "bg-emerald-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400")}>
+                          {item.done ? '✓' : '○'}
+                        </span>
+                        <span className={cn("text-xs", item.done ? "text-foreground font-medium" : "text-muted-foreground")}>{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto truncate max-w-28">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {!lpContent && monoContent && (
+                    <div className="pt-1 border-t border-emerald-200 dark:border-emerald-800">
+                      <Button size="sm" className="h-6 text-[10px] w-full bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setEcoHubOpen(false); setTimeout(() => setLpConfigOpen(true), 300); }}>
+                        ⚡ Buat Landing Page (Harga dari Monetisasi)
+                      </Button>
+                    </div>
+                  )}
+                  {lpContent && <p className="text-[10px] text-emerald-600 dark:text-emerald-400 pt-1 border-t border-emerald-200 dark:border-emerald-800">→ Mengalir ke: Chatbot Demo, Marketing Kit</p>}
+                </div>
+
+                {/* ENGAGEMENT LAYER */}
+                <div className={cn("rounded-xl border p-4 space-y-2", chatMessages.length > 0 ? "border-indigo-300 bg-indigo-50 dark:bg-indigo-950/20" : "border-border")}>
+                  <h4 className="text-xs font-bold text-indigo-700 dark:text-indigo-400 uppercase tracking-wide">🤖 Engagement Layer</h4>
+                  <div className="space-y-1">
+                    {[
+                      { label: 'Chatbot Demo', done: chatMessages.length > 0, desc: chatMessages.length > 0 ? `${chatMessages.length} pesan, LP-aware` : 'Buka + jalankan' },
+                      { label: 'Podcast Script', done: !!podcastContent, desc: podcastContent ? 'Siap rekam' : 'Generate dari ebook' },
+                      { label: 'Audiobook Script', done: !!audiobookContent, desc: audiobookContent ? 'Siap narasi' : 'Generate dari ebook' },
+                      { label: 'Riset Topik', done: !!risetContent, desc: risetContent ? 'Analisis selesai' : 'Research center' },
+                    ].map(item => (
+                      <div key={item.label} className="flex items-center gap-2">
+                        <span className={cn("w-4 h-4 rounded-full flex items-center justify-center text-[10px] shrink-0", item.done ? "bg-indigo-500 text-white" : "bg-slate-200 dark:bg-slate-700 text-slate-400")}>
+                          {item.done ? '✓' : '○'}
+                        </span>
+                        <span className={cn("text-xs", item.done ? "text-foreground font-medium" : "text-muted-foreground")}>{item.label}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto truncate max-w-28">{item.desc}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {chatMessages.length > 0 && (
+                    <p className="text-[10px] text-indigo-600 dark:text-indigo-400 pt-1 border-t border-indigo-200 dark:border-indigo-800">✓ Terhubung ke: konten ebook, silabus, harga, landing page</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Active Data Connections */}
+              <div className="rounded-xl border p-4 space-y-2">
+                <h3 className="text-sm font-semibold flex items-center gap-2">🔗 Koneksi Data Aktif</h3>
+                <div className="space-y-1.5">
+                  {[
+                    { active: !!(docContent && syllabusContent), label: 'Konten Ebook → Silabus E-Course', desc: 'Materi ebook dipakai sebagai fondasi kurikulum' },
+                    { active: !!(docContent && quizContent), label: 'Konten Ebook → Kuis', desc: 'Soal kuis dibuat berdasarkan materi ebook' },
+                    { active: !!(monoContent && lpContent), label: 'Monetisasi → Landing Page', desc: 'Strategi harga otomatis masuk ke sales page' },
+                    { active: !!(monoContent && mktContent), label: 'Monetisasi → Marketing Kit', desc: 'Harga dan CTA konsisten di semua channel' },
+                    { active: !!((lpContent || lpPrice) && chatMessages.length > 0), label: 'Landing Page → Chatbot', desc: 'Chatbot tahu harga, bonus, dan cara beli' },
+                    { active: !!(syllabusContent && lpBonuses), label: 'E-Course → Bonus LP', desc: 'Silabus kursus jadi bonus di landing page' },
+                    { active: !!(mockupImages.length > 0 && lpContent), label: 'Mockup 3D → Landing Page', desc: 'Gambar mockup disertakan dalam sales copy' },
+                    { active: !!(authorName && lpContent && coverTplContent), label: 'Brand Identity → Semua Output', desc: `"${authorName || 'Penulis'}" konsisten di semua konten` },
+                  ].map(conn => (
+                    <div key={conn.label} className="flex items-start gap-2">
+                      <span className={cn("mt-0.5 shrink-0 text-sm", conn.active ? "text-emerald-500" : "text-slate-300 dark:text-slate-600")}>
+                        {conn.active ? '🟢' : '⚪'}
+                      </span>
+                      <div>
+                        <p className={cn("text-xs font-medium", conn.active ? "text-foreground" : "text-muted-foreground")}>{conn.label}</p>
+                        <p className="text-[10px] text-muted-foreground">{conn.desc}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Next recommended actions */}
+              {integrationScore < 100 && (
+                <div className="rounded-xl border border-purple-200 dark:border-purple-800 bg-purple-50 dark:bg-purple-950/20 p-4 space-y-2">
+                  <h3 className="text-sm font-semibold text-purple-700 dark:text-purple-400">🚀 Langkah Berikutnya yang Direkomendasikan</h3>
+                  <div className="space-y-1.5">
+                    {!docContent && <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400"><span>1.</span><span>Generate konten ebook terlebih dahulu — ini fondasi semua output</span></div>}
+                    {docContent && !monoContent && <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400"><Button size="sm" className="h-6 text-[10px] bg-amber-500 hover:bg-amber-600 text-white" onClick={() => { setEcoHubOpen(false); setTimeout(() => setMonoOpen(true), 300); }}>Buat Monetisasi</Button><span>Tentukan harga dan strategi penjualan</span></div>}
+                    {monoContent && !lpContent && <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400"><Button size="sm" className="h-6 text-[10px] bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setEcoHubOpen(false); setTimeout(() => setLpConfigOpen(true), 300); }}>Buat Landing Page</Button><span>Sudah ada harga dari monetisasi yang bisa di-sync</span></div>}
+                    {lpContent && chatMessages.length === 0 && <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400"><Button size="sm" className="h-6 text-[10px] bg-indigo-600 hover:bg-indigo-700 text-white" onClick={() => { setEcoHubOpen(false); setTimeout(() => handleChatDemo(), 300); }}>Aktifkan Chatbot</Button><span>Chatbot akan tahu harga, konten, dan cara beli</span></div>}
+                    {lpContent && !mktContent && <div className="flex items-center gap-2 text-xs text-purple-600 dark:text-purple-400"><Button size="sm" className="h-6 text-[10px] bg-pink-600 hover:bg-pink-700 text-white" onClick={() => { setEcoHubOpen(false); setTimeout(() => handleGenerateMarketingKit(), 300); }}>Buat Marketing Kit</Button><span>7 channel promosi siap pakai (TikTok, Tokped, WA...)</span></div>}
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+          <div className="px-6 py-4 border-t flex gap-2 justify-between shrink-0">
+            <Button variant="outline" size="sm" onClick={handleExportBundle} disabled={exportLoading || completedCount === 0}>
+              {exportLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" /> : <Download className="h-3.5 w-3.5 mr-1.5" />}
+              Unduh Bundle
+            </Button>
+            <Button size="sm" onClick={() => setEcoHubOpen(false)} className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white">
+              Tutup Hub
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

@@ -1018,7 +1018,7 @@ Bundle Idea:
 
   app.post("/api/generate-marketing-kit", isAuthenticated, async (req, res) => {
     try {
-      const { title, topik, target, industry, docSummary } = req.body;
+      const { title, topik, target, industry, docSummary, price, authorName: mktAuthor, bonuses: mktBonuses } = req.body;
       if (!title && !topik) return res.status(400).json({ error: "Title or topic required" });
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -1033,6 +1033,9 @@ Judul: ${title || topik}
 Topik: ${topik}
 Target Pembaca: ${target || 'umum'}
 Industri/Niche: ${industry || 'umum'}
+${price ? `Harga Produk: ${price}` : ''}
+${mktAuthor ? `Nama Penulis/Penjual: ${mktAuthor}` : ''}
+${mktBonuses ? `Bonus yang tersedia: ${mktBonuses}` : ''}
 ${docSummary ? `Ringkasan konten: ${docSummary.slice(0, 500)}` : ''}
 
 Buat SEMUA 7 bagian berikut secara lengkap (JANGAN dipersingkat, JANGAN lewati satu pun):
