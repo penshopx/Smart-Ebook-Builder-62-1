@@ -155,6 +155,19 @@ The `shared/` directory contains code used by both frontend and backend:
 - authorName and bonuses passed to `/api/generate-marketing-kit`
 - Backend uses price/authorName/bonuses in all 7 marketing sections
 
+## Distribusi & Monetisasi Pipeline (Latest — from Akademi Profit analysis)
+
+### 3 New Pipeline Outputs Added (Distribusi Row)
+- **Platform Listing Pack** (`/api/generate-platform-listing`, gpt-4o) — Deskripsi produk siap upload ke semua platform: Tokopedia/Shopee (SEO description 500-800 kata + tag 20 keyword + kategori), Gumroad (English 300-400 words + short pitch), WA Catalog (max 500 karakter + CTA), Telegram Channel Post (emoji + informal), Bio Link CTA (max 150 karakter), Instagram Hashtag Pack (30 hashtag), TikTok Hashtag (5 hashtag trending).
+- **Reseller & Afiliasi Kit** (`/api/generate-reseller-kit`, gpt-4o) — Sistem reseller lengkap: Struktur Komisi 3 Tier (Biasa/Silver/Gold dengan kalkulasi penghasilan nyata), Pitch Rekrut Reseller (versi WA + IG caption), Welcome Kit Reseller Baru (template WA siap kirim), Script Closing 5 Objeksi (Mahal/Ntar aja/Beda sama gratis/Cara download/Jaminan), Materi Promosi Siap Pakai (3 caption berbeda), Tabel Kalkulasi Passive Income (5/10/20/50 ebook/bulan).
+- **Content Repurposing Pack** (`/api/generate-content-repurposing`, gpt-4o) — 1 Ebook → 6 Format: Instagram Carousel 10 Slide (hook+isi+CTA+caption), Twitter/X Thread 10 Tweet (viral-ready), LinkedIn Artikel (judul+intro+3 poin+CTA), Email Newsletter (subject line+preview+body 300-400 kata), Podcast/Video Outline (15-20 menit dengan segmen), Infografik Deskripsi Visual (layout+data points). Contextualizes dengan outline/chapter content yang sudah digenerate.
+- UI: "Distribusi:" label row baru (orange/yellow/cyan gradient) ditempatkan antara Ebook+ row dan Konversi row
+
+### Also Added (From buatebook.com analysis - previous session):
+- **Perpanjang Isi Bab** (`/api/expand-chapter`) — Di dalam Chapter Builder per-bab: toolbar biru dengan selector kata (100/150/200/300/500) + button "+ Perpanjang Bab" → AI menambah konten lanjutan yang natural
+- **Custom Upgrade Bab** (`/api/regenerate-chapter-custom`) — Di dalam Chapter Builder per-bab: toolbar ungu dengan 6 toggle pill (☑ Poin Bullet / 📊 Tabel / 📈 Data/Statistik / 💼 Contoh Kasus / 💡 Tips Praktis / ❓ FAQ Mini) → AI regenerate bab dengan elemen terpilih
+- **Stok Gambar Gratis** (`/api/search-images` → Openverse CC API) — Dialog teal dengan grid 12 gambar 4 kolom, hover overlay (Salin URL + buka), pagination, saran keyword otomatis dari topik ebook, lisensi badge. No API key required.
+
 ## Application Features
 
 ### 11 Generation Modes

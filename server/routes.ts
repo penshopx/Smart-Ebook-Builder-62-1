@@ -2870,5 +2870,236 @@ Bahasa: Indonesia natural, bukan terjemahan kaku.`;
     }
   });
 
+  // ========= DISTRIBUSI & MONETISASI PACK =========
+
+  // Platform Listing Pack — Tokopedia, Shopee, Gumroad, WA Catalog, Telegram
+  app.post("/api/generate-platform-listing", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, description, price, authorName, monoContent } = req.body;
+      const priceInfo = price || monoContent || 'harga kompetitif';
+      const systemPrompt = `Anda adalah copywriter dan digital marketing specialist Indonesia yang ahli menulis deskripsi produk digital untuk berbagai marketplace.
+Spesialisasi: optimasi SEO marketplace Indonesia, psikologi pembeli, kata kunci yang convert.`;
+
+      const userPrompt = `Buat PLATFORM LISTING PACK lengkap untuk ebook digital berikut:
+
+Judul Ebook: "${title || 'Ebook Digital'}"
+Topik/Niche: ${topik || 'bisnis online'}
+Info Harga: ${priceInfo}
+Penulis: ${authorName || 'Penulis Profesional'}
+
+Buat listing untuk SETIAP platform berikut dengan format yang spesifik:
+
+---
+## 🛒 TOKOPEDIA / SHOPEE
+**Nama Produk** (max 255 karakter, sertakan keyword SEO):
+[nama produk]
+
+**Deskripsi Produk** (500-800 kata, panjang untuk SEO):
+[deskripsi lengkap dengan bullet points, keyword organik, manfaat jelas, cara pembelian/download]
+
+**Tag/Keyword** (20 kata kunci, pisah koma):
+[tag1, tag2, ...]
+
+**Kategori yang Tepat:** [kategori]
+
+---
+## 💚 GUMROAD (English International)
+**Product Title:**
+[title]
+
+**Product Description** (300-400 words, benefit-driven):
+[description]
+
+**Short Pitch** (1 kalimat untuk social media):
+[short pitch]
+
+---
+## 📱 WHATSAPP CATALOG
+**Nama Produk** (max 100 karakter):
+[nama]
+
+**Deskripsi WA** (max 500 karakter, casual + CTA):
+[deskripsi singkat yang convert di WA]
+
+---
+## 📢 TELEGRAM CHANNEL POST
+**Teks Promosi** (informal, emoji, max 500 karakter):
+[teks telegram dengan emoji yang engaging]
+
+---
+## 🔗 BIO LINK (Instagram/TikTok Bio)
+**Teks CTA** (max 150 karakter):
+[teks CTA untuk bio]
+
+---
+## 📊 HASHTAG PACK
+**Instagram** (30 hashtag relevan):
+[#hashtag1 #hashtag2 ...]
+
+**TikTok** (5 hashtag trending):
+[#hashtag1 #hashtag2 ...]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 2500,
+        temperature: 0.75,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Platform listing error:", error);
+      res.status(500).json({ error: "Gagal generate platform listing. " + (error?.message || '') });
+    }
+  });
+
+  // Reseller & Afiliasi Kit — Sistem komisi, pitch, welcome message, materi rekrut
+  app.post("/api/generate-reseller-kit", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, price, authorName, monoContent } = req.body;
+      const priceInfo = price || monoContent || '';
+      const systemPrompt = `Anda adalah ahli sistem bisnis digital dan network marketing Indonesia. Anda pakar dalam membuat program reseller dan afiliasi yang menguntungkan semua pihak.`;
+
+      const userPrompt = `Buat RESELLER & AFILIASI KIT lengkap untuk ebook digital berikut:
+
+Judul Ebook: "${title || 'Ebook Digital'}"
+Topik/Niche: ${topik || 'bisnis online'}  
+Info Harga: ${priceInfo || 'Rp 97.000'}
+Penulis: ${authorName || 'Penulis'}
+
+Buat sistem reseller/afiliasi yang lengkap:
+
+---
+## 💰 STRUKTUR KOMISI
+[Buat 3 tier komisi yang menarik — Reseller Biasa, Reseller Silver, Reseller Gold — dengan persentase, syarat, dan benefit tiap tier. Sertakan kalkulasi contoh penghasilan nyata.]
+
+---
+## 📢 PITCH REKRUT RESELLER
+### Versi WhatsApp (informal, 150-200 kata):
+[pesan WA rekrut reseller yang friendly dan enticing]
+
+### Versi Instagram Caption (formal sedikit, dengan emoji):
+[caption IG untuk merekrut reseller]
+
+---
+## 📋 WELCOME KIT RESELLER BARU
+[Pesan selamat datang + panduan quick start + tips closing pertama — 200-300 kata. Format template WA yang bisa langsung dikirim]
+
+---
+## 💬 SCRIPT CLOSING UNTUK RESELLER
+[5 template jawaban untuk 5 objeksi umum calon pembeli:
+1. "Mahal..."
+2. "Ntar aja..."
+3. "Apa bedanya sama yang gratis?"
+4. "Gimana cara downloadnya?"
+5. "Ada jaminannya ga?"]
+
+---
+## 📊 MATERI PROMOSI SIAP PAKAI (untuk reseller bagikan ke pembeli)
+### Caption 1 — Story (persuasi ringan):
+[caption]
+
+### Caption 2 — Feed (bukti hasil + CTA):
+[caption]
+
+### Caption 3 — WA Broadcast:
+[pesan broadcast yang tidak spam]
+
+---
+## 📈 KALKULASI PASSIVE INCOME
+[Tabel kalkulasi: Jika jual 5/10/20/50 ebook per bulan → penghasilan reseller per tier]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 3000,
+        temperature: 0.78,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Reseller kit error:", error);
+      res.status(500).json({ error: "Gagal generate reseller kit. " + (error?.message || '') });
+    }
+  });
+
+  // Content Repurposing Pack — 1 Ebook → 6 format konten multi-platform
+  app.post("/api/generate-content-repurposing", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, outlineContent, chapterSummary, authorName } = req.body;
+      const context = outlineContent || chapterSummary || topik || 'konten ebook';
+      const systemPrompt = `Anda adalah content strategist dan copywriter multi-platform terbaik Indonesia. Anda ahli mengubah satu sumber konten menjadi berbagai format yang viral dan engaging di setiap platform.`;
+
+      const userPrompt = `Buat CONTENT REPURPOSING PACK lengkap dari ebook berikut:
+
+Judul Ebook: "${title || 'Ebook Digital'}"
+Topik/Niche: ${topik || 'bisnis dan pengembangan diri'}
+Konteks Konten: ${context.slice(0, 1500)}
+Penulis: ${authorName || 'Penulis'}
+
+Repurpose menjadi 6 format konten:
+
+---
+## 📸 1. INSTAGRAM CAROUSEL (10 Slide)
+Format: Judul slide → Isi slide (max 50 kata per slide)
+
+**Slide 1 — Hook (Cover):**
+Judul: [judul menarik yang bikin orang stop scroll]
+Subtitle: [subtitle]
+
+**Slide 2-9 — Konten Utama:**
+[8 slide dengan insight/tips terbaik dari ebook, format: "💡 [nomor]. [heading]\n[isi 2-3 kalimat]"]
+
+**Slide 10 — CTA:**
+[slide penutup dengan CTA + info ebook]
+
+**Caption Post:**
+[caption instagram 100-150 kata dengan hook + storytelling + CTA soft sell]
+
+---
+## 🧵 2. TWITTER/X THREAD (10 Tweet)
+[10 tweet yang mengalir, mulai dari hook yang viral, isi value, ending dengan CTA. Format: "Tweet 1/10: [isi tweet max 280 karakter]"]
+
+---
+## 💼 3. LINKEDIN ARTIKEL
+**Judul:** [judul profesional SEO-friendly]
+**Intro Hook** (100 kata):
+[pembuka yang engaging untuk profesional]
+**3 Poin Utama** (200 kata masing-masing):
+[3 insight dari ebook dengan contoh bisnis nyata]
+**Kesimpulan + CTA** (80 kata):
+[penutup + soft plug ebook]
+
+---
+## 📧 4. EMAIL NEWSLETTER
+**Subject Line:** [subject line yang bikin penasaran, max 60 karakter]
+**Preview Text:** [preview text 90 karakter]
+**Body Email** (300-400 kata):
+[email value-first dengan storytelling, 3 insight, dan CTA gentle di akhir]
+
+---
+## 🎙️ 5. PODCAST / VIDEO OUTLINE
+**Judul Episode:** [judul podcast yang menarik]
+**Durasi Target:** 15-20 menit
+**Outline:**
+[Opening hook 2 menit → 5 segmen konten dengan waktu → Closing + CTA]
+
+---
+## 📊 6. INFOGRAFIK (Deskripsi Visual)
+**Judul Infografik:** [judul]
+**Layout:** [deskripsikan tata letak visual — header, 5 seksi, footer]
+**Data Points:** [6-8 fakta/statistik/insight yang bisa dijadikan visual]`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 3500,
+        temperature: 0.82,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Content repurposing error:", error);
+      res.status(500).json({ error: "Gagal generate content repurposing. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }

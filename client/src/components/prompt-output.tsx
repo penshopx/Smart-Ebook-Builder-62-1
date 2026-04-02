@@ -249,6 +249,17 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [imageSearchPage, setImageSearchPage] = useState(1);
   const [imageTotal, setImageTotal] = useState(0);
   // ===== END EBOOK BUILDER =====
+  // ===== DISTRIBUSI & MONETISASI =====
+  const [platformListingOpen, setPlatformListingOpen] = useState(false);
+  const [platformListingContent, setPlatformListingContent] = useState('');
+  const [platformListingLoading, setPlatformListingLoading] = useState(false);
+  const [resellerKitOpen, setResellerKitOpen] = useState(false);
+  const [resellerKitContent, setResellerKitContent] = useState('');
+  const [resellerKitLoading, setResellerKitLoading] = useState(false);
+  const [repurposingOpen, setRepurposingOpen] = useState(false);
+  const [repurposingContent, setRepurposingContent] = useState('');
+  const [repurposingLoading, setRepurposingLoading] = useState(false);
+  // ===== END DISTRIBUSI =====
   // LP Section Kit
   const [lpSectionOpen, setLpSectionOpen] = useState(false);
   const [lpSectionContent, setLpSectionContent] = useState('');
@@ -922,6 +933,67 @@ ${bodyHtml}
       setImageSearchLoading(false);
     }
   }, [imageQuery, toast]);
+
+  // ===== DISTRIBUSI HANDLERS =====
+  const handlePlatformListing = useCallback(async () => {
+    setPlatformListingLoading(true);
+    setPlatformListingOpen(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-platform-listing', {
+        title: projectTitle,
+        topik: projectTopik,
+        authorName: localStorage.getItem('ebb_author_name') || '',
+        monoContent: monoContent,
+      });
+      const data = await res.json();
+      setPlatformListingContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate Platform Listing', variant: 'destructive' });
+    } finally {
+      setPlatformListingLoading(false);
+    }
+  }, [projectTitle, projectTopik, monoContent, toast]);
+
+  const handleResellerKit = useCallback(async () => {
+    setResellerKitLoading(true);
+    setResellerKitOpen(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-reseller-kit', {
+        title: projectTitle,
+        topik: projectTopik,
+        authorName: localStorage.getItem('ebb_author_name') || '',
+        monoContent: monoContent,
+      });
+      const data = await res.json();
+      setResellerKitContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate Reseller Kit', variant: 'destructive' });
+    } finally {
+      setResellerKitLoading(false);
+    }
+  }, [projectTitle, projectTopik, monoContent, toast]);
+
+  const handleContentRepurposing = useCallback(async () => {
+    setRepurposingLoading(true);
+    setRepurposingOpen(true);
+    try {
+      const outlineCtx = ebOutlineContent?.slice(0, 1200) || '';
+      const chapCtx = chapters.filter(c => c.content).map(c => `BAB ${c.number}: ${c.title}\n${c.content?.slice(0, 300)}`).join('\n\n').slice(0, 1200);
+      const res = await apiRequest('POST', '/api/generate-content-repurposing', {
+        title: projectTitle,
+        topik: projectTopik,
+        outlineContent: outlineCtx || chapCtx,
+        authorName: localStorage.getItem('ebb_author_name') || '',
+      });
+      const data = await res.json();
+      setRepurposingContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal generate Content Repurposing', variant: 'destructive' });
+    } finally {
+      setRepurposingLoading(false);
+    }
+  }, [projectTitle, projectTopik, ebOutlineContent, chapters, toast]);
+  // ===== END DISTRIBUSI HANDLERS =====
 
   const handleGenerateEbTemplate = useCallback(async () => {
     setEbTemplateOpen(true);
@@ -2733,6 +2805,39 @@ ${bodyHtml}
                   Stok Gambar<span className="ml-1 text-[7px] opacity-40 font-mono">·CC</span>
                 </Button>
               </div>
+              {/* ===== DISTRIBUSI ROW ===== */}
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-16">Distribusi:</div>
+                <Button
+                  onClick={handlePlatformListing}
+                  disabled={platformListingLoading}
+                  className="flex-1 bg-gradient-to-r from-orange-700 to-amber-700 hover:from-orange-800 hover:to-amber-800 text-white text-xs h-8"
+                  data-testid="button-platform-listing"
+                >
+                  {platformListingLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <ShoppingBag className="h-3.5 w-3.5 mr-1.5" />}
+                  Platform Listing<span className="ml-1 text-[7px] opacity-40 font-mono">·Toped/Shopee</span>
+                </Button>
+                <Button
+                  onClick={handleResellerKit}
+                  disabled={resellerKitLoading}
+                  className="flex-1 bg-gradient-to-r from-yellow-700 to-amber-600 hover:from-yellow-800 hover:to-amber-700 text-white text-xs h-8"
+                  data-testid="button-reseller-kit"
+                >
+                  {resellerKitLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <DollarSign className="h-3.5 w-3.5 mr-1.5" />}
+                  Reseller Kit<span className="ml-1 text-[7px] opacity-40 font-mono">·Komisi</span>
+                </Button>
+                <Button
+                  onClick={handleContentRepurposing}
+                  disabled={repurposingLoading}
+                  className="flex-1 bg-gradient-to-r from-cyan-700 to-sky-700 hover:from-cyan-800 hover:to-sky-800 text-white text-xs h-8"
+                  data-testid="button-repurposing"
+                >
+                  {repurposingLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <Smartphone className="h-3.5 w-3.5 mr-1.5" />}
+                  Repurposing Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·6 Format</span>
+                </Button>
+              </div>
+              {/* ===== END DISTRIBUSI ROW ===== */}
+
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Konversi:</div>
                 {/* LP Section Kit — dropdown-style with tabs */}
@@ -5460,6 +5565,100 @@ ${bodyHtml}
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* ===== DISTRIBUSI DIALOGS ===== */}
+
+      {/* Platform Listing Dialog */}
+      <Dialog open={platformListingOpen} onOpenChange={setPlatformListingOpen}>
+        <DialogContent className="max-w-3xl max-h-[88vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="h-5 w-5 text-orange-600" />
+              Platform Listing Pack — Tokopedia · Shopee · Gumroad · WA · Telegram
+            </DialogTitle>
+          </DialogHeader>
+          {platformListingLoading ? (
+            <div className="flex-1 flex items-center justify-center gap-3 text-muted-foreground py-12">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span>Membuat listing untuk semua platform...</span>
+            </div>
+          ) : platformListingContent ? (
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-end gap-2 mb-3">
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(platformListingContent); toast({ title: 'Semua listing tersalin!' }); }} data-testid="button-copy-platform-listing">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={handlePlatformListing} data-testid="button-regen-platform-listing">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
+                </Button>
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{platformListingContent}</div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Reseller Kit Dialog */}
+      <Dialog open={resellerKitOpen} onOpenChange={setResellerKitOpen}>
+        <DialogContent className="max-w-3xl max-h-[88vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <DollarSign className="h-5 w-5 text-yellow-600" />
+              Reseller & Afiliasi Kit — Sistem Komisi · Pitch · Script Closing
+            </DialogTitle>
+          </DialogHeader>
+          {resellerKitLoading ? (
+            <div className="flex-1 flex items-center justify-center gap-3 text-muted-foreground py-12">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span>Membangun sistem reseller & afiliasi...</span>
+            </div>
+          ) : resellerKitContent ? (
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-end gap-2 mb-3">
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(resellerKitContent); toast({ title: 'Reseller Kit tersalin!' }); }} data-testid="button-copy-reseller-kit">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleResellerKit} data-testid="button-regen-reseller-kit">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
+                </Button>
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{resellerKitContent}</div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Content Repurposing Dialog */}
+      <Dialog open={repurposingOpen} onOpenChange={setRepurposingOpen}>
+        <DialogContent className="max-w-3xl max-h-[88vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Smartphone className="h-5 w-5 text-cyan-600" />
+              Content Repurposing Pack — 1 Ebook → 6 Format Multi-Platform
+            </DialogTitle>
+          </DialogHeader>
+          {repurposingLoading ? (
+            <div className="flex-1 flex items-center justify-center gap-3 text-muted-foreground py-12">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span>Mengubah ebook menjadi 6 format konten...</span>
+            </div>
+          ) : repurposingContent ? (
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-end gap-2 mb-3">
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(repurposingContent); toast({ title: 'Semua konten tersalin!' }); }} data-testid="button-copy-repurposing">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleContentRepurposing} data-testid="button-regen-repurposing">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
+                </Button>
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{repurposingContent}</div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== END DISTRIBUSI DIALOGS ===== */}
 
       {/* LP Section Kit Dialog */}
       <Dialog open={lpSectionOpen} onOpenChange={setLpSectionOpen}>
