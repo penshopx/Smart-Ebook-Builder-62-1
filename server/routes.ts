@@ -3101,5 +3101,206 @@ Subtitle: [subtitle]
     }
   });
 
+  // ========= EDUKAZO-INSPIRED FEATURES =========
+
+  // AI Text Assist — expand/shorten/humanize/tone/translate existing text (like Edukazo's inline AI assist)
+  app.post("/api/ai-text-assist", isAuthenticated, async (req, res) => {
+    try {
+      const { text, operation, tone, targetLanguage, topik } = req.body;
+      if (!text?.trim()) return res.status(400).json({ error: 'Teks tidak boleh kosong' });
+
+      const operations: Record<string, { system: string; user: string }> = {
+        expand_detail: {
+          system: `Anda adalah penulis Indonesia profesional. Perluas teks berikut dengan menambahkan detail, contoh nyata, dan penjelasan yang lebih mendalam. Pertahankan gaya bahasa yang sama. Output HANYA teks yang sudah diperluas, tanpa komentar.`,
+          user: `Perluas teks ini dengan lebih banyak detail dan contoh nyata dari konteks ${topik || 'bisnis Indonesia'}:\n\n${text}`,
+        },
+        expand_extended: {
+          system: `Anda adalah penulis Indonesia profesional. Perluas teks berikut secara signifikan — 2-3x lebih panjang — dengan sub-poin, penjelasan komprehensif, dan insight tambahan. Pertahankan gaya bahasa asli. Output HANYA teks, tanpa komentar.`,
+          user: `Perluas teks ini menjadi versi yang jauh lebih panjang dan komprehensif:\n\n${text}`,
+        },
+        expand_with_table: {
+          system: `Anda adalah penulis Indonesia profesional. Perluas teks berikut dan tambahkan minimal 1 TABEL MARKDOWN yang relevan untuk memperkaya informasinya. Pertahankan gaya bahasa asli. Output HANYA teks, tanpa komentar.`,
+          user: `Perluas teks ini dan tambahkan tabel markdown yang relevan:\n\n${text}`,
+        },
+        shorten: {
+          system: `Anda adalah editor Indonesia profesional. Persingkat teks berikut menjadi sekitar 40-50% dari panjang aslinya, pertahankan semua poin penting, hilangkan redundansi. Output HANYA teks yang sudah dipersingkat, tanpa komentar.`,
+          user: `Persingkat teks ini tanpa menghilangkan poin penting:\n\n${text}`,
+        },
+        humanize: {
+          system: `Anda adalah penulis Indonesia. Ubah teks berikut menjadi terdengar lebih manusiawi, natural, dan tidak kelihatan seperti ditulis AI. Gunakan variasi kalimat, ungkapan natural, dan nada percakapan yang hangat. Output HANYA teks, tanpa komentar.`,
+          user: `Buat teks ini terdengar lebih manusiawi dan natural:\n\n${text}`,
+        },
+        tone_professional: {
+          system: `Anda adalah editor bahasa Indonesia profesional. Ubah nada/gaya teks berikut menjadi PROFESIONAL dan formal — cocok untuk laporan bisnis, materi pelatihan, atau konten korporat. Output HANYA teks, tanpa komentar.`,
+          user: `Ubah gaya bahasa teks ini menjadi profesional:\n\n${text}`,
+        },
+        tone_casual: {
+          system: `Anda adalah penulis konten Indonesia. Ubah nada/gaya teks berikut menjadi CASUAL dan santai — seperti ngobrol dengan teman, menggunakan kata-kata sehari-hari. Output HANYA teks, tanpa komentar.`,
+          user: `Ubah gaya bahasa teks ini menjadi casual dan santai:\n\n${text}`,
+        },
+        tone_friendly: {
+          system: `Anda adalah penulis konten Indonesia. Ubah nada/gaya teks berikut menjadi FRIENDLY dan hangat — ramah, empatik, mendukung pembaca. Output HANYA teks, tanpa komentar.`,
+          user: `Ubah gaya bahasa teks ini menjadi friendly dan hangat:\n\n${text}`,
+        },
+        translate_en: {
+          system: `You are a professional Indonesian-English translator. Translate the following Indonesian text to natural, fluent English. Output ONLY the translated text, no comments.`,
+          user: `Translate to English:\n\n${text}`,
+        },
+        translate_id: {
+          system: `Anda adalah penerjemah profesional Inggris-Indonesia. Terjemahkan teks berikut ke bahasa Indonesia yang natural dan mengalir. Output HANYA teks terjemahan, tanpa komentar.`,
+          user: `Terjemahkan ke bahasa Indonesia:\n\n${text}`,
+        },
+      };
+
+      const op = operations[operation];
+      if (!op) return res.status(400).json({ error: 'Operasi tidak valid' });
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: op.system }, { role: "user", content: op.user }],
+        max_tokens: 2000,
+        temperature: 0.72,
+      });
+
+      res.json({ result: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("AI Text Assist error:", error);
+      res.status(500).json({ error: "Gagal memproses teks. " + (error?.message || '') });
+    }
+  });
+
+  // Social Media Pilar Plan — angle × content per angle with ide visual + caption + hashtag + CTA
+  app.post("/api/generate-social-pilar", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, title, brandInfo, numAngles, contentPerAngle, authorName } = req.body;
+      const angles = Math.min(parseInt(numAngles) || 4, 8);
+      const perAngle = Math.min(parseInt(contentPerAngle) || 4, 7);
+      const brand = brandInfo?.trim() || '';
+
+      const systemPrompt = `Anda adalah social media strategist Indonesia terbaik. Anda ahli membuat rencana konten pilar yang terstruktur, variatif, dan siap dieksekusi oleh tim konten.`;
+
+      const userPrompt = `Buat SOCIAL MEDIA PILAR PLAN lengkap untuk topik berikut:
+
+Topik/Niche: ${topik || 'bisnis online'}
+Judul/Produk: ${title || 'Brand Digital'}
+${brand ? `Info Brand: ${brand}` : ''}
+Penulis/Author: ${authorName || ''}
+
+Buat PERSIS ${angles} PILAR KONTEN (ANGLE), masing-masing berisi ${perAngle} konten berbeda:
+
+Format untuk SETIAP konten (wajib semua diisi):
+\`\`\`
+💡 Ide Visual: [deskripsi visual konten yang menarik — warna, layout, elemen grafis]
+📝 Caption: [caption lengkap dengan hook di baris pertama, body storytelling/value, CTA di akhir — min 3 paragraf]
+#️⃣ Hashtag: [15-20 hashtag relevan mix populer + niche, dipisah spasi]
+📣 CTA: [Call-to-action spesifik yang kuat — bukan "klik link di bio" saja]
+\`\`\`
+
+Gunakan format ini dengan KETAT untuk SETIAP pilar dan konten:
+
+---
+## 🎯 PILAR 1: [Nama Pilar — tema/angle]
+**Tujuan Pilar:** [satu kalimat tujuan]
+
+### Konten 1.1 — [Tipe: tips/quotes/edukasi/meme/behind-scene/dll]
+[format di atas]
+
+### Konten 1.2 — [...]
+[format di atas]
+...
+---
+## 🎯 PILAR 2: [Nama Pilar]
+...
+
+(ulangi untuk semua ${angles} pilar)
+
+---
+## 📊 OVERVIEW
+Total konten: ${angles * perAngle} konten
+Estimasi: ${Math.ceil((angles * perAngle) / 4)} minggu konten (posting 4x/minggu)`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.8,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Social pilar error:", error);
+      res.status(500).json({ error: "Gagal generate Social Media Pilar Plan. " + (error?.message || '') });
+    }
+  });
+
+  // Thread Content — FB/Twitter/X storytelling threads
+  app.post("/api/generate-thread-content", isAuthenticated, async (req, res) => {
+    try {
+      const { topik, title, brandInfo, contentType, numAngles, contentPerAngle, authorName } = req.body;
+      const angles = Math.min(parseInt(numAngles) || 3, 6);
+      const perAngle = Math.min(parseInt(contentPerAngle) || 3, 5);
+      const brand = brandInfo?.trim() || '';
+
+      const systemPrompt = `Anda adalah copywriter Indonesia spesialis storytelling konten untuk Facebook, Twitter/X, dan LinkedIn. Anda ahli menulis thread yang viral, engaging, dan menggerakkan audiens.`;
+
+      const contentTypeLabel = contentType || 'storytelling, edukasi, promosi';
+
+      const userPrompt = `Buat THREAD CONTENT PLAN untuk platform Facebook/Twitter/X:
+
+Topik/Niche: ${topik || 'bisnis online'}
+Judul/Produk: ${title || 'Konten Digital'}
+${brand ? `Info Brand: ${brand}` : ''}
+Tipe Konten: ${contentTypeLabel}
+Author: ${authorName || ''}
+
+Buat PERSIS ${angles} ANGLE/PILAR THREAD, masing-masing berisi ${perAngle} thread berbeda:
+
+Format untuk SETIAP thread:
+- Thread ini adalah konten TEKS STORYTELLING (bukan carousel/gambar) untuk FB/Twitter/X
+- Mulai dengan HOOK kalimat pembuka yang powerful (bikin penasaran/stop scroll)
+- Lanjut dengan 3-5 "tweet" atau paragraf pendek yang mengalir
+- Akhiri dengan CTA yang spesifik
+
+---
+## 📌 ANGLE 1: [Nama Angle]
+
+### Thread 1.1 — [Sub-tipe: kisah/tips/motivasi/edukasi/promo/dll]
+**🔥 Hook:**
+[kalimat pembuka yang viral dan bikin penasaran — max 2 kalimat]
+
+**📖 Thread:**
+Tweet 1: [isi — max 250 karakter per tweet/paragraf]
+Tweet 2: [isi]
+Tweet 3: [isi]
+Tweet 4: [isi]
+Tweet 5: [isi + soft sell jika relevan]
+
+**📣 CTA:**
+[call-to-action spesifik yang kuat]
+
+**💬 Engagement Trigger:**
+[pertanyaan atau isi untuk memancing komentar]
+
+---
+(ulangi untuk semua ${angles} angle, masing-masing ${perAngle} thread)
+
+---
+## 📊 SUMMARY
+Total thread: ${angles * perAngle} thread
+Format: Teks storytelling untuk FB/Twitter/X
+Estimasi posting: ${Math.ceil((angles * perAngle) / 5)} minggu (5 thread/minggu)`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+        max_tokens: 4000,
+        temperature: 0.82,
+      });
+      res.json({ content: response.choices[0]?.message?.content || '' });
+    } catch (error: any) {
+      console.error("Thread content error:", error);
+      res.status(500).json({ error: "Gagal generate Thread Content. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }

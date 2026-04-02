@@ -14,6 +14,7 @@ import { apiRequest } from '@/lib/queryClient';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -260,6 +261,26 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [repurposingContent, setRepurposingContent] = useState('');
   const [repurposingLoading, setRepurposingLoading] = useState(false);
   // ===== END DISTRIBUSI =====
+  // ===== EDUKAZO FEATURES =====
+  // AI Text Assist (inline editor untuk Chapter Builder)
+  const [aiAssistLoading, setAiAssistLoading] = useState<string | null>(null);
+  const [aiAssistPreview, setAiAssistPreview] = useState<{result: string; chapterId: string} | null>(null);
+  // Social Media Pilar Plan
+  const [socialPilarOpen, setSocialPilarOpen] = useState(false);
+  const [socialPilarContent, setSocialPilarContent] = useState('');
+  const [socialPilarLoading, setSocialPilarLoading] = useState(false);
+  const [socialPilarAngles, setSocialPilarAngles] = useState('4');
+  const [socialPilarPerAngle, setSocialPilarPerAngle] = useState('4');
+  const [socialPilarBrand, setSocialPilarBrand] = useState('');
+  // Thread FB/X Content
+  const [threadOpen, setThreadOpen] = useState(false);
+  const [threadContent, setThreadContent] = useState('');
+  const [threadLoading, setThreadLoading] = useState(false);
+  const [threadAngles, setThreadAngles] = useState('3');
+  const [threadPerAngle, setThreadPerAngle] = useState('3');
+  const [threadType, setThreadType] = useState('storytelling, edukasi, promosi');
+  const [threadBrand, setThreadBrand] = useState('');
+  // ===== END EDUKAZO =====
   // LP Section Kit
   const [lpSectionOpen, setLpSectionOpen] = useState(false);
   const [lpSectionContent, setLpSectionContent] = useState('');
@@ -994,6 +1015,86 @@ ${bodyHtml}
     }
   }, [projectTitle, projectTopik, ebOutlineContent, chapters, toast]);
   // ===== END DISTRIBUSI HANDLERS =====
+
+  // ===== EDUKAZO HANDLERS =====
+  const handleAiTextAssist = useCallback(async (chapterId: string, text: string, operation: string) => {
+    if (!text.trim()) {
+      toast({ title: 'Pilih atau ketik teks terlebih dahulu', variant: 'destructive' });
+      return;
+    }
+    setAiAssistLoading(operation + '_' + chapterId);
+    try {
+      const res = await apiRequest('POST', '/api/ai-text-assist', {
+        text,
+        operation,
+        topik: projectTopik,
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setAiAssistPreview({ result: data.result || '', chapterId });
+    } catch (err: any) {
+      toast({ title: 'Gagal: ' + (err?.message || 'Error AI Assist'), variant: 'destructive' });
+    } finally {
+      setAiAssistLoading(null);
+    }
+  }, [projectTopik, toast]);
+
+  const handleApplyAiAssist = useCallback((chapterId: string) => {
+    if (!aiAssistPreview) return;
+    setChapters(prev => prev.map(c =>
+      c.id === chapterId ? { ...c, content: aiAssistPreview.result } : c
+    ));
+    setAiAssistPreview(null);
+    toast({ title: 'Konten berhasil diperbarui!' });
+  }, [aiAssistPreview]);
+
+  const handleSocialPilar = useCallback(async () => {
+    setSocialPilarLoading(true);
+    setSocialPilarOpen(true);
+    setSocialPilarContent('');
+    try {
+      const res = await apiRequest('POST', '/api/generate-social-pilar', {
+        topik: projectTopik,
+        title: projectTitle,
+        brandInfo: socialPilarBrand,
+        numAngles: socialPilarAngles,
+        contentPerAngle: socialPilarPerAngle,
+        authorName: localStorage.getItem('ebb_author_name') || '',
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setSocialPilarContent(data.content || '');
+    } catch (err: any) {
+      toast({ title: 'Gagal: ' + (err?.message || 'Error Social Pilar'), variant: 'destructive' });
+    } finally {
+      setSocialPilarLoading(false);
+    }
+  }, [projectTopik, projectTitle, socialPilarBrand, socialPilarAngles, socialPilarPerAngle, toast]);
+
+  const handleThreadContent = useCallback(async () => {
+    setThreadLoading(true);
+    setThreadOpen(true);
+    setThreadContent('');
+    try {
+      const res = await apiRequest('POST', '/api/generate-thread-content', {
+        topik: projectTopik,
+        title: projectTitle,
+        brandInfo: threadBrand,
+        contentType: threadType,
+        numAngles: threadAngles,
+        contentPerAngle: threadPerAngle,
+        authorName: localStorage.getItem('ebb_author_name') || '',
+      });
+      const data = await res.json();
+      if (data.error) throw new Error(data.error);
+      setThreadContent(data.content || '');
+    } catch (err: any) {
+      toast({ title: 'Gagal: ' + (err?.message || 'Error Thread Content'), variant: 'destructive' });
+    } finally {
+      setThreadLoading(false);
+    }
+  }, [projectTopik, projectTitle, threadBrand, threadType, threadAngles, threadPerAngle, toast]);
+  // ===== END EDUKAZO HANDLERS =====
 
   const handleGenerateEbTemplate = useCallback(async () => {
     setEbTemplateOpen(true);
@@ -2837,6 +2938,30 @@ ${bodyHtml}
                 </Button>
               </div>
               {/* ===== END DISTRIBUSI ROW ===== */}
+
+              {/* ===== SOSMED ROW (Edukazo-inspired) ===== */}
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-16">Sosmed:</div>
+                <Button
+                  onClick={() => setSocialPilarOpen(true)}
+                  disabled={socialPilarLoading}
+                  className="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-700 hover:to-rose-700 text-white text-xs h-8"
+                  data-testid="button-social-pilar"
+                >
+                  {socialPilarLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">📱</span>}
+                  Social Pilar Plan<span className="ml-1 text-[7px] opacity-40 font-mono">·Angle×Post</span>
+                </Button>
+                <Button
+                  onClick={() => setThreadOpen(true)}
+                  disabled={threadLoading}
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white text-xs h-8"
+                  data-testid="button-thread-content"
+                >
+                  {threadLoading ? <Loader2 className="animate-spin h-3.5 w-3.5 mr-1.5" /> : <span className="mr-1.5 text-sm leading-none">🧵</span>}
+                  Thread FB/X<span className="ml-1 text-[7px] opacity-40 font-mono">·Storytelling</span>
+                </Button>
+              </div>
+              {/* ===== END SOSMED ROW ===== */}
 
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Konversi:</div>
@@ -5369,6 +5494,114 @@ ${bodyHtml}
                           {(customRegenLoading === ch.id || ch.loading) ? <><Loader2 className="animate-spin h-3 w-3 mr-1" />Upgrading...</> : <><Sparkles className="h-3 w-3 mr-1" />Upgrade Bab</>}
                         </Button>
                       </div>
+                      {/* AI Text Assist toolbar — Edukazo-style */}
+                      <div className="p-2.5 bg-emerald-50 dark:bg-emerald-950/30 rounded-lg border border-emerald-100 dark:border-emerald-900">
+                        <div className="text-xs text-emerald-700 dark:text-emerald-400 font-semibold mb-2 flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5" /> AI Text Assist — Edit & Transform Konten Bab
+                          <span className="text-[10px] font-normal opacity-70 ml-1">(biarkan kosong = apply ke seluruh bab)</span>
+                        </div>
+                        {/* Row 1: Expand group */}
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <span className="text-[10px] text-muted-foreground self-center mr-1 shrink-0">Expand:</span>
+                          {[
+                            { op: 'expand_detail', label: '📄 More Detail' },
+                            { op: 'expand_extended', label: '📋 Extended' },
+                            { op: 'expand_with_table', label: '📊 +Tabel' },
+                          ].map(({ op, label }) => (
+                            <button
+                              key={op}
+                              className={`px-2.5 py-1 rounded text-xs border transition-all ${aiAssistLoading?.startsWith(op) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800'}`}
+                              disabled={!!aiAssistLoading}
+                              onClick={() => {
+                                const ta = document.querySelector(`[data-testid="textarea-chapter-content-${ch.id}"]`) as HTMLTextAreaElement;
+                                const sel = ta && ta.selectionStart !== ta.selectionEnd ? ta.value.slice(ta.selectionStart, ta.selectionEnd) : ch.content;
+                                handleAiTextAssist(ch.id, sel, op);
+                              }}
+                              data-testid={`button-assist-${op}-${ch.id}`}
+                            >
+                              {aiAssistLoading === op + '_' + ch.id ? <span className="flex items-center gap-1"><Loader2 className="animate-spin h-3 w-3" />{label}</span> : label}
+                            </button>
+                          ))}
+                          <span className="text-[10px] text-muted-foreground self-center ml-2 shrink-0">Edit:</span>
+                          {[
+                            { op: 'shorten', label: '✂️ Shorten' },
+                            { op: 'humanize', label: '🤝 Humanize' },
+                          ].map(({ op, label }) => (
+                            <button
+                              key={op}
+                              className={`px-2.5 py-1 rounded text-xs border transition-all ${aiAssistLoading?.startsWith(op) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800'}`}
+                              disabled={!!aiAssistLoading}
+                              onClick={() => {
+                                const ta = document.querySelector(`[data-testid="textarea-chapter-content-${ch.id}"]`) as HTMLTextAreaElement;
+                                const sel = ta && ta.selectionStart !== ta.selectionEnd ? ta.value.slice(ta.selectionStart, ta.selectionEnd) : ch.content;
+                                handleAiTextAssist(ch.id, sel, op);
+                              }}
+                              data-testid={`button-assist-${op}-${ch.id}`}
+                            >
+                              {aiAssistLoading === op + '_' + ch.id ? <span className="flex items-center gap-1"><Loader2 className="animate-spin h-3 w-3" />{label}</span> : label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Row 2: Tone + Translate */}
+                        <div className="flex flex-wrap gap-1.5">
+                          <span className="text-[10px] text-muted-foreground self-center mr-1 shrink-0">Tone:</span>
+                          {[
+                            { op: 'tone_professional', label: '💼 Profesional' },
+                            { op: 'tone_casual', label: '😊 Casual' },
+                            { op: 'tone_friendly', label: '🤗 Friendly' },
+                          ].map(({ op, label }) => (
+                            <button
+                              key={op}
+                              className={`px-2.5 py-1 rounded text-xs border transition-all ${aiAssistLoading?.startsWith(op) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800'}`}
+                              disabled={!!aiAssistLoading}
+                              onClick={() => {
+                                const ta = document.querySelector(`[data-testid="textarea-chapter-content-${ch.id}"]`) as HTMLTextAreaElement;
+                                const sel = ta && ta.selectionStart !== ta.selectionEnd ? ta.value.slice(ta.selectionStart, ta.selectionEnd) : ch.content;
+                                handleAiTextAssist(ch.id, sel, op);
+                              }}
+                              data-testid={`button-assist-${op}-${ch.id}`}
+                            >
+                              {aiAssistLoading === op + '_' + ch.id ? <span className="flex items-center gap-1"><Loader2 className="animate-spin h-3 w-3" />{label}</span> : label}
+                            </button>
+                          ))}
+                          <span className="text-[10px] text-muted-foreground self-center ml-2 shrink-0">Terjemah:</span>
+                          {[
+                            { op: 'translate_en', label: '🇬🇧 → English' },
+                            { op: 'translate_id', label: '🇮🇩 → Indonesia' },
+                          ].map(({ op, label }) => (
+                            <button
+                              key={op}
+                              className={`px-2.5 py-1 rounded text-xs border transition-all ${aiAssistLoading?.startsWith(op) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-emerald-100 dark:hover:bg-emerald-900/40 border-emerald-200 dark:border-emerald-800'}`}
+                              disabled={!!aiAssistLoading}
+                              onClick={() => {
+                                const ta = document.querySelector(`[data-testid="textarea-chapter-content-${ch.id}"]`) as HTMLTextAreaElement;
+                                const sel = ta && ta.selectionStart !== ta.selectionEnd ? ta.value.slice(ta.selectionStart, ta.selectionEnd) : ch.content;
+                                handleAiTextAssist(ch.id, sel, op);
+                              }}
+                              data-testid={`button-assist-${op}-${ch.id}`}
+                            >
+                              {aiAssistLoading === op + '_' + ch.id ? <span className="flex items-center gap-1"><Loader2 className="animate-spin h-3 w-3" />{label}</span> : label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* AI Assist Preview */}
+                        {aiAssistPreview && aiAssistPreview.chapterId === ch.id && (
+                          <div className="mt-3 p-3 bg-white dark:bg-gray-900 rounded-lg border-2 border-emerald-400">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">✨ Preview Hasil AI Assist</span>
+                              <div className="flex gap-2">
+                                <Button size="sm" className="h-6 text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3" onClick={() => handleApplyAiAssist(ch.id)} data-testid={`button-apply-assist-${ch.id}`}>
+                                  ✓ Terapkan ke Bab
+                                </Button>
+                                <Button size="sm" variant="ghost" className="h-6 text-xs" onClick={() => setAiAssistPreview(null)}>
+                                  ✕ Batal
+                                </Button>
+                              </div>
+                            </div>
+                            <pre className="text-xs whitespace-pre-wrap font-mono leading-relaxed max-h-48 overflow-y-auto">{aiAssistPreview.result}</pre>
+                          </div>
+                        )}
+                      </div>
                       <div className="flex gap-2 justify-end">
                         <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(ch.content); toast({ title: `Bab ${ch.number} tersalin!` }); }} data-testid={`button-copy-chapter-${ch.id}`}>
                           <Copy className="h-3.5 w-3.5 mr-1" /> Salin Bab
@@ -5659,6 +5892,157 @@ ${bodyHtml}
       </Dialog>
 
       {/* ===== END DISTRIBUSI DIALOGS ===== */}
+
+      {/* ===== SOSMED DIALOGS ===== */}
+
+      {/* Social Media Pilar Plan Dialog */}
+      <Dialog open={socialPilarOpen} onOpenChange={(o) => { setSocialPilarOpen(o); if (!o) setSocialPilarContent(''); }}>
+        <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">📱</span>
+              Social Media Pilar Plan — Konten Terstruktur per Angle
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Generate rencana konten sosial media berbasis pilar: ide visual + caption lengkap + hashtag + CTA untuk setiap post.
+            </DialogDescription>
+          </DialogHeader>
+          {!socialPilarContent && !socialPilarLoading && (
+            <div className="grid grid-cols-2 gap-4 py-2">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Jumlah Angle/Pilar (maks 8)</label>
+                <select className="border rounded px-3 py-1.5 text-sm w-full" value={socialPilarAngles} onChange={e => setSocialPilarAngles(e.target.value)} data-testid="select-pilar-angles">
+                  {['2','3','4','5','6','7','8'].map(n => <option key={n} value={n}>{n} Pilar</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Konten per Pilar (maks 7)</label>
+                <select className="border rounded px-3 py-1.5 text-sm w-full" value={socialPilarPerAngle} onChange={e => setSocialPilarPerAngle(e.target.value)} data-testid="select-pilar-per-angle">
+                  {['2','3','4','5','6','7'].map(n => <option key={n} value={n}>{n} Konten/Pilar</option>)}
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="text-xs text-muted-foreground mb-1 block">Info Brand/Produk (opsional — deskripsi brand untuk personalisasi konten)</label>
+                <textarea
+                  className="border rounded px-3 py-2 text-sm w-full min-h-[70px] resize-y"
+                  placeholder="Contoh: Brand kita adalah [nama brand], bergerak di bidang [bidang], target market [target], keunikan/USP [USP brand]..."
+                  value={socialPilarBrand}
+                  onChange={e => setSocialPilarBrand(e.target.value)}
+                  data-testid="textarea-pilar-brand"
+                />
+              </div>
+              <div className="col-span-2 flex justify-end">
+                <Button className="bg-pink-600 hover:bg-pink-700 text-white" onClick={handleSocialPilar} data-testid="button-gen-social-pilar">
+                  <Sparkles className="h-4 w-4 mr-1.5" /> Generate {socialPilarAngles} Pilar × {socialPilarPerAngle} Konten
+                </Button>
+              </div>
+            </div>
+          )}
+          {socialPilarLoading && (
+            <div className="flex-1 flex items-center justify-center gap-3 text-muted-foreground py-12">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span>Membuat {socialPilarAngles} pilar konten × {socialPilarPerAngle} post per pilar...</span>
+            </div>
+          )}
+          {socialPilarContent && !socialPilarLoading && (
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-end gap-2 mb-3">
+                <Button variant="outline" size="sm" onClick={() => { setSocialPilarContent(''); }} data-testid="button-reset-pilar">
+                  ↩ Setting Ulang
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(socialPilarContent); toast({ title: 'Social Pilar Plan tersalin!' }); }} data-testid="button-copy-social-pilar">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleSocialPilar} data-testid="button-regen-social-pilar">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
+                </Button>
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{socialPilarContent}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Thread FB/X Content Dialog */}
+      <Dialog open={threadOpen} onOpenChange={(o) => { setThreadOpen(o); if (!o) setThreadContent(''); }}>
+        <DialogContent className="max-w-4xl max-h-[92vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🧵</span>
+              Thread FB/X Content — Storytelling untuk Facebook & Twitter/X
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Generate thread storytelling berbasis angle: hook viral + body thread + CTA + engagement trigger per thread.
+            </DialogDescription>
+          </DialogHeader>
+          {!threadContent && !threadLoading && (
+            <div className="grid grid-cols-2 gap-4 py-2">
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Jumlah Angle (maks 6)</label>
+                <select className="border rounded px-3 py-1.5 text-sm w-full" value={threadAngles} onChange={e => setThreadAngles(e.target.value)} data-testid="select-thread-angles">
+                  {['2','3','4','5','6'].map(n => <option key={n} value={n}>{n} Angle</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Thread per Angle (maks 5)</label>
+                <select className="border rounded px-3 py-1.5 text-sm w-full" value={threadPerAngle} onChange={e => setThreadPerAngle(e.target.value)} data-testid="select-thread-per-angle">
+                  {['1','2','3','4','5'].map(n => <option key={n} value={n}>{n} Thread/Angle</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Tipe Konten Thread</label>
+                <select className="border rounded px-3 py-1.5 text-sm w-full" value={threadType} onChange={e => setThreadType(e.target.value)} data-testid="select-thread-type">
+                  <option value="storytelling, edukasi, promosi">Mix: Story + Edukasi + Promo</option>
+                  <option value="storytelling personal branding">Storytelling Personal</option>
+                  <option value="edukasi dan tips praktis">Edukasi & Tips</option>
+                  <option value="flash sale dan promosi">Promosi & Flash Sale</option>
+                  <option value="behind the scenes dan cerita brand">Behind-The-Scenes</option>
+                  <option value="engagement dan komunitas">Engagement & Komunitas</option>
+                </select>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Info Brand (opsional)</label>
+                <input
+                  className="border rounded px-3 py-1.5 text-sm w-full"
+                  placeholder="Nama brand + deskripsi singkat"
+                  value={threadBrand}
+                  onChange={e => setThreadBrand(e.target.value)}
+                  data-testid="input-thread-brand"
+                />
+              </div>
+              <div className="col-span-2 flex justify-end">
+                <Button className="bg-blue-600 hover:bg-blue-700 text-white" onClick={handleThreadContent} data-testid="button-gen-thread">
+                  <Sparkles className="h-4 w-4 mr-1.5" /> Generate {threadAngles} Angle × {threadPerAngle} Thread
+                </Button>
+              </div>
+            </div>
+          )}
+          {threadLoading && (
+            <div className="flex-1 flex items-center justify-center gap-3 text-muted-foreground py-12">
+              <Loader2 className="animate-spin h-6 w-6" />
+              <span>Membuat {threadAngles} angle × {threadPerAngle} thread storytelling...</span>
+            </div>
+          )}
+          {threadContent && !threadLoading && (
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex justify-end gap-2 mb-3">
+                <Button variant="outline" size="sm" onClick={() => setThreadContent('')} data-testid="button-reset-thread">
+                  ↩ Setting Ulang
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(threadContent); toast({ title: 'Thread content tersalin!' }); }} data-testid="button-copy-thread">
+                  <Copy className="h-3.5 w-3.5 mr-1.5" /> Salin Semua
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleThreadContent} data-testid="button-regen-thread">
+                  <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
+                </Button>
+              </div>
+              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{threadContent}</div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* ===== END SOSMED DIALOGS ===== */}
 
       {/* LP Section Kit Dialog */}
       <Dialog open={lpSectionOpen} onOpenChange={setLpSectionOpen}>
