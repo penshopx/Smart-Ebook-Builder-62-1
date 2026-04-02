@@ -212,6 +212,20 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [coverTplAuthor, setCoverTplAuthor] = useState('');
   const [coverTplColorScheme, setCoverTplColorScheme] = useState('professional');
   const [coverTplStyle, setCoverTplStyle] = useState('Modern & Profesional');
+  // LP Section Kit
+  const [lpSectionOpen, setLpSectionOpen] = useState(false);
+  const [lpSectionContent, setLpSectionContent] = useState('');
+  const [lpSectionLoading, setLpSectionLoading] = useState(false);
+  const [lpSectionActive, setLpSectionActive] = useState<string>('headline');
+  // Funnel Blueprint
+  const [funnelBpOpen, setFunnelBpOpen] = useState(false);
+  const [funnelBpContent, setFunnelBpContent] = useState('');
+  const [funnelBpLoading, setFunnelBpLoading] = useState(false);
+  // Headline Power Pack
+  const [headlinePackOpen, setHeadlinePackOpen] = useState(false);
+  const [headlinePackContent, setHeadlinePackContent] = useState('');
+  const [headlinePackLoading, setHeadlinePackLoading] = useState(false);
+  const [headlinePackNiche, setHeadlinePackNiche] = useState('');
   // Meta Ads Copy Generator
   const [metaAdsOpen, setMetaAdsOpen] = useState(false);
   const [metaAdsContent, setMetaAdsContent] = useState('');
@@ -736,6 +750,76 @@ ${bodyHtml}
       setMockupLoading(false);
     }
   }, [projectTitle, projectTopik, authorName, mockupStyle, toast]);
+
+  const handleGenerateLpSection = useCallback(async (section: string) => {
+    setLpSectionActive(section);
+    setLpSectionOpen(true);
+    setLpSectionContent('');
+    setLpSectionLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-lp-section-kit', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        section,
+      });
+      const data = await res.json();
+      setLpSectionContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat LP section', variant: 'destructive' });
+    } finally {
+      setLpSectionLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, toast]);
+
+  const handleGenerateFunnelBlueprint = useCallback(async () => {
+    setFunnelBpOpen(true);
+    setFunnelBpContent('');
+    setFunnelBpLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-funnel-blueprint', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        funnelType: 'Meta Ads → LP → WA Closing → Upsell',
+      });
+      const data = await res.json();
+      setFunnelBpContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat funnel blueprint', variant: 'destructive' });
+    } finally {
+      setFunnelBpLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, toast]);
+
+  const handleGenerateHeadlinePack = useCallback(async () => {
+    setHeadlinePackOpen(true);
+    setHeadlinePackContent('');
+    setHeadlinePackLoading(true);
+    try {
+      const res = await apiRequest('POST', '/api/generate-headline-pack', {
+        prompt,
+        topik: projectTopik,
+        judul: projectTitle,
+        target: '',
+        price: extractMonetizationPrice(monoContent),
+        authorName,
+        niche: headlinePackNiche,
+      });
+      const data = await res.json();
+      setHeadlinePackContent(data.content || '');
+    } catch {
+      toast({ title: 'Gagal membuat headline pack', variant: 'destructive' });
+    } finally {
+      setHeadlinePackLoading(false);
+    }
+  }, [prompt, projectTopik, projectTitle, monoContent, authorName, headlinePackNiche, toast]);
 
   const handleGenerateMetaAds = useCallback(async () => {
     setMetaAdsOpen(true);
@@ -2415,6 +2499,50 @@ ${bodyHtml}
                     Mode Akurat · {uploadedFiles.length} sumber
                   </div>
                 )}
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Konversi:</div>
+                {/* LP Section Kit — dropdown-style with tabs */}
+                <div className="flex-1 flex gap-1 flex-wrap">
+                  {[
+                    { key: 'headline', label: '🎯 Headline', title: 'Headline Pack' },
+                    { key: 'problem', label: '😣 Problem', title: 'Problems Section' },
+                    { key: 'social_proof', label: '⭐ Proof', title: 'Social Proof' },
+                    { key: 'bonus_stack', label: '🎁 Bonus', title: 'Bonus Stack' },
+                    { key: 'cta', label: '🔔 CTA', title: 'CTA Pack' },
+                    { key: 'faq', label: '❓ FAQ', title: 'FAQ Section' },
+                  ].map(sec => (
+                    <Button
+                      key={sec.key}
+                      onClick={() => handleGenerateLpSection(sec.key)}
+                      className="bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-800 hover:to-purple-800 text-white text-[10px] h-7 px-2"
+                      data-testid={`button-lp-section-${sec.key}`}
+                      title={`Generate ${sec.title} untuk LP`}
+                    >
+                      {sec.label}
+                    </Button>
+                  ))}
+                </div>
+                <span className="text-[9px] text-muted-foreground opacity-50 font-mono ml-1">·4o</span>
+              </div>
+              <div className="flex items-center gap-2 pt-1">
+                <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-14 shrink-0">Strategi+:</div>
+                <Button
+                  onClick={handleGenerateFunnelBlueprint}
+                  className="flex-1 bg-gradient-to-r from-cyan-700 to-teal-700 hover:from-cyan-800 hover:to-teal-800 text-white text-xs h-8"
+                  data-testid="button-funnel-blueprint"
+                >
+                  <span className="mr-1.5 text-sm leading-none">🗺️</span>
+                  Funnel Blueprint<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
+                <Button
+                  onClick={handleGenerateHeadlinePack}
+                  className="flex-1 bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-700 hover:to-amber-700 text-white text-xs h-8"
+                  data-testid="button-headline-pack"
+                >
+                  <span className="mr-1.5 text-sm leading-none">⚡</span>
+                  Headline Power Pack<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
+                </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide">Iklan:</div>
@@ -4721,6 +4849,149 @@ ${bodyHtml}
           </div>
         </DialogContent>
       </Dialog>
+      {/* LP Section Kit Dialog */}
+      <Dialog open={lpSectionOpen} onOpenChange={setLpSectionOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🏗️</span>
+              LP Section Kit —{' '}
+              {lpSectionActive === 'headline' && 'Headline Pack'}
+              {lpSectionActive === 'problem' && 'Problems & Agitation'}
+              {lpSectionActive === 'social_proof' && 'Social Proof Templates'}
+              {lpSectionActive === 'bonus_stack' && 'Bonus Stack Copy'}
+              {lpSectionActive === 'cta' && 'CTA Pack'}
+              {lpSectionActive === 'faq' && 'FAQ Section'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-1 flex-wrap mb-3">
+            {[
+              { key: 'headline', label: '🎯 Headline' },
+              { key: 'problem', label: '😣 Problem' },
+              { key: 'social_proof', label: '⭐ Proof' },
+              { key: 'bonus_stack', label: '🎁 Bonus Stack' },
+              { key: 'cta', label: '🔔 CTA' },
+              { key: 'faq', label: '❓ FAQ' },
+            ].map(sec => (
+              <Button
+                key={sec.key}
+                size="sm"
+                variant={lpSectionActive === sec.key ? 'default' : 'outline'}
+                onClick={() => handleGenerateLpSection(sec.key)}
+                disabled={lpSectionLoading}
+                className={lpSectionActive === sec.key ? 'bg-violet-700 text-white text-xs' : 'text-xs'}
+                data-testid={`button-lp-tab-${sec.key}`}
+              >
+                {sec.label}
+              </Button>
+            ))}
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {lpSectionLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menulis section LP yang high-converting...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {lpSectionContent}
+              </div>
+            )}
+          </div>
+          {!lpSectionLoading && lpSectionContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(lpSectionContent); toast({ title: 'LP Section tersalin!' }); }} data-testid="button-copy-lp-section">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Funnel Blueprint Dialog */}
+      <Dialog open={funnelBpOpen} onOpenChange={setFunnelBpOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">🗺️</span>
+              Sales Funnel Blueprint — Meta Ads → LP → WA → Upsell
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto">
+            {funnelBpLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menyusun blueprint funnel lengkap...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {funnelBpContent}
+              </div>
+            )}
+          </div>
+          {!funnelBpLoading && funnelBpContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={handleGenerateFunnelBlueprint} disabled={funnelBpLoading} data-testid="button-regen-funnel">
+                <Sparkles className="h-4 w-4 mr-1.5" /> Regenerate
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(funnelBpContent); toast({ title: 'Funnel Blueprint tersalin!' }); }} data-testid="button-copy-funnel-bp">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Headline Power Pack Dialog */}
+      <Dialog open={headlinePackOpen} onOpenChange={setHeadlinePackOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-lg">
+              <span className="text-xl">⚡</span>
+              Headline Power Pack — 40+ Variations
+            </DialogTitle>
+          </DialogHeader>
+          <div className="mb-3 flex flex-col gap-2">
+            <div className="text-xs text-muted-foreground">Niche / industri spesifik (opsional):</div>
+            <input
+              className="border rounded px-3 py-1.5 text-sm w-full"
+              placeholder="Contoh: bisnis online, kesehatan wanita, investasi saham..."
+              value={headlinePackNiche}
+              onChange={e => setHeadlinePackNiche(e.target.value)}
+              data-testid="input-headline-niche"
+            />
+            <Button
+              size="sm"
+              className="w-fit bg-yellow-600 hover:bg-yellow-700 text-white"
+              onClick={handleGenerateHeadlinePack}
+              disabled={headlinePackLoading}
+              data-testid="button-regen-headline"
+            >
+              {headlinePackLoading ? 'Generating...' : '🔄 Regenerate dengan niche ini'}
+            </Button>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            {headlinePackLoading ? (
+              <div className="flex items-center justify-center h-40 gap-3 text-muted-foreground">
+                <Loader2 className="animate-spin h-5 w-5" />
+                <span>AI sedang menulis 40+ headline yang powerful...</span>
+              </div>
+            ) : (
+              <div className="whitespace-pre-wrap text-sm font-mono bg-muted/30 rounded-lg p-4 leading-relaxed">
+                {headlinePackContent}
+              </div>
+            )}
+          </div>
+          {!headlinePackLoading && headlinePackContent && (
+            <div className="flex justify-end gap-2 pt-3 border-t">
+              <Button variant="outline" size="sm" onClick={() => { navigator.clipboard.writeText(headlinePackContent); toast({ title: 'Headline Pack tersalin!' }); }} data-testid="button-copy-headline-pack">
+                <Copy className="h-4 w-4 mr-1.5" /> Salin Semua
+              </Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Meta Ads Copy Dialog */}
       <Dialog open={metaAdsOpen} onOpenChange={setMetaAdsOpen}>
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">

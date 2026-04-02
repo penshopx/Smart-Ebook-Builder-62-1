@@ -90,7 +90,14 @@ The `shared/` directory contains code used by both frontend and backend:
 ### Future Enhancements (TODO)
 - **Payment/Monetization**: Stripe integration was declined by user. If payment features are needed in the future, user will need to setup Stripe connector or provide API keys manually.
 
-## Iklan Pipeline Features (Latest — tauheed.id/cuan inspired)
+## Konversi & Strategi Pipeline Features (Latest — tauheed.id/cuan Bab 4 & 3)
+
+### 3 New Pipeline Outputs Added (Konversi & Strategi+ rows)
+- **LP Section Kit** (`/api/generate-lp-section-kit`, gpt-4o) — 6 section individual LP yang bisa di-generate terpisah: Headline Pack (10 pasang headline+sub), Problems & Agitation, Social Proof Templates (5 format), Bonus Stack Copy, CTA Pack (button text/headline/supporting/micro-commitment/sticky bar), FAQ Section (12 Q&A). UI: 6 mini-buttons di row "Konversi:", dialog dengan tab switching.
+- **Sales Funnel Blueprint** (`/api/generate-funnel-blueprint`, gpt-4o) — Peta lengkap 7-tahap funnel: Traffic (Meta Ads) → LP → Thank You/OTO → WA Closing → Delivery & Onboarding → Upsell/Cross-sell → Re-Engagement. Termasuk budget plan, tools stack, key metrics, common mistakes.
+- **Headline Power Pack** (`/api/generate-headline-pack`, gpt-4o) — 40+ headline variations: 8 pain, 8 aspiration, 6 curiosity, 6 numbers, 4 social proof, 4 contrarian, 4 fear + 8 email subject + 6 thumbnail. Input niche opsional.
+
+## Iklan Pipeline Features (tauheed.id/cuan inspired)
 
 ### 3 New Pipeline Outputs Added (Iklan Row)
 - **Meta Ads Copy Pack** (`/api/generate-meta-ads`, gpt-4o) — Full FB/IG ads pack: 5 Hook Variations, Primary Text Short (100-150w), Primary Text Long (250-350w), 5 Headline Variations, Link Description, Video Hook 15s Script, Audience Targeting Suggestions, Split Test Matrix (3 angles), Catatan Strategis. Input pain point opsional.

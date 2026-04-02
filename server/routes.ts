@@ -2168,5 +2168,237 @@ Buat semua copy dalam Bahasa Indonesia yang terasa autentik, bukan robot, dan be
     }
   });
 
+  // Generate LP Section Kit — per-section landing page copy
+  app.post("/api/generate-lp-section-kit", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, section } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const sectionPrompts: Record<string, string> = {
+        headline: `Buat 10 HEADLINE + 10 SUB-HEADLINE untuk landing page produk digital.
+Format: [HEADLINE] dan [Sub-headline] secara berpasangan.
+Gunakan angle berbeda: Pain (3 pasang), Aspiration (3 pasang), Curiosity (2 pasang), Angka/Statistik (2 pasang).
+Setiap headline max 12 kata, sub-headline max 20 kata. Langsung ke titik, tidak bertele-tele.`,
+
+        problem: `Buat bagian PROBLEMS & AGITATION untuk landing page — sedang dan kuat.
+Format:
+1. [Opening empati — 2 kalimat]
+2. [Problem List — 5-7 bullet poin masalah yang sangat relatable]
+3. [Pain Agitation — 2-3 paragraf mengintensifkan rasa frustasi]
+4. [Bridge ke solusi — 1-2 kalimat transisi]
+Tulis seolah-olah kamu pernah mengalaminya sendiri.`,
+
+        social_proof: `Buat TEMPLATE SOCIAL PROOF untuk landing page — 4 format berbeda:
+1. [Screenshot WA Testimoni — template copy untuk 5 testimoni berbeda dengan emoji reactions]
+2. [Video Testimoni Script — 3 template script singkat (30 detik) yang bisa digunakan customer untuk rekam video review]
+3. [Angka/Statistik Social Proof — 5 cara menyajikan social proof lewat angka dan data]
+4. [Nama + Profesi + Hasil Nyata — 6 format testimoni tertulis yang compelling]
+5. [Before-After Story Template — 3 template kisah sebelum-sesudah]`,
+
+        bonus_stack: `Buat BONUS STACK COPY untuk landing page — tunjukkan nilai total lebih besar dari harga.
+Format:
+1. [Daftar 6-8 bonus dengan value price masing-masing]
+2. [Total Value Summary copy — tunjukkan selisih besar antara total value vs harga jual]
+3. [Cara Menulis Nama Bonus yang Menarik — 5 formula penamaan bonus]
+4. [Bonus Delivery Copy — cara explain cara dapat bonus]
+Harga jual: ${price || 'Rp97.000'}. Total bonus harus terasa jauh melebihi harga ini.`,
+
+        cta: `Buat CTA (CALL TO ACTION) PACK untuk landing page.
+Format:
+1. [CTA Button Text — 10 variasi teks tombol yang lebih menarik dari "Beli Sekarang"]
+2. [CTA Section Headline — 5 judul section CTA yang mendesak]
+3. [CTA Supporting Copy — 3 paragraf pendek di bawah tombol CTA yang buang keraguan terakhir]
+4. [Micro-Commitment Copy — teks kecil di bawah tombol yang reduce anxiety (privasi, garansi, dll)]
+5. [Sticky CTA Bar Copy — teks untuk floating bar di atas/bawah halaman]`,
+
+        faq: `Buat FAQ SECTION untuk landing page — 12 pertanyaan paling umum calon pembeli.
+Format untuk setiap FAQ:
+[Q: Pertanyaan]
+[A: Jawaban yang confident, meyakinkan, max 3 kalimat]
+
+Fokus pada: keraguan tentang harga, hasil, keaslian, metode, waktu belajar, garansi, dan cara beli.
+Tulis jawaban yang pre-empt keberatan sebelum muncul.`,
+      };
+
+      const selectedSection = section || 'headline';
+      const systemPrompt = `Anda adalah copywriter landing page Indonesia #1 yang sudah menghasilkan puluhan LP dengan conversion rate di atas 5%.
+Spesialisasi: LP untuk produk digital (ebook, kursus online) di pasar Indonesia.
+Gaya: Bahasa Indonesia natural, emosi kuat, tidak kaku, sangat relatable untuk target market Indonesia.`;
+
+      const sectionPromptText = sectionPrompts[selectedSection] || sectionPrompts['headline'];
+
+      const userPrompt = `Produk: ${topikFallback}
+Judul: ${judul || topikFallback}
+Target Audiens: ${target || 'Masyarakat Indonesia 25-45 tahun'}
+Harga: ${price || 'Rp97.000'}
+Author: ${authorName || 'Pakar'}
+
+${sectionPromptText}
+
+Buat dalam Bahasa Indonesia yang natural, persuasif, dan sangat relatable. Jangan terjemahan kaku.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.82,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("LP section kit error:", error);
+      res.status(500).json({ error: "Gagal membuat LP section. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Sales Funnel Blueprint
+  app.post("/api/generate-funnel-blueprint", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, funnelType } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah Digital Marketing Strategist Indonesia dengan spesialisasi sales funnel untuk produk digital.
+Pendekatan: Data-driven, practical, telah terbukti menghasilkan ROI tinggi di pasar Indonesia.
+Spesialisasi: Meta Ads → Landing Page → WhatsApp → Closing → Upsell funnel untuk info-produk Indonesia.`;
+
+      const userPrompt = `Buat SALES FUNNEL BLUEPRINT lengkap untuk:
+- Produk: ${topikFallback}
+- Judul: ${judul || topikFallback}
+- Target: ${target || 'Masyarakat Indonesia 25-45 tahun'}
+- Harga: ${price || 'Rp97.000'}
+- Author: ${authorName || 'Expert'}
+- Tipe Funnel: ${funnelType || 'Meta Ads → LP → WA Closing → Upsell'}
+
+Format output:
+
+===== OVERVIEW FUNNEL (Diagram Teks) =====
+[Gambaran alur lengkap dengan → dan breakdown setiap tahap. Cantumkan estimasi conversion rate tiap tahap]
+
+===== TAHAP 1: TRAFFIC SOURCE (Meta Ads) =====
+[Objective iklan, budget rekomendasi, jenis audience, format iklan terbaik, KPI target]
+
+===== TAHAP 2: LANDING PAGE =====
+[Elemen wajib, above-the-fold recommendation, estimated load time target, CTA utama, pixel event]
+
+===== TAHAP 3: THANK YOU PAGE / OTO =====
+[Copy untuk halaman terima kasih + One-Time Offer jika ada, cara maximize revenue per buyer]
+
+===== TAHAP 4: WHATSAPP CLOSING =====
+[Flow CS dari leads masuk sampai closing, waktu response ideal, touchpoint sequence]
+
+===== TAHAP 5: DELIVERY & ONBOARDING =====
+[Sistem pengiriman produk digital, pesan onboarding otomatis, cara reduce refund]
+
+===== TAHAP 6: UPSELL / CROSS-SELL =====
+[Kapan dan bagaimana tawarkan produk lanjutan, rekomendasi produk komplementer]
+
+===== TAHAP 7: RE-ENGAGEMENT =====
+[Strategi untuk leads yang tidak convert: retargeting ads, email sequence, WA broadcast]
+
+===== BUDGET PLAN (Starter) =====
+[Alokasi budget realistis untuk mulai dari Rp100.000 - Rp500.000/hari]
+
+===== TOOLS & PLATFORM STACK =====
+[Rekomendasi tools Indonesia-friendly: LP builder, WA Business, payment gateway, CRM sederhana]
+
+===== KEY METRICS & TARGETS =====
+[CTR target, CPL target, conversion rate LP, closing rate WA, ROAS target, break-even point]
+
+===== COMMON MISTAKES =====
+[5 kesalahan fatal yang paling sering dilakukan penjual produk digital Indonesia dan cara hindarinya]
+
+Buat semua dalam Bahasa Indonesia yang praktis dan langsung bisa diimplementasikan.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3500,
+        temperature: 0.75,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Funnel blueprint error:", error);
+      res.status(500).json({ error: "Gagal membuat funnel blueprint. " + (error?.message || '') });
+    }
+  });
+
+  // Generate Headline Power Pack
+  app.post("/api/generate-headline-pack", isAuthenticated, async (req, res) => {
+    try {
+      const { prompt, topik, judul, target, price, authorName, niche } = req.body;
+      const topikFallback = topik || judul || (prompt || '').split(/[,.:!?]/)[0].slice(0, 80) || 'Produk Digital';
+
+      const systemPrompt = `Anda adalah copywriter headline Indonesia terbaik yang menulis headline untuk iklan FB, LP, email, dan konten.
+Prinsip: Headline adalah 80% faktor penentu apakah orang mau baca konten selanjutnya.
+Gaya: Direct, emotional, specific, curiosity-driven — selalu dalam Bahasa Indonesia yang natural dan kuat.`;
+
+      const userPrompt = `Buat HEADLINE POWER PACK lengkap (40+ headline) untuk:
+- Produk/Topik: ${topikFallback}
+- Niche/Industri: ${niche || 'Digital Marketing / Produk Digital'}
+- Target: ${target || 'Orang Indonesia yang ingin penghasilan tambahan'}
+- Harga: ${price || 'Rp97.000'}
+- Author: ${authorName || 'Pakar'}
+
+Format:
+
+===== HEADLINE — PAIN/PROBLEM ANGLE (8 headline) =====
+[Langsung sentuh masalah, frustrasi, atau ketakutan terbesar target market]
+
+===== HEADLINE — ASPIRATION/RESULT ANGLE (8 headline) =====
+[Gambarkan hasil impian, pencapaian, transformasi yang ingin mereka capai]
+
+===== HEADLINE — CURIOSITY/MYSTERY ANGLE (6 headline) =====
+[Bikin orang penasaran, "cliffhanger effect", knowledge gap]
+
+===== HEADLINE — NUMBER/SPECIFIC ANGLE (6 headline) =====
+[Pakai angka spesifik, waktu, persentase, jumlah langkah]
+
+===== HEADLINE — SOCIAL PROOF ANGLE (4 headline) =====
+[Referensi pada orang lain yang sudah berhasil, komunitas, jumlah pengguna]
+
+===== HEADLINE — CONTRARIAN/PATTERN INTERRUPT (4 headline) =====
+[Lawan ekspektasi, counter-intuitive, challenge common beliefs]
+
+===== HEADLINE — FEAR/LOSS AVERSION (4 headline) =====
+[FOMO, takut tertinggal, biaya tidak bertindak]
+
+===== HEADLINE UNTUK EMAIL SUBJECT LINE (8 variasi) =====
+[Headline yang work sebagai subject email — pendek, mobile-friendly, open rate tinggi]
+
+===== HEADLINE UNTUK VIDEO THUMBNAIL (6 variasi) =====
+[Pendek, bold, 4-6 kata maksimal, terlihat jelas di thumbnail kecil]
+
+===== FORMULA HEADLINE YANG DIGUNAKAN =====
+[Jelaskan 5 formula headline yang paling ampuh beserta contohnya]
+
+Semua dalam Bahasa Indonesia. Buat yang benar-benar berbeda, bukan variasi yang sama berkali-kali.`;
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt }
+        ],
+        max_tokens: 3000,
+        temperature: 0.88,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      res.json({ content });
+    } catch (error: any) {
+      console.error("Headline pack error:", error);
+      res.status(500).json({ error: "Gagal membuat headline pack. " + (error?.message || '') });
+    }
+  });
+
   return httpServer;
 }
