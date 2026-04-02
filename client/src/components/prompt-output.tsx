@@ -926,6 +926,7 @@ ${bodyHtml}
   }, [projectTitle, projectTopik, projectTarget, docContent, quizConfigLevel, quizConfigFocus, fetchSSE, toast]);
 
   const handleGeneratePodcastScript = useCallback(async (config?: {host?: string; guest?: string; style?: string; length?: string; segments?: string}) => {
+    const topikFallback = projectTopik || projectTitle || prompt.split(/[,.:!?]/)[0].slice(0, 80) || 'Ebook Digital Indonesia';
     setPodcastOpen(true);
     setPodcastContent('');
     setPodcastLoading(true);
@@ -934,8 +935,8 @@ ${bodyHtml}
       await fetchSSE(
         '/api/generate-podcast-script',
         {
-          title: projectTitle || projectTopik,
-          topik: projectTopik,
+          title: projectTitle || topikFallback,
+          topik: topikFallback,
           target: projectTarget,
           docContent: docContent.slice(0, 1500),
           podcastHost: config?.host,
@@ -951,9 +952,11 @@ ${bodyHtml}
       setPodcastLoading(false);
       toast({ title: 'Gagal membuat podcast script', variant: 'destructive' });
     }
-  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, docContent, prompt, fetchSSE, toast]);
 
   const handleGenerateAudiobookScript = useCallback(async (config?: {narrator?: string; tone?: string; pace?: string; chapterFocus?: string; emphasis?: string}) => {
+    // Fallback: extract topic from prompt if projectTopik empty
+    const topikFallback = projectTopik || projectTitle || prompt.split(/[,.:!?]/)[0].slice(0, 80) || 'Ebook Digital Indonesia';
     setAudiobookOpen(true);
     setAudiobookContent('');
     setAudiobookLoading(true);
@@ -962,8 +965,8 @@ ${bodyHtml}
       await fetchSSE(
         '/api/generate-audiobook-script',
         {
-          title: projectTitle || projectTopik,
-          topik: projectTopik,
+          title: projectTitle || topikFallback,
+          topik: topikFallback,
           target: projectTarget,
           docContent: docContent.slice(0, 2000),
           audiobookNarrator: config?.narrator,
@@ -979,7 +982,7 @@ ${bodyHtml}
       setAudiobookLoading(false);
       toast({ title: 'Gagal membuat audiobook script', variant: 'destructive' });
     }
-  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, docContent, prompt, fetchSSE, toast]);
 
   const handleGenerateLandingPage = useCallback(async (config?: {style?: string; goal?: string; price?: string; bonuses?: string; cta?: string; outputFormat?: string}) => {
     setLpOpen(true);
@@ -1557,6 +1560,7 @@ ${bodyHtml}
                   <span className="font-semibold">Chatbot Demo</span>
                   <span className="text-[10px] opacity-80">{chatMessages.length > 0 ? '✓ Sudah dijalankan' : 'AI asisten topik'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o-mini</span>
                 {chatMessages.length > 0 && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1569,6 +1573,7 @@ ${bodyHtml}
                   <span className="font-semibold">Silabus Kursus</span>
                   <span className="text-[10px] opacity-80">{syllabusContent ? '✓ Silabus selesai' : '8 modul + worksheet'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {syllabusContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1581,6 +1586,7 @@ ${bodyHtml}
                   <span className="font-semibold">Blueprint App</span>
                   <span className="text-[10px] opacity-80">{appContent ? '✓ Blueprint selesai' : 'Prompt Cursor/Lovable/Bolt'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o-mini</span>
                 {appContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1593,6 +1599,7 @@ ${bodyHtml}
                   <span className="font-semibold">Generator Kuis</span>
                   <span className="text-[10px] opacity-80">{quizContent ? '✓ Kuis selesai' : '19 soal MCQ/esai/kasus'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o-mini</span>
                 {quizContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1605,6 +1612,7 @@ ${bodyHtml}
                   <span className="font-semibold">Podcast Script</span>
                   <span className="text-[10px] opacity-80">{podcastContent ? '✓ Script selesai' : 'Dialog 2 orang siap rekam'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {podcastContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1617,6 +1625,7 @@ ${bodyHtml}
                   <span className="font-semibold">Audiobook Script</span>
                   <span className="text-[10px] opacity-80">{audiobookContent ? '✓ Script selesai' : 'Narasi solo + production cue'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {audiobookContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1629,6 +1638,7 @@ ${bodyHtml}
                   <span className="font-semibold">Landing Page</span>
                   <span className="text-[10px] opacity-80">{lpContent ? '✓ Copy + HTML selesai' : 'Konfigurasi → Generate'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {lpContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1641,6 +1651,7 @@ ${bodyHtml}
                   <span className="font-semibold">Cover Template</span>
                   <span className="text-[10px] opacity-80">{coverTplContent ? '✓ Cover selesai' : 'HTML/CSS siap cetak'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {coverTplContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1664,6 +1675,7 @@ ${bodyHtml}
                   <span className="font-semibold">Riset Topik</span>
                   <span className="text-[10px] opacity-80">{risetContent ? '✓ Riset selesai' : 'Ide ebook marketable'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
                 {risetContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
@@ -1676,6 +1688,7 @@ ${bodyHtml}
                   <span className="font-semibold">Mockup 3D</span>
                   <span className="text-[10px] opacity-80">{mockupImages.length > 0 ? '✓ Mockup selesai' : 'Cover buku DALL-E 3'}</span>
                 </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">DALL·E 3</span>
                 {mockupImages.length > 0 && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
             </div>
@@ -2190,7 +2203,7 @@ ${bodyHtml}
                   data-testid="button-marketing-kit"
                 >
                   <Megaphone className="h-3.5 w-3.5 mr-1.5" />
-                  Marketing Kit
+                  Marketing Kit<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
                 <Button
                   onClick={handleGenerateScript}
@@ -2198,7 +2211,7 @@ ${bodyHtml}
                   data-testid="button-script-video"
                 >
                   <Mic className="h-3.5 w-3.5 mr-1.5" />
-                  Script Video
+                  Script Video<span className="ml-1 text-[7px] opacity-40 font-mono">·mini</span>
                 </Button>
                 <Button
                   onClick={handleGenerateThumbnail}
@@ -2206,7 +2219,7 @@ ${bodyHtml}
                   data-testid="button-thumbnail"
                 >
                   <Video className="h-3.5 w-3.5 mr-1.5" />
-                  Thumbnail YT
+                  Thumbnail YT<span className="ml-1 text-[7px] opacity-40 font-mono">·D3</span>
                 </Button>
                 <Button
                   onClick={handleReviewDocument}
@@ -2214,7 +2227,7 @@ ${bodyHtml}
                   data-testid="button-review-ai"
                 >
                   <ShieldCheck className="h-3.5 w-3.5 mr-1.5" />
-                  Review AI
+                  Review AI<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
               </div>
               <div className="flex items-center gap-2 pt-1">
@@ -2225,7 +2238,7 @@ ${bodyHtml}
                   data-testid="button-monetization"
                 >
                   <span className="mr-1.5 text-sm leading-none">💰</span>
-                  Strategi Jual Ebook
+                  Strategi Jual Ebook<span className="ml-1 text-[7px] opacity-40 font-mono">·4o</span>
                 </Button>
                 {uploadedFiles.length > 0 && (
                   <div className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 text-[10px] text-blue-700 dark:text-blue-400 font-medium shrink-0">

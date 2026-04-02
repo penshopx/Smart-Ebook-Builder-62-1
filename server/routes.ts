@@ -325,7 +325,7 @@ export async function registerRoutes(
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -625,7 +625,7 @@ Tulis semuanya dalam Bahasa Indonesia yang powerful dan menjual.`,
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -909,7 +909,7 @@ Panduan Penilaian: [Rubrik singkat untuk menilai jawaban peserta]
       res.setHeader("Connection", "keep-alive");
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1094,7 +1094,7 @@ Harga coret suggestion dan strategi bundling
 Tulis SEMUA 7 bagian lengkap dalam Bahasa Indonesia yang natural dan menjual.`;
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
@@ -1243,7 +1243,7 @@ Format setiap segmen:
       };
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1324,7 +1324,7 @@ Gunakan filler words yang wajar: "iya betul", "wah menarik", "hmm", "nah jadi...
       };
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1420,7 +1420,7 @@ Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max
         : '';
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1532,7 +1532,7 @@ Sertakan angka/data konkret untuk meningkatkan kredibilitas.`,
       const paletteName = colorScheme || 'professional';
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -1607,7 +1607,7 @@ Output: HANYA kode HTML lengkap, tidak ada teks lain di luar HTML.`,
                         `kata kunci: ${query}`;
 
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
