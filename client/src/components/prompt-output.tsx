@@ -179,6 +179,8 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpLoading, setLpLoading] = useState(false);
   const [lpTab, setLpTab] = useState<'copy' | 'preview' | 'sections'>('copy');
   const [lpOutputFormat, setLpOutputFormat] = useState('copy');
+  // FlipBook Guide
+  const [flipbookOpen, setFlipbookOpen] = useState(false);
   // Cover HTML Template Generator
   const [coverTplOpen, setCoverTplOpen] = useState(false);
   const [coverTplContent, setCoverTplContent] = useState('');
@@ -1337,6 +1339,17 @@ ${bodyHtml}
                   <span className="text-[10px] opacity-80">HTML/CSS siap cetak</span>
                 </span>
               </Button>
+              <Button
+                onClick={() => setFlipbookOpen(true)}
+                className="bg-gradient-to-r from-sky-600 to-blue-700 hover:from-sky-700 hover:to-blue-800 text-white text-xs h-10 justify-start relative overflow-hidden col-span-2"
+                data-testid="button-flipbook-main"
+              >
+                <span className="text-base mr-2 shrink-0">📖</span>
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Convert ke FlipBook</span>
+                  <span className="text-[10px] opacity-80">Heyzine (gratis) · FlipHTML5 · FlippingBook · FlipBuilder</span>
+                </span>
+              </Button>
             </div>
             {docContent && (
               <div className="flex items-center gap-1.5 text-[10px] text-green-600 dark:text-green-400">
@@ -1941,8 +1954,8 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-pink-600 to-rose-500 text-white">
                 <Megaphone className="h-3.5 w-3.5" />
               </div>
-              Marketing Kit AI
-              <Badge variant="secondary" className="ml-1 text-xs">Sales · Social Media · Email · WA</Badge>
+              Marketing Kit AI — Indonesia Edition
+              <Badge variant="secondary" className="ml-1 text-xs">Sales · IG · Email · WA · TikTok 🇮🇩 · Tokped 🇮🇩</Badge>
             </DialogTitle>
           </DialogHeader>
           {mktLoading && !mktContent && (
@@ -1959,7 +1972,9 @@ ${bodyHtml}
                   { key: 'instagram', label: 'Instagram', icon: <Camera className="h-3.5 w-3.5" /> },
                   { key: 'linkedin', label: 'LinkedIn', icon: <Linkedin className="h-3.5 w-3.5" /> },
                   { key: 'email', label: 'Email', icon: <Mail className="h-3.5 w-3.5" /> },
-                  { key: 'whatsapp', label: 'WhatsApp', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+                  { key: 'whatsapp', label: 'WhatsApp 🇮🇩', icon: <MessageSquare className="h-3.5 w-3.5" /> },
+                  { key: 'tiktok', label: 'TikTok 🇮🇩', icon: <span className="text-xs">🎵</span> },
+                  { key: 'tokopedia', label: 'Tokped/Shopee 🇮🇩', icon: <span className="text-xs">🛒</span> },
                 ].map(tab => (
                   <button
                     key={tab.key}
@@ -1982,6 +1997,8 @@ ${bodyHtml}
                       linkedin: 'POSTINGAN LINKEDIN',
                       email: 'EMAIL MARKETING',
                       whatsapp: 'BROADCAST WHATSAPP',
+                      tiktok: 'TIKTOK SCRIPT',
+                      tokopedia: 'TOKOPEDIA SHOPEE LISTING',
                     };
                     const sectionKeys = Object.keys(sections);
                     const sectionStart = `===== ${sections[mktActiveSection]} =====`;
@@ -3439,6 +3456,99 @@ ${bodyHtml}
             >
               <Zap className="h-3.5 w-3.5 mr-1.5" /> {coverTplContent ? 'Generate Ulang' : 'Generate Cover'}
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* FlipBook Guide Dialog */}
+      <Dialog open={flipbookOpen} onOpenChange={setFlipbookOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <span className="text-xl">📖</span>
+              Convert Ebook ke FlipBook
+              <Badge variant="secondary" className="text-xs">Panduan Indonesia</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              FlipBook adalah tampilan ebook interaktif dengan efek balik halaman. Berikut tools terbaik yang bisa digunakan — semua tersedia untuk pengguna Indonesia:
+            </p>
+
+            {/* Tool 1 - Heyzine */}
+            <div className="rounded-lg border-2 border-green-200 bg-green-50 dark:bg-green-950/20 dark:border-green-800 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge className="bg-green-600 text-white text-xs">🥇 GRATIS — Rekomendasi</Badge>
+                  </div>
+                  <h3 className="font-bold text-sm">Heyzine</h3>
+                  <p className="text-xs text-muted-foreground mt-1">heyzine.com — Gratis tanpa watermark, download HTML offline, embed video/audio, link sharable langsung</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['✓ Gratis', '✓ Tanpa watermark', '✓ Download HTML', '✓ Embed video', '✓ Share link'].map(f => (
+                      <span key={f} className="text-[10px] bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full">{f}</span>
+                    ))}
+                  </div>
+                </div>
+                <Button size="sm" className="bg-green-600 hover:bg-green-700 text-white shrink-0" onClick={() => window.open('https://heyzine.com', '_blank')}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" /> Buka
+                </Button>
+              </div>
+            </div>
+
+            {/* Tool 2 - FlipBuilder */}
+            <div className="rounded-lg border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="secondary" className="text-xs">🥈 Gratis (Desktop Win/Mac)</Badge>
+                  </div>
+                  <h3 className="font-bold text-sm">FlipBuilder (Flip PDF Plus)</h3>
+                  <p className="text-xs text-muted-foreground mt-1">flipbuilder.com — Software desktop gratis, konversi PDF ke flipbook, export HTML5, tidak butuh coding</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['✓ Gratis desktop', '✓ PDF → FlipBook', '✓ Export HTML5', '✓ Win & Mac'].map(f => (
+                      <span key={f} className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">{f}</span>
+                    ))}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => window.open('https://www.flipbuilder.com/download-ebook-software-free.html', '_blank')}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" /> Buka
+                </Button>
+              </div>
+            </div>
+
+            {/* Tool 3 - FlipHTML5 */}
+            <div className="rounded-lg border p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="secondary" className="text-xs">🥉 Berbayar $14/bln — Fitur Lengkap</Badge>
+                  </div>
+                  <h3 className="font-bold text-sm">FlipHTML5</h3>
+                  <p className="text-xs text-muted-foreground mt-1">fliphtml5.com — 28+ jenis interaktif, 1000+ template, embed audio/video per halaman, analytics pembaca</p>
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {['✓ 1000+ template', '✓ 28 jenis interaktif', '✓ Analytics', '✓ Embed media'].map(f => (
+                      <span key={f} className="text-[10px] bg-secondary text-secondary-foreground px-2 py-0.5 rounded-full">{f}</span>
+                    ))}
+                  </div>
+                </div>
+                <Button size="sm" variant="outline" className="shrink-0" onClick={() => window.open('https://fliphtml5.com', '_blank')}>
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" /> Buka
+                </Button>
+              </div>
+            </div>
+
+            {/* Cara pakai */}
+            <div className="rounded-lg bg-sky-50 dark:bg-sky-950/20 border border-sky-200 dark:border-sky-800 p-4">
+              <h4 className="text-sm font-semibold mb-2">📋 Cara Membuat FlipBook dari Ebook Builder Pro</h4>
+              <ol className="text-xs space-y-1.5 text-muted-foreground">
+                <li><span className="font-medium text-foreground">1.</span> Generate konten ebook di mode OUTLINE atau FULL DRAFT</li>
+                <li><span className="font-medium text-foreground">2.</span> Download hasilnya sebagai TXT atau DOCX</li>
+                <li><span className="font-medium text-foreground">3.</span> Format di Word/Google Docs → Export ke PDF</li>
+                <li><span className="font-medium text-foreground">4.</span> Upload PDF ke <strong>Heyzine.com</strong> (gratis, tanpa watermark)</li>
+                <li><span className="font-medium text-foreground">5.</span> Kustomisasi desain → Share link atau embed di website</li>
+              </ol>
+            </div>
           </div>
         </DialogContent>
       </Dialog>

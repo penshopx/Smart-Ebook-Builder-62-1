@@ -199,37 +199,123 @@ Pastikan bahasa yang digunakan baku dan sesuai standar industri untuk ${taskConf
       const isVisualPrompt = taskConfig.marketingAsset.includes('Prompt Gambar') || taskConfig.marketingAsset.includes('Prompt Video');
       
       taskInstruction = `
-MODE TUGAS: MARKETING KIT GENERATOR
+MODE TUGAS: MARKETING KIT GENERATOR — INDONESIA EDITION
 ${styleReminder}
 
-Saya membutuhkan materi pemasaran yang persuasif untuk menjual ebook/produk ini.
-Anda bertindak sebagai **Expert Copywriter** dan **Creative Director**.
+Saya membutuhkan materi pemasaran yang persuasif untuk menjual ebook/produk ini di pasar INDONESIA.
+Anda bertindak sebagai **Expert Copywriter Indonesia** dan **Digital Marketing Strategist**.
 
 === DATA PRODUK ===
 - Produk: Ebook "${projectData.judul}"
 - Target: ${projectData.target}
 - Masalah yang diselesaikan: ${projectData.painPoint}
-- Jenis Aset Marketing: **${taskConfig.marketingAsset}**
+- Topik: ${projectData.topik}
 - Angle/Hook Khusus: ${taskConfig.marketingAngle || 'Fokus pada Transformasi & Kemudahan'}
 
-=== INSTRUKSI KHUSUS ===
+=== INSTRUKSI ===
 ${isVisualPrompt ? `
 **TUGAS: GENERATE AI IMAGE/VIDEO PROMPT**
-Jangan buat copy iklan! Tapi buatlah **Prompt Teknis dalam Bahasa Inggris** yang bisa saya copy-paste ke Midjourney/DALL-E/Runway.
-Struktur Prompt:
-1. **Subject:** (Deskripsi objek utama, misal: buku di atas meja kerja modern).
-2. **Environment:** (Latar belakang, pencahayaan, suasana).
-3. **Style:** (Photorealistic, 3D Render, Minimalist Vector, Cinematic).
-4. **Parameters:** (Aspect ratio --ar 16:9, v 6.0, dll).
+Buatlah **Prompt Teknis dalam Bahasa Inggris** untuk Midjourney/DALL-E/Runway.
+Struktur: Subject + Environment + Style + Parameters (--ar 16:9).
 Buat 3 Variasi Prompt yang berbeda.
 ` : `
-**TUGAS: TULIS COPYWRITING PENJUALAN**
-Tulis naskah iklan/konten yang sangat membujuk menggunakan teknik **Direct Response Marketing**.
-Gunakan kerangka **PAS (Problem - Agitate - Solution)** atau **AIDA (Attention - Interest - Desire - Action)**.
-- Gunakan bahasa yang "nendang" (Punchy).
-- Fokus pada *Benefit*, bukan hanya *Features*.
-- Sertakan Call to Action (CTA) yang jelas.
+Tulis SELURUH 7 section berikut secara lengkap dan BERURUTAN.
+Gunakan PERSIS pemisah === untuk setiap section.
 `}
+
+${!isVisualPrompt ? `
+===== SALES PAGE COPY =====
+Tulis sales page copy panjang menggunakan formula PAS/AIDA.
+- Headline kuat yang menarik perhatian
+- Opening: identifikasi masalah target
+- Agitate: perbesar rasa sakit (pain)
+- Solution: ebook ini sebagai solusinya
+- Bullet benefits (minimal 7 poin)
+- Social proof placeholder
+- CTA yang kuat
+- Bahasa: conversational, bukan kaku
+
+===== POSTINGAN INSTAGRAM =====
+Buat 3 variasi caption Instagram (panjang, sedang, pendek):
+- Caption Panjang (200+ kata): storytelling + hook kuat + CTA ke bio link
+- Caption Sedang (100 kata): bullet benefits + CTA
+- Caption Pendek (30-50 kata): one-liner hook + CTA
+- 15 hashtag Indonesia yang relevan (mix populer + niche)
+- Ide untuk stories: 5 slide konten teaser
+
+===== POSTINGAN LINKEDIN =====
+Tulis post LinkedIn profesional:
+- Hook kalimat pertama yang memancing klik "lihat selengkapnya"
+- Cerita personal/case study singkat (problem → solution → result)
+- 5 insight/tips dari ebook sebagai value teaser
+- CTA soft-sell (bukan hard-sell) ke ebook
+- Tone: profesional tapi personal, bukan corporate kaku
+
+===== EMAIL MARKETING =====
+Tulis sequence email 3-bagian:
+EMAIL 1 — Welcome/Teaser: subject line + body perkenalan + cliffhanger
+EMAIL 2 — Value/Edukasi: subject line + 1 insight besar dari ebook + soft CTA
+EMAIL 3 — Penawaran/Closing: subject line + urgency + hard CTA + PS menarik
+Format: [SUBJECT: ...] diikuti body email.
+
+===== BROADCAST WHATSAPP =====
+Buat 5 pesan WhatsApp untuk pasar Indonesia (170 juta pengguna, open rate 98%):
+PESAN 1 — Broadcast Promosi Utama (max 300 karakter, langsung ke poin)
+PESAN 2 — Follow-up D+1 (untuk yang belum beli)
+PESAN 3 — Testimonial/Social Proof (format WA-friendly)
+PESAN 4 — Last Call / Urgency (closing penawaran)
+PESAN 5 — Template Auto-Reply FAQ (5 Q&A paling sering ditanya)
+Gunakan emoji secukupnya. Bahasa santai tapi profesional khas Indonesia.
+
+===== TIKTOK SCRIPT =====
+Buat konten TikTok untuk pasar Indonesia (194 JUTA pengguna, pasar terbesar dunia):
+HOOK KALIMAT PERTAMA (5 versi alternatif, max 10 kata, harus bikin penonton STOP scroll):
+1. [Hook 1]
+2. [Hook 2]
+3. [Hook 3]
+4. [Hook 4]
+5. [Hook 5]
+
+SCRIPT VIDEO 60 DETIK (siap dibacakan):
+[0-5 detik] Hook: ...
+[5-20 detik] Problem: ...
+[20-40 detik] Solusi/Value: ...
+[40-55 detik] Proof/Demo: ...
+[55-60 detik] CTA: ...
+
+IDE KONTEN 7 VIDEO dari ebook ini:
+1. [Judul video + angle]
+2. [Judul video + angle]
+... dst
+
+20 HASHTAG TIKTOK INDONESIA yang relevan (mix trending + niche)
+
+===== TOKOPEDIA SHOPEE LISTING =====
+Buat listing produk digital untuk Tokopedia & Shopee (platform jual ebook #1 Indonesia):
+
+JUDUL PRODUK (max 60 karakter, SEO-optimized untuk search Tokped/Shopee):
+[Judul listing yang mengandung keyword utama]
+
+DESKRIPSI PRODUK (persuasif, terstruktur, max 2000 karakter):
+Buka dengan hook kuat.
+Isi manfaat dalam bullet points.
+Spesifikasi: format file, jumlah halaman, dll.
+Cara pembelian produk digital.
+Penutup dengan CTA.
+
+FAQ PRODUK DIGITAL (5 pertanyaan + jawaban):
+Q1: [Pertanyaan umum tentang produk digital]
+A1: ...
+... dst
+
+TAG/KEYWORD SHOPEE (10-15 tag untuk muncul di search):
+[tag1, tag2, ...]
+
+REKOMENDASI HARGA (dalam Rupiah, berdasarkan segmen target):
+- Harga Normal: Rp [...]
+- Harga Promo/Flash Sale: Rp [...]
+- Strategi bundling (jika relevan)
+` : ''}
 `;
       break;
 
