@@ -11,6 +11,7 @@ import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
+import { markEcoUsed } from '@/components/ecosystem-tracker';
 import {
   Dialog,
   DialogContent,
@@ -920,6 +921,7 @@ ${bodyHtml}
   }, [prompt, projectTopik, projectTitle, authorName, ebOutlineChapters, toast]);
 
   const handleGenerateChapter = useCallback(async (chapterId: string) => {
+    markEcoUsed('ebook');
     const ch = chapters.find(c => c.id === chapterId);
     if (!ch) return;
     setChapters(prev => prev.map(c => c.id === chapterId ? { ...c, loading: true, content: '' } : c));
@@ -1033,6 +1035,7 @@ ${bodyHtml}
 
   // ===== DISTRIBUSI HANDLERS =====
   const handlePlatformListing = useCallback(async () => {
+    markEcoUsed('distribusi');
     setPlatformListingLoading(true);
     setPlatformListingOpen(true);
     try {
@@ -1394,6 +1397,7 @@ ${bodyHtml}
 
   // ===== SOSMED HANDLERS =====
   const handleIgCaption = useCallback(async () => {
+    markEcoUsed('sosmed');
     setIgCaptionOpen(true);
     setIgCaptionContent('');
     setIgCaptionLoading(true);
@@ -1454,6 +1458,7 @@ ${bodyHtml}
 
   // ===== IKLAN HANDLERS =====
   const handleTikTokAds = useCallback(async () => {
+    markEcoUsed('iklan');
     setTikTokAdsOpen(true);
     setTikTokAdsContent('');
     setTikTokAdsLoading(true);
@@ -1469,6 +1474,7 @@ ${bodyHtml}
   }, [projectTopik, projectTitle, tikTokMasalah, tikTokSolusi, tikTokCta, tikTokDurasi, toast]);
 
   const handleGoogleAds = useCallback(async () => {
+    markEcoUsed('iklan');
     setGoogleAdsOpen(true);
     setGoogleAdsContent('');
     setGoogleAdsLoading(true);
@@ -1510,6 +1516,7 @@ ${bodyHtml}
   // ===== END EBOOK BUILDER HANDLERS =====
 
   const handleGenerateLpSection = useCallback(async (section: string) => {
+    markEcoUsed('landing');
     setLpSectionActive(section);
     setLpSectionOpen(true);
     setLpSectionContent('');
@@ -1719,6 +1726,7 @@ ${bodyHtml}
   }, [prompt, projectTopik, projectTitle, calendarPlatforms, toast]);
 
   const handleGenerateSop = useCallback(async () => {
+    markEcoUsed('sop');
     setSopOpen(true);
     setSopContent('');
     setSopLoading(true);
@@ -1737,6 +1745,7 @@ ${bodyHtml}
   }, [projectTopik, projectTitle, sopType, toast]);
 
   const handleGenerateLinkedin = useCallback(async () => {
+    markEcoUsed('sosmed');
     setLinkedinOpen(true);
     setLinkedinContent('');
     setLinkedinLoading(true);
@@ -1755,6 +1764,7 @@ ${bodyHtml}
   }, [projectTopik, projectTitle, linkedinAngle, toast]);
 
   const handleGenerateMembership = useCallback(async () => {
+    markEcoUsed('membership');
     setMembershipOpen(true);
     setMembershipContent('');
     setMembershipLoading(true);
@@ -1864,6 +1874,7 @@ ${bodyHtml}
   }, []);
 
   const handleChatDemo = useCallback(async () => {
+    markEcoUsed('chatbot');
     const parts: string[] = [];
     parts.push(`Kamu adalah AI Assistant ahli tentang topik "${projectTitle || projectTopik}". Bantu calon pembeli, peserta kursus, atau siapa pun yang penasaran dengan produk digital ini.`);
     if (authorName) parts.push(`Ebook ini ditulis oleh ${authorName}.`);
@@ -1927,6 +1938,7 @@ ${bodyHtml}
   }, [chatInput, chatLoading, chatMessages, chatSystemPrompt, fetchSSE, toast]);
 
   const handleGenerateSyllabus = useCallback(async (duration?: string, format?: string, goal?: string) => {
+    markEcoUsed('ecourse');
     setSyllabusConfigOpen(false);
     setSyllabusOpen(true);
     setSyllabusContent('');
@@ -1951,6 +1963,7 @@ ${bodyHtml}
   }, [projectTitle, projectTopik, projectTarget, syllabusConfigDuration, syllabusConfigFormat, syllabusConfigGoal, fetchSSE, toast]);
 
   const handleGenerateMiniApp = useCallback(async () => {
+    markEcoUsed('miniapp');
     setAppOpen(true);
     setAppContent('');
     setAppLoading(true);
@@ -3351,7 +3364,7 @@ ${bodyHtml}
               <div className="flex items-center gap-2 pt-1">
                 <div className="text-[10px] text-muted-foreground font-medium shrink-0 uppercase tracking-wide w-14 shrink-0">Publish:</div>
                 <Button
-                  onClick={() => { handleGeneratePublishView(); setEbPublishOpen(true); }}
+                  onClick={() => { markEcoUsed('publish'); handleGeneratePublishView(); setEbPublishOpen(true); }}
                   className="flex-1 bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-800 hover:to-purple-800 text-white text-xs h-8"
                   data-testid="button-publish-baca-online"
                 >

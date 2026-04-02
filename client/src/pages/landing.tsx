@@ -209,7 +209,7 @@ const FAQ_DATA = [
   },
   {
     question: "Bagaimana cara kerja generator prompt?",
-    answer: "Isi form proyek (topik, target audiens, industri, pain point, big idea), pilih salah satu dari 16 mode generasi, dan sistem menghasilkan prompt AI terstruktur yang dioptimasi untuk Bahasa Indonesia. Copy prompt dan jalankan di DokumenTender AI, ChatGPT, Claude, atau AI lainnya. Ikuti pipeline 9-langkah untuk membangun ekosistem bisnis dari ebook tersebut."
+    answer: "Isi form proyek (topik, target audiens, industri, pain point, big idea), lalu pilih dari 16 mode AI generasi. Sistem menghasilkan prompt terstruktur untuk Bahasa Indonesia — jalankan di ChatGPT, Claude, Gemini, atau DokumenTender AI. Penting: Pipeline 9-Langkah adalah kerangka distribusi (Ebook → Publish → Distribusi → Sosmed → Konversi → Strategi → Iklan → Funnel → Ekosistem), sedangkan 53 generator adalah alat AI yang membantu setiap langkah. Keduanya bekerja bersama untuk membangun ekosistem kompetensi digital."
   },
   {
     question: "Industri apa saja yang didukung?",
@@ -249,21 +249,36 @@ function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] 
 
 function ComparisonTable() {
   const features = [
-    { name: "Prompt per hari", free: "5", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Mode generasi (16 mode)", free: "3", pro: "16", enterprise: "16 + Custom" },
-    { name: "Pipeline Ebook Ecosystem 9-Langkah", free: false, pro: true, enterprise: true },
+    { name: "— PENGGUNAAN DASAR —", free: "", pro: "", enterprise: "", header: true },
+    { name: "Prompt per hari", free: "5/hari", pro: "Unlimited", enterprise: "Unlimited" },
+    { name: "Mode generasi AI (16 mode)", free: "3 mode", pro: "16 mode", enterprise: "16 + Custom" },
     { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "Teks", pro: "Semua", enterprise: "Semua + API" },
-    { name: "Export Terproteksi (watermark + hak cipta)", free: false, pro: true, enterprise: true },
-    { name: "Baca Online (HTML reader self-contained)", free: false, pro: true, enterprise: true },
-    { name: "Industry themes", free: "3", pro: "24", enterprise: "24 + Custom" },
-    { name: "IG Caption Pack + Reels Hook Generator", free: false, pro: true, enterprise: true },
-    { name: "Pricing Ladder 5-Tier + Launch D-30", free: false, pro: true, enterprise: true },
-    { name: "TikTok Ads Script + Google Search Ads RSA", free: false, pro: true, enterprise: true },
-    { name: "AI Image (DALL-E 3) cover & thumbnail", free: false, pro: true, enterprise: true },
-    { name: "Text-to-Speech (TTS) script", free: false, pro: true, enterprise: true },
-    { name: "Mini App Blueprint + deep-link", free: false, pro: true, enterprise: true },
+    { name: "Tema industri Indonesia", free: "3", pro: "24", enterprise: "24 + Custom" },
     { name: "AI Character modes", free: false, pro: true, enterprise: true },
+    { name: "— FONDASI EBOOK —", free: "", pro: "", enterprise: "", header: true },
+    { name: "Pipeline Ekosistem 9-Langkah", free: false, pro: true, enterprise: true },
+    { name: "Ebook Outline & Chapter Builder", free: "Terbatas", pro: "Penuh", enterprise: "Penuh" },
+    { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "TXT", pro: "Semua", enterprise: "Semua + API" },
+    { name: "Export Terproteksi (watermark + UU Hak Cipta)", free: false, pro: true, enterprise: true },
+    { name: "Baca Online (HTML Reader self-contained)", free: false, pro: true, enterprise: true },
+    { name: "— TRANSFER KOMPETENSI (Ekosistem) —", free: "", pro: "", enterprise: "", header: true },
+    { name: "Chatbot AI Demo (GPT Builder)", free: false, pro: true, enterprise: true },
+    { name: "E-Course Builder + Silabus 8 Modul", free: false, pro: true, enterprise: true },
+    { name: "Mini App Blueprint + deep-link", free: false, pro: true, enterprise: true },
+    { name: "SOP Prosedur Generator (Document Generator)", free: false, pro: true, enterprise: true },
+    { name: "Membership Site Brief (Funnel)", free: false, pro: true, enterprise: true },
+    { name: "Quiz Maker berlevel (Beginner–Advanced)", free: false, pro: true, enterprise: true },
+    { name: "Podcast Script + Audiobook Script", free: false, pro: true, enterprise: true },
+    { name: "— MARKETING & DISTRIBUSI —", free: "", pro: "", enterprise: "", header: true },
+    { name: "IG Caption Pack + Reels/TikTok Hook", free: false, pro: true, enterprise: true },
+    { name: "LinkedIn Thought Leader Article", free: false, pro: true, enterprise: true },
+    { name: "Pricing Ladder 5-Tier + Launch Checklist D-30", free: false, pro: true, enterprise: true },
+    { name: "Landing Page Generator (copy + HTML)", free: false, pro: true, enterprise: true },
+    { name: "TikTok Ads Script + Google Search Ads RSA", free: false, pro: true, enterprise: true },
+    { name: "Meta Ads Copy + WA Closing + Scarcity Pack", free: false, pro: true, enterprise: true },
+    { name: "AI Image (DALL-E 3) cover & mockup 3D", free: false, pro: true, enterprise: true },
+    { name: "Text-to-Speech (TTS) narasi", free: false, pro: true, enterprise: true },
+    { name: "— ENTERPRISE —", free: "", pro: "", enterprise: "", header: true },
     { name: "Priority support", free: false, pro: true, enterprise: true },
     { name: "Team collaboration", free: false, pro: false, enterprise: true },
     { name: "White-label export", free: false, pro: false, enterprise: true },
@@ -286,32 +301,43 @@ function ComparisonTable() {
           </tr>
         </thead>
         <tbody>
-          {features.map((feature, idx) => (
-            <tr key={idx} className="border-b last:border-0">
-              <td className="py-3 px-4">{feature.name}</td>
-              <td className="text-center py-3 px-4">
-                {typeof feature.free === 'boolean' ? (
-                  feature.free ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                ) : (
-                  <span>{feature.free}</span>
-                )}
-              </td>
-              <td className="text-center py-3 px-4 bg-primary/5">
-                {typeof feature.pro === 'boolean' ? (
-                  feature.pro ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                ) : (
-                  <span className="font-medium text-primary">{feature.pro}</span>
-                )}
-              </td>
-              <td className="text-center py-3 px-4">
-                {typeof feature.enterprise === 'boolean' ? (
-                  feature.enterprise ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                ) : (
-                  <span>{feature.enterprise}</span>
-                )}
-              </td>
-            </tr>
-          ))}
+          {features.map((feature, idx) => {
+            if ((feature as any).header) {
+              return (
+                <tr key={idx} className="bg-muted/50">
+                  <td colSpan={4} className="py-2 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                    {feature.name}
+                  </td>
+                </tr>
+              );
+            }
+            return (
+              <tr key={idx} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
+                <td className="py-3 px-4 text-sm">{feature.name}</td>
+                <td className="text-center py-3 px-4">
+                  {typeof feature.free === 'boolean' ? (
+                    feature.free ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                  ) : (
+                    <span className="text-sm">{feature.free}</span>
+                  )}
+                </td>
+                <td className="text-center py-3 px-4 bg-primary/5">
+                  {typeof feature.pro === 'boolean' ? (
+                    feature.pro ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                  ) : (
+                    <span className="text-sm font-medium text-primary">{feature.pro}</span>
+                  )}
+                </td>
+                <td className="text-center py-3 px-4">
+                  {typeof feature.enterprise === 'boolean' ? (
+                    feature.enterprise ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
+                  ) : (
+                    <span className="text-sm">{feature.enterprise}</span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
