@@ -257,6 +257,14 @@ export default function Home() {
     setProjectName('');
   };
 
+  const handleTopicUpdate = (topik: string, judul?: string) => {
+    setProjectData(prev => ({
+      ...prev,
+      topik,
+      judul: judul || topik,
+    }));
+  };
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const data = {
@@ -482,6 +490,7 @@ export default function Home() {
                 projectTopik={projectData.topik}
                 projectTarget={projectData.target}
                 uploadedFiles={uploadedFiles}
+                onTopicUpdate={handleTopicUpdate}
               />
             </div>
           </div>

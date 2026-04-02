@@ -45,6 +45,7 @@ interface PromptOutputProps {
   projectTopik?: string;
   projectTarget?: string;
   uploadedFiles?: { name: string; type: string; size: string }[];
+  onTopicUpdate?: (topik: string, judul?: string) => void;
 }
 
 const WORKFLOW_STEPS = [
@@ -83,7 +84,7 @@ function getSuggestedQuestions(topik: string): string[] {
   ];
 }
 
-export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [] }: PromptOutputProps) {
+export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
@@ -192,6 +193,9 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [mockupImages, setMockupImages] = useState<string[]>([]);
   const [mockupLoading, setMockupLoading] = useState(false);
   const [mockupStyle, setMockupStyle] = useState<'book' | 'phone' | 'tablet'>('phone');
+  // Brand / Author Identity (persisted)
+  const [authorName, setAuthorName] = useState(() => localStorage.getItem('ebb_author_name') || '');
+  const [exportLoading, setExportLoading] = useState(false);
   // Cover HTML Template Generator
   const [coverTplOpen, setCoverTplOpen] = useState(false);
   const [coverTplContent, setCoverTplContent] = useState('');
@@ -212,6 +216,61 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   useEffect(() => {
     setNextStepDismissed(false);
   }, [activeMode]);
+
+  // Persist author name
+  useEffect(() => {
+    localStorage.setItem('ebb_author_name', authorName);
+  }, [authorName]);
+
+  // Computed: pipeline completion
+  const pipelineItems = [
+    { key: 'chat', label: 'Chatbot Demo', done: chatMessages.length > 0 },
+    { key: 'syllabus', label: 'Silabus Kursus', done: !!syllabusContent },
+    { key: 'app', label: 'Blueprint App', done: !!appContent },
+    { key: 'quiz', label: 'Generator Kuis', done: !!quizContent },
+    { key: 'marketing', label: 'Marketing Kit', done: !!mktContent },
+    { key: 'script', label: 'Script+TTS', done: !!scriptContent },
+    { key: 'thumbnail', label: 'Thumbnail', done: thumbImages.length > 0 },
+    { key: 'monetization', label: 'Monetisasi', done: !!monoContent },
+    { key: 'review', label: 'AI Review', done: !!reviewContent },
+    { key: 'podcast', label: 'Podcast Script', done: !!podcastContent },
+    { key: 'audiobook', label: 'Audiobook', done: !!audiobookContent },
+    { key: 'landing', label: 'Landing Page', done: !!lpContent },
+    { key: 'cover', label: 'Cover Template', done: !!coverTplContent },
+    { key: 'mockup', label: 'Mockup 3D', done: mockupImages.length > 0 },
+  ];
+  const completedCount = pipelineItems.filter(i => i.done).length;
+
+  // Export Bundle: download all outputs as one TXT file
+  const handleExportBundle = useCallback(async () => {
+    setExportLoading(true);
+    const sections: string[] = [];
+    const sep = '\n\n' + '='.repeat(60) + '\n\n';
+    const title = projectTitle || projectTopik || 'Ebook Builder Pro';
+    sections.push(`📦 EXPORT BUNDLE — ${title}\nDibuat dengan Ebook Builder Pro\nTanggal: ${new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}\n${authorName ? `Penulis: ${authorName}` : ''}`);
+    if (docContent) sections.push(`📄 KONTEN EBOOK\n${sep.trim()}\n${docContent}`);
+    if (mktContent) sections.push(`📣 MARKETING KIT\n${sep.trim()}\n${mktContent}`);
+    if (scriptContent) sections.push(`🎬 SCRIPT VIDEO\n${sep.trim()}\n${scriptContent}`);
+    if (monoContent) sections.push(`💰 STRATEGI MONETISASI\n${sep.trim()}\n${monoContent}`);
+    if (reviewContent) sections.push(`🔍 AI QUALITY REVIEW\n${sep.trim()}\n${reviewContent}`);
+    if (podcastContent) sections.push(`🎙️ PODCAST SCRIPT\n${sep.trim()}\n${podcastContent}`);
+    if (audiobookContent) sections.push(`🎧 AUDIOBOOK SCRIPT\n${sep.trim()}\n${audiobookContent}`);
+    if (lpContent) sections.push(`🌐 LANDING PAGE\n${sep.trim()}\n${lpContent}`);
+    if (syllabusContent) sections.push(`🎓 SILABUS KURSUS\n${sep.trim()}\n${syllabusContent}`);
+    if (appContent) sections.push(`📱 BLUEPRINT APP\n${sep.trim()}\n${appContent}`);
+    if (quizContent) sections.push(`📝 GENERATOR KUIS\n${sep.trim()}\n${quizContent}`);
+    if (risetContent) sections.push(`🔍 RISET TOPIK\n${sep.trim()}\n${risetContent}`);
+    const bundle = sections.join(sep);
+    const blob = new Blob([bundle], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${title.replace(/\s+/g, '-').toLowerCase()}-bundle.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setExportLoading(false);
+    toast({ description: `Bundle ${sections.length - 1} output berhasil diunduh!` });
+  }, [projectTitle, projectTopik, authorName, docContent, mktContent, scriptContent, monoContent, reviewContent, podcastContent, audiobookContent, lpContent, syllabusContent, appContent, quizContent, risetContent, toast]);
 
   const handleCopy = async () => {
     try {
@@ -572,6 +631,7 @@ ${bodyHtml}
     try {
       const res = await apiRequest('POST', '/api/generate-mockup', {
         title: projectTitle || projectTopik,
+        author: authorName,
         style: mockupStyle,
       });
       const data = await res.json();
@@ -581,7 +641,7 @@ ${bodyHtml}
     } finally {
       setMockupLoading(false);
     }
-  }, [projectTitle, projectTopik, mockupStyle, toast]);
+  }, [projectTitle, projectTopik, authorName, mockupStyle, toast]);
 
   const handleReviewDocument = useCallback(async () => {
     if (!docContent) { toast({ title: 'Generate dokumen dulu sebelum review', variant: 'destructive' }); return; }
@@ -860,7 +920,7 @@ ${bodyHtml}
     setCoverTplContent('');
     setCoverTplLoading(true);
     setCoverTplTab('preview');
-    const author = opts?.author ?? coverTplAuthor;
+    const author = opts?.author ?? coverTplAuthor ?? authorName;
     const colorScheme = opts?.colorScheme ?? coverTplColorScheme;
     const style = opts?.style ?? coverTplStyle;
     try {
@@ -870,7 +930,7 @@ ${bodyHtml}
           title: projectTitle || projectTopik,
           topik: projectTopik,
           target: projectTarget,
-          author: author || 'Ebook Builder Pro',
+          author: author || authorName || 'Ebook Builder Pro',
           industry: projectTopik,
           colorScheme,
           style,
@@ -1304,11 +1364,61 @@ ${bodyHtml}
           })()}
 
           {/* Ekosistem Section */}
-          <div className="pt-4 border-t space-y-2">
-            <div className="flex items-center gap-2">
-              <div className="h-px flex-1 bg-gradient-to-r from-indigo-300/50 via-cyan-300/50 to-purple-300/50" />
-              <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest px-1">Ekosistem Ebook</span>
-              <div className="h-px flex-1 bg-gradient-to-r from-purple-300/50 via-cyan-300/50 to-indigo-300/50" />
+          <div className="pt-4 border-t space-y-3">
+            {/* Header + Progress Tracker */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-gradient-to-r from-indigo-300/50 via-cyan-300/50 to-purple-300/50" />
+                <span className="text-[11px] text-muted-foreground font-semibold uppercase tracking-widest px-1">Ekosistem Ebook</span>
+                <div className="h-px flex-1 bg-gradient-to-r from-purple-300/50 via-cyan-300/50 to-indigo-300/50" />
+              </div>
+              {/* Pipeline Progress Bar */}
+              <div className="rounded-lg bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-950/30 dark:to-purple-950/30 border border-indigo-200/50 dark:border-indigo-800/50 px-3 py-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+                    Pipeline Progress: {completedCount}/{pipelineItems.length} output selesai
+                  </span>
+                  {completedCount > 0 && (
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2 text-[10px] text-indigo-600 hover:text-indigo-700 hover:bg-indigo-100 dark:hover:bg-indigo-900/40"
+                      onClick={handleExportBundle}
+                      disabled={exportLoading}
+                      data-testid="button-export-bundle"
+                    >
+                      {exportLoading ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Download className="h-3 w-3 mr-1" />}
+                      Unduh Bundle
+                    </Button>
+                  )}
+                </div>
+                <div className="w-full bg-indigo-200/50 dark:bg-indigo-800/30 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-indigo-500 to-purple-500 rounded-full transition-all duration-700"
+                    style={{ width: `${(completedCount / pipelineItems.length) * 100}%` }}
+                  />
+                </div>
+                {completedCount > 0 && (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {pipelineItems.filter(i => i.done).map(i => (
+                      <span key={i.key} className="text-[9px] bg-indigo-100 dark:bg-indigo-900/40 text-indigo-600 dark:text-indigo-400 px-1.5 py-0.5 rounded-full">✓ {i.label}</span>
+                    ))}
+                  </div>
+                )}
+              </div>
+              {/* Author/Brand Name input */}
+              <div className="flex items-center gap-2">
+                <div className="relative flex-1">
+                  <input
+                    className="w-full h-7 pl-7 pr-3 text-[11px] rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-primary placeholder:text-muted-foreground/60"
+                    placeholder="Nama Penulis / Brand (dipakai di semua output)..."
+                    value={authorName}
+                    onChange={e => setAuthorName(e.target.value)}
+                    data-testid="input-author-name"
+                  />
+                  <span className="absolute left-2 top-1/2 -translate-y-1/2 text-xs">✍️</span>
+                </div>
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
               <Button
@@ -1319,9 +1429,9 @@ ${bodyHtml}
                 <Bot className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Chatbot Demo</span>
-                  <span className="text-[10px] opacity-80">{docContent ? '✓ Pakai konten ebook' : 'AI asisten topik'}</span>
+                  <span className="text-[10px] opacity-80">{chatMessages.length > 0 ? '✓ Sudah dijalankan' : 'AI asisten topik'}</span>
                 </span>
-                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+                {chatMessages.length > 0 && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => setSyllabusConfigOpen(true)}
@@ -1331,8 +1441,9 @@ ${bodyHtml}
                 <GraduationCap className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Silabus Kursus</span>
-                  <span className="text-[10px] opacity-80">8 modul + worksheet</span>
+                  <span className="text-[10px] opacity-80">{syllabusContent ? '✓ Silabus selesai' : '8 modul + worksheet'}</span>
                 </span>
+                {syllabusContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={handleGenerateMiniApp}
@@ -1342,8 +1453,9 @@ ${bodyHtml}
                 <Smartphone className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Blueprint App</span>
-                  <span className="text-[10px] opacity-80">Prompt Cursor/Lovable/Bolt</span>
+                  <span className="text-[10px] opacity-80">{appContent ? '✓ Blueprint selesai' : 'Prompt Cursor/Lovable/Bolt'}</span>
                 </span>
+                {appContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => setQuizConfigOpen(true)}
@@ -1353,9 +1465,9 @@ ${bodyHtml}
                 <ClipboardList className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Generator Kuis</span>
-                  <span className="text-[10px] opacity-80">{docContent ? '✓ Berbasis konten ebook' : '19 soal MCQ/esai/kasus'}</span>
+                  <span className="text-[10px] opacity-80">{quizContent ? '✓ Kuis selesai' : '19 soal MCQ/esai/kasus'}</span>
                 </span>
-                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+                {quizContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => handleGeneratePodcastScript()}
@@ -1365,9 +1477,9 @@ ${bodyHtml}
                 <Mic className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Podcast Script</span>
-                  <span className="text-[10px] opacity-80">Dialog 2 orang siap rekam</span>
+                  <span className="text-[10px] opacity-80">{podcastContent ? '✓ Script selesai' : 'Dialog 2 orang siap rekam'}</span>
                 </span>
-                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+                {podcastContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => handleGenerateAudiobookScript()}
@@ -1377,9 +1489,9 @@ ${bodyHtml}
                 <Volume2 className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Audiobook Script</span>
-                  <span className="text-[10px] opacity-80">Narasi solo + production cue</span>
+                  <span className="text-[10px] opacity-80">{audiobookContent ? '✓ Script selesai' : 'Narasi solo + production cue'}</span>
                 </span>
-                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+                {audiobookContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => handleGenerateLandingPage()}
@@ -1389,9 +1501,9 @@ ${bodyHtml}
                 <ExternalLink className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Landing Page</span>
-                  <span className="text-[10px] opacity-80">Copy + HTML siap upload</span>
+                  <span className="text-[10px] opacity-80">{lpContent ? '✓ Copy + HTML selesai' : 'Copy + HTML siap upload'}</span>
                 </span>
-                {docContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+                {lpContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => handleGenerateCoverTemplate()}
@@ -1401,8 +1513,9 @@ ${bodyHtml}
                 <Palette className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Cover Template</span>
-                  <span className="text-[10px] opacity-80">HTML/CSS siap cetak</span>
+                  <span className="text-[10px] opacity-80">{coverTplContent ? '✓ Cover selesai' : 'HTML/CSS siap cetak'}</span>
                 </span>
+                {coverTplContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => setFlipbookOpen(true)}
@@ -1416,26 +1529,28 @@ ${bodyHtml}
                 </span>
               </Button>
               <Button
-                onClick={() => { setRisetOpen(true); setRisetContent(''); }}
+                onClick={() => setRisetOpen(true)}
                 className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-riset-ebook"
               >
                 <Search className="h-4 w-4 mr-2 shrink-0" />
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Riset Topik</span>
-                  <span className="text-[10px] opacity-80">Ide ebook marketable</span>
+                  <span className="text-[10px] opacity-80">{risetContent ? '✓ Riset selesai' : 'Ide ebook marketable'}</span>
                 </span>
+                {risetContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
-                onClick={() => { setMockupOpen(true); setMockupImages([]); }}
+                onClick={() => setMockupOpen(true)}
                 className="bg-gradient-to-r from-rose-600 to-pink-700 hover:from-rose-700 hover:to-pink-800 text-white text-xs h-10 justify-start relative overflow-hidden"
                 data-testid="button-mockup-3d"
               >
                 <span className="text-base mr-2 shrink-0">📸</span>
                 <span className="flex flex-col items-start leading-tight">
                   <span className="font-semibold">Mockup 3D</span>
-                  <span className="text-[10px] opacity-80">Cover buku DALL-E 3</span>
+                  <span className="text-[10px] opacity-80">{mockupImages.length > 0 ? '✓ Mockup selesai' : 'Cover buku DALL-E 3'}</span>
                 </span>
+                {mockupImages.length > 0 && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
             </div>
             {docContent && (
@@ -3618,10 +3733,38 @@ ${bodyHtml}
               </div>
             )}
             {risetContent && !risetLoading && (
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3">
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2">
                 <p className="text-xs text-emerald-700 dark:text-emerald-300 font-medium">
-                  💡 Langkah selanjutnya: Pilih ide terbaik, lalu klik "Generate Prompt" di panel utama untuk memulai pipeline 16 output!
+                  💡 Pilih ide terbaik dari hasil riset → gunakan sebagai topik ebook utama
                 </p>
+                <div className="flex gap-2">
+                  <input
+                    className="flex-1 h-8 px-3 text-xs rounded-md border border-emerald-300 bg-white dark:bg-background focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    placeholder="Ketik ide yang dipilih / topik baru dari riset..."
+                    id="riset-topic-input"
+                    data-testid="input-riset-topic-pick"
+                  />
+                  <Button
+                    size="sm"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 text-xs"
+                    onClick={() => {
+                      const input = document.getElementById('riset-topic-input') as HTMLInputElement;
+                      const val = input?.value?.trim();
+                      if (val && onTopicUpdate) {
+                        onTopicUpdate(val);
+                        toast({ description: `✅ Topik "${val}" berhasil diaplikasikan ke form utama!` });
+                        setRisetOpen(false);
+                      } else if (!val) {
+                        toast({ title: 'Masukkan topik yang dipilih', variant: 'destructive' });
+                      } else {
+                        toast({ description: '💡 Salin topik ini ke form utama secara manual' });
+                      }
+                    }}
+                    data-testid="button-use-riset-topic"
+                  >
+                    <Sparkles className="h-3 w-3 mr-1" /> Pakai Topik Ini
+                  </Button>
+                </div>
               </div>
             )}
           </div>
@@ -3640,8 +3783,18 @@ ${bodyHtml}
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Buat gambar mockup 3D profesional untuk marketing ebook <strong>{projectTitle || projectTopik}</strong>. Pilih style tampilan:
+              Buat gambar mockup 3D profesional untuk marketing ebook <strong>{projectTitle || projectTopik}</strong>. Gambar langsung siap pakai untuk Tokopedia, Shopee, Instagram.
             </p>
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground shrink-0">✍️ Nama Penulis:</span>
+              <input
+                className="flex-1 h-8 px-3 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-rose-500"
+                placeholder="Nama penulis / brand (opsional)"
+                value={authorName}
+                onChange={e => setAuthorName(e.target.value)}
+                data-testid="input-mockup-author"
+              />
+            </div>
             <div className="grid grid-cols-3 gap-3">
               {([
                 ['book', '📗', 'Book Only', 'Tampilan buku saja'],
@@ -3694,6 +3847,24 @@ ${bodyHtml}
                 <p className="text-xs text-muted-foreground text-center">
                   Hover gambar untuk unduh. Gunakan untuk Tokopedia/Shopee, Instagram, dan marketing material.
                 </p>
+                {/* Smart Integration Hints */}
+                <div className="rounded-lg bg-rose-50 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-800 p-3 space-y-2">
+                  <p className="text-xs font-semibold text-rose-700 dark:text-rose-300">🔗 Integrasikan mockup ini ke pipeline lain:</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-50"
+                      onClick={() => { setMockupOpen(false); setTimeout(() => { setMktOpen(true); handleGenerateMarketingKit(); }, 300); }}>
+                      <Megaphone className="h-3 w-3 mr-1" /> → Marketing Kit
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-50"
+                      onClick={() => { setMockupOpen(false); setTimeout(() => handleGenerateLandingPage(), 300); }}>
+                      <ExternalLink className="h-3 w-3 mr-1" /> → Landing Page
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-7 text-xs border-rose-300 text-rose-700 hover:bg-rose-50"
+                      onClick={() => { setMockupOpen(false); setTimeout(() => handleGenerateCoverTemplate(), 300); }}>
+                      <Palette className="h-3 w-3 mr-1" /> → Cover Template
+                    </Button>
+                  </div>
+                </div>
               </div>
             )}
           </div>

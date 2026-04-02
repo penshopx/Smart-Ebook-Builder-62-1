@@ -1643,20 +1643,21 @@ Buat analisis yang sangat spesifik dan actionable untuk pasar Indonesia!`,
   // Generate 3D Ebook Mockup - DALL-E 3
   app.post("/api/generate-mockup", isAuthenticated, async (req, res) => {
     try {
-      const { title, style } = req.body;
+      const { title, author, style } = req.body;
       if (!title) return res.status(400).json({ error: "Title required" });
 
+      const byLine = author ? ` by ${author}` : '';
       const stylePrompts: Record<string, string[]> = {
         book: [
-          `Professional 3D book mockup of an Indonesian ebook titled "${title}". Realistic hardcover book floating at 45-degree angle, dramatic studio lighting, shadow on surface, clean white/light gray background, professional product photography style, highly detailed cover with elegant typography, glossy finish, high resolution`,
-          `3D rendered ebook cover mockup for "${title}". Softcover book, slight perspective tilt, warm studio light, subtle drop shadow, crisp clean aesthetic, bookstore display style, vibrant professional color palette, Indonesia market professional design`,
+          `Professional 3D book mockup of an Indonesian ebook titled "${title}"${byLine}. Realistic hardcover book floating at 45-degree angle, dramatic studio lighting, shadow on surface, clean white/light gray background, professional product photography style, highly detailed cover with elegant typography, glossy finish, high resolution`,
+          `3D rendered ebook cover mockup for "${title}"${byLine}. Softcover book, slight perspective tilt, warm studio light, subtle drop shadow, crisp clean aesthetic, bookstore display style, vibrant professional color palette, Indonesia market professional design`,
         ],
         phone: [
-          `Professional 3D mockup of ebook "${title}" displayed on a modern smartphone screen. Elegant phone floating at angle with ebook cover visible on screen, soft studio lighting, clean minimal background, app store style product shot, realistic screen reflection, premium look`,
-          `Ebook mockup "${title}" on smartphone. Phone screen showing ebook cover, lifestyle flat lay composition, white marble surface background, soft natural lighting, Instagram-ready product shot, premium minimalist aesthetic`,
+          `Professional 3D mockup of ebook "${title}"${byLine} displayed on a modern smartphone screen. Elegant phone floating at angle with ebook cover visible on screen, soft studio lighting, clean minimal background, app store style product shot, realistic screen reflection, premium look`,
+          `Ebook mockup "${title}" on smartphone. Phone screen showing ebook cover, lifestyle flat lay composition on white marble surface, soft natural lighting, Instagram-ready product shot, premium minimalist aesthetic${author ? `, author: ${author}` : ''}`,
         ],
         tablet: [
-          `Professional 3D mockup of ebook "${title}" displayed on a tablet/iPad. Realistic tablet floating slightly angled, ebook cover visible on screen, soft studio lighting, clean background, premium product photography, digital reading experience visualization`,
+          `Professional 3D mockup of ebook "${title}"${byLine} displayed on a tablet/iPad. Realistic tablet floating slightly angled, ebook cover visible on screen, soft studio lighting, clean background, premium product photography, digital reading experience visualization`,
           `Ebook "${title}" on modern tablet screen mockup. Elegant tablet at angle, ebook cover prominently displayed, coffee shop lifestyle background blur, premium look, professional product visualization for marketing`,
         ],
       };
