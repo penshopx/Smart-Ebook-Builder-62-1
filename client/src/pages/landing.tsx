@@ -551,6 +551,179 @@ export default function Landing() {
           </div>
         </section>
 
+        {/* VSL Founder Story */}
+        <section className="py-20 border-t bg-gradient-to-br from-amber-50/60 via-background to-orange-50/40 dark:from-amber-950/20 dark:via-background dark:to-orange-950/10">
+          <div className="container px-4 mx-auto max-w-screen-xl">
+            {/* Section header */}
+            <div className="text-center mb-14">
+              <Badge variant="secondary" className="mb-4 px-4 py-2 bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border-amber-200 dark:border-amber-700">
+                <TrendingUp className="h-3 w-3 mr-2" />
+                Kisah Nyata · Bukan Teori
+              </Badge>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4">
+                Dari <span className="text-amber-600 dark:text-amber-400">Laptop + Internet</span>
+                <br />Jadi <span className="text-primary">1,6 Miliar Rupiah</span>
+              </h2>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Tahun 2015–2019. Tanpa sewa ruko, tanpa stok barang, tanpa gaji karyawan. 
+                Hanya dari produk digital bernama ebook.
+              </p>
+            </div>
+
+            {/* Big stat + quote */}
+            <div className="grid md:grid-cols-2 gap-8 mb-14 items-center">
+              <div className="relative">
+                <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-2xl blur-xl opacity-20" />
+                <Card className="relative border-amber-200 dark:border-amber-800 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20">
+                  <CardContent className="pt-8 pb-6 px-8 text-center">
+                    <div className="text-7xl font-black text-amber-600 dark:text-amber-400 mb-2">1,6M</div>
+                    <div className="text-2xl font-bold mb-1">Rupiah</div>
+                    <div className="text-sm text-muted-foreground mb-6">dari jualan ebook saja · 4 tahun · 100% digital</div>
+                    <div className="flex justify-center gap-6 text-sm">
+                      <div className="text-center">
+                        <div className="font-bold text-green-600">0</div>
+                        <div className="text-muted-foreground text-xs">Stok barang</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-green-600">0</div>
+                        <div className="text-muted-foreground text-xs">Sewa toko</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-green-600">0</div>
+                        <div className="text-muted-foreground text-xs">Gaji karyawan</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="font-bold text-primary">∞</div>
+                        <div className="text-muted-foreground text-xs">Dijual berkali-kali</div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="space-y-4">
+                <div className="p-5 rounded-xl border bg-card hover-elevate">
+                  <Quote className="h-6 w-6 text-amber-400 mb-2" />
+                  <p className="text-base italic text-muted-foreground leading-relaxed">
+                    "Bayangin kalau Anda punya resep keluarga masakan yang enak banget... Kalau Anda jual masakannya, 
+                    Anda harus belanja bahan, masak, mengemas, mengirim. Ribet. Tapi kalau Anda jual <strong>resepnya</strong> — 
+                    Anda cukup nulis sekali dan orang bisa download berkali-kali."
+                  </p>
+                  <p className="text-sm font-semibold text-amber-600 dark:text-amber-400 mt-3">— Mas Harley, Founder</p>
+                </div>
+                <div className="p-4 rounded-xl border bg-amber-500/5 border-amber-200 dark:border-amber-800 flex items-start gap-3">
+                  <Globe className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground">Tidak terbatas wilayah.</strong> Anda bisa dapat uang bahkan dari tempat terpencil yang Anda tidak pernah tahu di mana lokasinya.
+                  </p>
+                </div>
+                <div className="p-4 rounded-xl border bg-green-500/5 border-green-200 dark:border-green-800 flex items-start gap-3">
+                  <TrendingUp className="h-5 w-5 text-green-600 shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    <strong className="text-foreground">Keuntungan murni masuk ke kantong Anda.</strong> Biaya produksi nol. Tidak ada logistik. Sekali buat, dijual ribuan kali.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* 3 Steps */}
+            <div className="mb-14">
+              <h3 className="text-center text-xl font-bold mb-8">
+                3 Langkah yang <span className="text-primary">Bisa Dibantu AI</span> — dari Ide sampai Jual
+              </h3>
+              <div className="grid md:grid-cols-3 gap-6">
+                {[
+                  {
+                    step: "1",
+                    icon: Lightbulb,
+                    title: "Temukan Ide",
+                    color: "from-blue-500 to-cyan-500",
+                    bg: "from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20",
+                    border: "border-blue-200 dark:border-blue-800",
+                    desc: "Dulu harus brainstorming berminggu-minggu. Sekarang cukup ajukan beberapa pertanyaan ke AI — Anda langsung dapat daftar ide yang sudah terbukti ada pasarnya.",
+                  },
+                  {
+                    step: "2",
+                    icon: FileText,
+                    title: "Tulis Kontennya",
+                    color: "from-purple-500 to-violet-500",
+                    bg: "from-purple-50 to-violet-50 dark:from-purple-950/20 dark:to-violet-950/20",
+                    border: "border-purple-200 dark:border-purple-800",
+                    desc: "Tidak perlu jago nulis. AI bisa bikin kerangka sampai mengisi ebook lengkap sesuai instruksi Anda. Proses yang dulu butuh berbulan-bulan, kini jadi hitungan jam.",
+                  },
+                  {
+                    step: "3",
+                    icon: ImagePlus,
+                    title: "Desain Cover & Jual",
+                    color: "from-amber-500 to-orange-500",
+                    bg: "from-amber-50 to-orange-50 dark:from-amber-950/20 dark:to-orange-950/20",
+                    border: "border-amber-200 dark:border-amber-800",
+                    desc: "Tidak perlu mahir desain. AI bantu bikin cover yang cantik — warna, layout, gambar — semuanya sudah pintar. Lalu iklan dan konten penjualannya pun bisa dibuatkan AI.",
+                  },
+                ].map(({ step, icon: Icon, title, color, bg, border, desc }) => (
+                  <div key={step} className={`relative p-6 rounded-2xl border ${border} bg-gradient-to-br ${bg} hover-elevate`}>
+                    <div className={`inline-flex items-center justify-center h-10 w-10 rounded-xl bg-gradient-to-br ${color} text-white font-bold text-lg mb-4`}>
+                      {step}
+                    </div>
+                    <Icon className="h-5 w-5 text-muted-foreground mb-2" />
+                    <h4 className="font-bold text-base mb-2">{title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Guarantee + CTA */}
+            <div className="max-w-3xl mx-auto">
+              <Card className="border-green-200 dark:border-green-800 bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20">
+                <CardContent className="pt-8 pb-8 px-8">
+                  <div className="flex flex-col md:flex-row items-center gap-6">
+                    <div className="flex-shrink-0 text-center">
+                      <div className="h-20 w-20 rounded-full bg-green-500 flex items-center justify-center mx-auto mb-2">
+                        <Shield className="h-10 w-10 text-white" />
+                      </div>
+                      <div className="text-xs font-bold text-green-700 dark:text-green-400 uppercase tracking-wider">Garansi</div>
+                      <div className="text-2xl font-black text-green-700 dark:text-green-400">24 Jam</div>
+                    </div>
+                    <div className="flex-1 text-center md:text-left">
+                      <h4 className="font-bold text-lg mb-2">Garansi Uang Kembali — Tanpa Pertanyaan</h4>
+                      <p className="text-sm text-muted-foreground leading-relaxed mb-4">
+                        Jika dalam 24 jam Anda mempelajari semua materi dan tidak mendapat ide yang menarik sama sekali, 
+                        uang akan dikembalikan penuh. Risiko sepenuhnya di kami. Anda tidak rugi sepeserpun.
+                      </p>
+                      <div className="flex flex-wrap gap-3 justify-center md:justify-start text-xs">
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400 font-medium">
+                          <CheckCircle2 className="h-4 w-4" /> Tidak ada syarat rumit
+                        </div>
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400 font-medium">
+                          <CheckCircle2 className="h-4 w-4" /> Langsung diproses
+                        </div>
+                        <div className="flex items-center gap-1 text-green-700 dark:text-green-400 font-medium">
+                          <CheckCircle2 className="h-4 w-4" /> 100% aman
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="mt-8 text-center">
+                <p className="text-muted-foreground mb-4 text-sm">
+                  Bayangin dalam 24 jam Anda sudah punya ide, punya produknya, dan bisa langsung jual.
+                </p>
+                <Button size="lg" asChild className="bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white text-lg px-10" data-testid="button-cta-vsl">
+                  <a href="/api/login">
+                    <Rocket className="mr-2 h-5 w-5" />
+                    Mulai Bikin Produk Digital Sekarang
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </Button>
+                <p className="text-xs text-muted-foreground mt-3">Gratis untuk memulai · Tidak perlu kartu kredit</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Industries Supported */}
         <section className="py-20 border-t">
           <div className="container px-4 mx-auto max-w-screen-xl">
