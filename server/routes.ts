@@ -151,17 +151,28 @@ export async function registerRoutes(
   app.post("/api/user/upgrade-request", isAuthenticated, async (req, res) => {
     try {
       const userId = getUserId(req);
-      const { targetPlan } = z.object({ targetPlan: z.enum(['pro', 'enterprise']) }).parse(req.body);
+      const { targetPlan } = z.object({ targetPlan: z.enum(['pro', 'premium', 'advance', 'enterprise']) }).parse(req.body);
       await storage.createUpgradeRequest(userId, targetPlan);
-      const planPrices: Record<string, string> = { pro: 'Rp 99.000/bulan', enterprise: 'Rp 499.000/bulan' };
+      const planPrices: Record<string, string> = {
+        pro: 'Rp 99.000/bulan',
+        premium: 'Rp 199.000/bulan',
+        advance: 'Rp 299.000/bulan',
+        enterprise: 'Rp 499.000/bulan',
+      };
+      const planNames: Record<string, string> = {
+        pro: 'Pro',
+        premium: 'Premium',
+        advance: 'Advance',
+        enterprise: 'Enterprise',
+      };
       res.json({
         success: true,
         requestedPlan: targetPlan,
         price: planPrices[targetPlan],
         contactInfo: {
-          whatsapp: 'https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20ingin%20upgrade%20ke%20paket%20' + targetPlan,
+          whatsapp: 'https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20ingin%20upgrade%20ke%20paket%20' + encodeURIComponent(planNames[targetPlan] ?? targetPlan),
           email: 'upgrade@chaesaai.com',
-          subject: `Upgrade ${targetPlan} - Chaesa AI Studio`,
+          subject: `Upgrade ${planNames[targetPlan] ?? targetPlan} - Chaesa AI Studio`,
         },
       });
     } catch (error) {

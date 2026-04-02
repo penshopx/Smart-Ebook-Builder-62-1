@@ -40,13 +40,17 @@ import { Link } from 'wouter';
 
 const PLAN_COLORS: Record<string, string> = {
   free: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
-  pro: 'bg-primary/10 text-primary',
+  pro: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+  premium: 'bg-primary/10 text-primary',
+  advance: 'bg-purple-100 text-purple-700 dark:bg-purple-900 dark:text-purple-300',
   enterprise: 'bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300',
 };
 
 const PLAN_ICONS: Record<string, typeof Zap> = {
   free: Sparkles,
   pro: Zap,
+  premium: Star,
+  advance: Shield,
   enterprise: Crown,
 };
 
@@ -72,52 +76,95 @@ const PRICING_PLANS = [
     price: 'Rp 0',
     period: '/bulan',
     desc: 'Untuk mencoba fitur dasar',
-    features: ['5 prompt per hari', '3 mode generasi', '1 proyek tersimpan', 'Export TXT', '3 industri themes'],
+    features: [
+      '5 prompt per hari',
+      '3 mode generasi (Brainstorm, Big Idea, Outline)',
+      '1 proyek tersimpan',
+      'Export TXT',
+      '3 industri themes',
+    ],
     cta: 'Paket Aktif',
     highlight: false,
+    color: '',
   },
   {
     id: 'pro',
     name: 'Pro',
     price: 'Rp 99K',
-    originalPrice: 'Rp 199K',
+    period: '/bulan',
+    desc: 'Mulai berkarya lebih produktif',
+    features: [
+      '25 prompt per hari',
+      '8 mode generasi',
+      '5 proyek tersimpan',
+      'Export TXT/PDF',
+      '8 industri themes',
+      'Draft Bab, Video Script, Quiz Maker',
+      'Extend Text, Marketing Kit',
+    ],
+    cta: 'Upgrade ke Pro',
+    highlight: false,
+    color: 'border-blue-300 dark:border-blue-700',
+  },
+  {
+    id: 'premium',
+    name: 'Premium',
+    price: 'Rp 199K',
     period: '/bulan',
     desc: 'Untuk content creator serius',
     features: [
+      '75 prompt per hari',
+      '12 mode generasi',
+      '20 proyek tersimpan',
+      'Export TXT/PDF/DOCX/MD',
+      '16 industri themes',
+      'E-Course Builder + GPT Builder',
+      'Document Generator + Mini App Blueprint',
+      'AI Image Mockup via DALL-E 3',
+    ],
+    cta: 'Upgrade ke Premium',
+    highlight: true,
+    color: '',
+  },
+  {
+    id: 'advance',
+    name: 'Advance',
+    price: 'Rp 299K',
+    period: '/bulan',
+    desc: 'Ekosistem penuh tanpa batas',
+    features: [
       'Unlimited prompt',
       'Semua 16 mode generasi',
-      'Ekosistem 10-Langkah penuh (ebook → 10 output)',
-      'Chatbot AI Demo + E-Course Builder',
-      'Mini App Blueprint + SOP Generator',
-      'Podcast Script + Audiobook Script',
-      'Landing Page Copy + Cover HTML Generator',
-      'Marketing Kit 7 Kanal (IG, TikTok, LinkedIn, dst)',
-      'AI Image Mockup 3D via DALL-E 3',
-      'Text-to-Speech (TTS) narasi',
       'Unlimited proyek',
       'Export TXT/PDF/DOCX/MD/HTML',
-      '24 industry themes',
-      'Priority support (WhatsApp & email)',
+      '24 industri themes',
+      'Podcast Script + Audiobook Script',
+      'Landing Page Copy + Cover HTML',
+      'TTS narasi + Ekosistem 9-Langkah penuh',
+      'Priority support',
     ],
-    cta: 'Upgrade ke Pro',
-    highlight: true,
+    cta: 'Upgrade ke Advance',
+    highlight: false,
+    color: 'border-purple-300 dark:border-purple-700',
   },
   {
     id: 'enterprise',
     name: 'Enterprise',
     price: 'Rp 499K',
     period: '/bulan',
-    desc: 'Untuk tim dan bisnis',
+    desc: 'Untuk tim dan bisnis skala besar',
     features: [
-      'Semua fitur Pro',
+      'Semua fitur Advance',
       'Hingga 10 anggota tim',
       'White-label export',
       'API access',
       'Custom AI training',
       'Dedicated support',
+      'SLA & onboarding',
     ],
     cta: 'Hubungi Sales',
     highlight: false,
+    color: 'border-amber-300 dark:border-amber-700',
   },
 ];
 
@@ -148,7 +195,8 @@ export default function Account() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const upgrade = params.get('upgrade');
-    if (upgrade === 'pro' || upgrade === 'enterprise') {
+    const validPlans = ['pro', 'premium', 'advance', 'enterprise'];
+    if (upgrade && validPlans.includes(upgrade)) {
       setTargetPlan(upgrade);
       setUpgradeResult(null);
       setUpgradeDialogOpen(true);
@@ -293,11 +341,11 @@ export default function Account() {
                   <Button
                     className="w-full bg-gradient-to-r from-primary to-purple-600"
                     size="sm"
-                    onClick={() => handleUpgradeClick('pro')}
+                    onClick={() => handleUpgradeClick('premium')}
                     data-testid="button-upgrade-from-usage"
                   >
-                    <Zap className="h-3.5 w-3.5 mr-1.5" />
-                    Upgrade ke Pro
+                    <Star className="h-3.5 w-3.5 mr-1.5" />
+                    Upgrade ke Premium
                   </Button>
                 </CardFooter>
               )}
@@ -339,14 +387,21 @@ export default function Account() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
               {PRICING_PLANS.map((plan) => {
                 const isActive = currentPlan === plan.id;
                 const PIcon = PLAN_ICONS[plan.id] ?? Sparkles;
+                const iconColor: Record<string, string> = {
+                  free: 'text-gray-500',
+                  pro: 'text-blue-500',
+                  premium: 'text-primary',
+                  advance: 'text-purple-500',
+                  enterprise: 'text-amber-500',
+                };
                 return (
                   <Card
                     key={plan.id}
-                    className={`relative flex flex-col ${plan.highlight ? 'border-2 border-primary shadow-lg' : ''} ${isActive ? 'ring-2 ring-green-500' : ''}`}
+                    className={`relative flex flex-col ${plan.highlight ? 'border-2 border-primary shadow-lg' : plan.color ? `border-2 ${plan.color}` : ''} ${isActive ? 'ring-2 ring-green-500' : ''}`}
                     data-testid={`card-plan-${plan.id}`}
                   >
                     {plan.highlight && (
@@ -364,15 +419,12 @@ export default function Account() {
                     )}
                     <CardHeader className={`pb-2 ${plan.highlight ? 'pt-6' : ''}`}>
                       <div className="flex items-center gap-2 mb-1">
-                        <PIcon className={`h-4 w-4 ${plan.id === 'pro' ? 'text-primary' : plan.id === 'enterprise' ? 'text-amber-500' : 'text-gray-500'}`} />
-                        <CardTitle className="text-base">{plan.name}</CardTitle>
+                        <PIcon className={`h-4 w-4 ${iconColor[plan.id] ?? 'text-gray-500'}`} />
+                        <CardTitle className="text-sm">{plan.name}</CardTitle>
                       </div>
                       <CardDescription className="text-xs">{plan.desc}</CardDescription>
                       <div className="mt-2">
-                        {plan.originalPrice && (
-                          <span className="text-xs text-muted-foreground line-through mr-1">{plan.originalPrice}</span>
-                        )}
-                        <span className="text-2xl font-bold">{plan.price}</span>
+                        <span className="text-xl font-bold">{plan.price}</span>
                         <span className="text-xs text-muted-foreground">{plan.period}</span>
                       </div>
                     </CardHeader>
@@ -426,7 +478,7 @@ export default function Account() {
             {/* Feature Comparison */}
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Apa yang Anda Dapat di Paket Pro?</CardTitle>
+                <CardTitle className="text-base">Kenapa Upgrade ke Premium atau Lebih Tinggi?</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

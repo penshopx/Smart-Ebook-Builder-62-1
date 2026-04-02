@@ -29,7 +29,8 @@ function AppContent() {
     if (!raw) return;
     try {
       const intent = JSON.parse(raw) as { plan: string; ts: number };
-      if (Date.now() - intent.ts < 60 * 60 * 1000) {
+      const validPlans = ['pro', 'premium', 'advance', 'enterprise'];
+      if (Date.now() - intent.ts < 60 * 60 * 1000 && validPlans.includes(intent.plan)) {
         sessionStorage.removeItem('chaesa_upgrade_intent');
         setLocation(`/account?upgrade=${intent.plan}`);
       } else {

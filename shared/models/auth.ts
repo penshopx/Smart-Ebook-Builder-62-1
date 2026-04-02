@@ -21,7 +21,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  // Subscription plan: 'free' | 'pro' | 'enterprise'
+  // Subscription plan: 'free' | 'pro' | 'premium' | 'advance' | 'enterprise'
   plan: varchar("plan").default("free").notNull(),
   // Daily prompt tracking
   promptsUsedToday: integer("prompts_used_today").default(0).notNull(),
@@ -44,12 +44,28 @@ export const PLAN_LIMITS = {
     color: 'gray',
   },
   pro: {
+    promptsPerDay: 25,
+    maxProjects: 5,
+    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT'],
+    exports: ['txt', 'pdf'],
+    label: 'Pro',
+    color: 'blue',
+  },
+  premium: {
+    promptsPerDay: 75,
+    maxProjects: 20,
+    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT', 'E_COURSE', 'GPT_BUILDER', 'DOCUMENT_GENERATOR', 'MINI_APP'],
+    exports: ['txt', 'pdf', 'docx', 'md'],
+    label: 'Premium',
+    color: 'primary',
+  },
+  advance: {
     promptsPerDay: Infinity,
     maxProjects: Infinity,
     allowedModes: 'all',
     exports: ['txt', 'pdf', 'docx', 'md', 'html'],
-    label: 'Pro',
-    color: 'primary',
+    label: 'Advance',
+    color: 'purple',
   },
   enterprise: {
     promptsPerDay: Infinity,

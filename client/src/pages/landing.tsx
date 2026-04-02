@@ -247,65 +247,73 @@ function TestimonialCard({ testimonial }: { testimonial: typeof TESTIMONIALS[0] 
   );
 }
 
+type PlanVal = boolean | string;
+interface CompRow { name: string; header?: boolean; free: PlanVal; pro: PlanVal; premium: PlanVal; advance: PlanVal; enterprise: PlanVal; }
+
 function ComparisonTable() {
-  const features = [
-    { name: "— PENGGUNAAN DASAR —", free: "", pro: "", enterprise: "", header: true },
-    { name: "Prompt per hari", free: "5/hari", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Mode generasi AI (16 mode)", free: "3 mode", pro: "16 mode", enterprise: "16 + Custom" },
-    { name: "Simpan proyek", free: "1", pro: "Unlimited", enterprise: "Unlimited" },
-    { name: "Tema industri Indonesia", free: "3", pro: "24", enterprise: "24 + Custom" },
-    { name: "AI Character modes", free: false, pro: true, enterprise: true },
-    { name: "— FONDASI EBOOK —", free: "", pro: "", enterprise: "", header: true },
-    { name: "Pipeline Ekosistem 9-Langkah", free: false, pro: true, enterprise: true },
-    { name: "Ebook Outline & Chapter Builder", free: "Terbatas", pro: "Penuh", enterprise: "Penuh" },
-    { name: "Export format (TXT/PDF/DOCX/MD/HTML)", free: "TXT", pro: "Semua", enterprise: "Semua + API" },
-    { name: "Export Terproteksi (watermark + UU Hak Cipta)", free: false, pro: true, enterprise: true },
-    { name: "Baca Online (HTML Reader self-contained)", free: false, pro: true, enterprise: true },
-    { name: "— TRANSFER KOMPETENSI (Ekosistem) —", free: "", pro: "", enterprise: "", header: true },
-    { name: "Chatbot AI Demo (GPT Builder)", free: false, pro: true, enterprise: true },
-    { name: "E-Course Builder + Silabus 8 Modul", free: false, pro: true, enterprise: true },
-    { name: "Mini App Blueprint + deep-link", free: false, pro: true, enterprise: true },
-    { name: "SOP Prosedur Generator (Document Generator)", free: false, pro: true, enterprise: true },
-    { name: "Membership Site Brief (Funnel)", free: false, pro: true, enterprise: true },
-    { name: "Quiz Maker berlevel (Beginner–Advanced)", free: false, pro: true, enterprise: true },
-    { name: "Podcast Script + Audiobook Script", free: false, pro: true, enterprise: true },
-    { name: "— MARKETING & DISTRIBUSI —", free: "", pro: "", enterprise: "", header: true },
-    { name: "IG Caption Pack + Reels/TikTok Hook", free: false, pro: true, enterprise: true },
-    { name: "LinkedIn Thought Leader Article", free: false, pro: true, enterprise: true },
-    { name: "Pricing Ladder 5-Tier + Launch Checklist D-30", free: false, pro: true, enterprise: true },
-    { name: "Landing Page Generator (copy + HTML)", free: false, pro: true, enterprise: true },
-    { name: "TikTok Ads Script + Google Search Ads RSA", free: false, pro: true, enterprise: true },
-    { name: "Meta Ads Copy + WA Closing + Scarcity Pack", free: false, pro: true, enterprise: true },
-    { name: "AI Image (DALL-E 3) cover & mockup 3D", free: false, pro: true, enterprise: true },
-    { name: "Text-to-Speech (TTS) narasi", free: false, pro: true, enterprise: true },
-    { name: "— ENTERPRISE —", free: "", pro: "", enterprise: "", header: true },
-    { name: "Priority support", free: false, pro: true, enterprise: true },
-    { name: "Team collaboration", free: false, pro: false, enterprise: true },
-    { name: "White-label export", free: false, pro: false, enterprise: true },
-    { name: "API Access", free: false, pro: false, enterprise: true },
+  const features: CompRow[] = [
+    { name: "— PENGGUNAAN DASAR —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
+    { name: "Prompt per hari", free: "5/hari", pro: "25/hari", premium: "75/hari", advance: "Unlimited", enterprise: "Unlimited" },
+    { name: "Mode generasi AI", free: "3 mode", pro: "8 mode", premium: "12 mode", advance: "16 mode", enterprise: "16 + Custom" },
+    { name: "Proyek tersimpan", free: "1", pro: "5", premium: "20", advance: "Unlimited", enterprise: "Unlimited" },
+    { name: "Industri themes", free: "3", pro: "8", premium: "16", advance: "24", enterprise: "24 + Custom" },
+    { name: "— FONDASI EBOOK —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
+    { name: "Ebook Outline & Chapter Builder", free: "Terbatas", pro: "Dasar", premium: "Penuh", advance: "Penuh", enterprise: "Penuh" },
+    { name: "Export format", free: "TXT", pro: "TXT/PDF", premium: "TXT/PDF/DOCX/MD", advance: "Semua", enterprise: "Semua + API" },
+    { name: "Export Terproteksi (watermark)", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "Baca Online (HTML Reader)", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "— TRANSFER KOMPETENSI —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
+    { name: "Chatbot AI Demo (GPT Builder)", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "E-Course Builder (8 modul)", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "Mini App Blueprint", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "Document Generator (SOP)", free: false, pro: "Dasar", premium: true, advance: true, enterprise: true },
+    { name: "Podcast + Audiobook Script", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "AI Image DALL-E 3", free: false, pro: false, premium: true, advance: true, enterprise: true },
+    { name: "Text-to-Speech (TTS)", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "— MARKETING & DISTRIBUSI —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
+    { name: "Marketing Kit (IG, TikTok, WA)", free: false, pro: true, premium: true, advance: true, enterprise: true },
+    { name: "Landing Page Copy + HTML", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "TikTok Ads + Google Search Ads", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "Pricing Ladder + Launch Checklist", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "— ENTERPRISE —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
+    { name: "Priority support", free: false, pro: false, premium: false, advance: true, enterprise: true },
+    { name: "Team collaboration", free: false, pro: false, premium: false, advance: false, enterprise: true },
+    { name: "White-label export", free: false, pro: false, premium: false, advance: false, enterprise: true },
+    { name: "API Access", free: false, pro: false, premium: false, advance: false, enterprise: true },
   ];
+
+  const renderCell = (val: PlanVal, highlight = false) => {
+    if (typeof val === 'boolean') {
+      return val
+        ? <CheckCircle2 className="h-4 w-4 text-green-500 mx-auto" />
+        : <XCircle className="h-4 w-4 text-muted-foreground/20 mx-auto" />;
+    }
+    return <span className={`text-xs ${highlight ? 'font-medium text-primary' : ''}`}>{val}</span>;
+  };
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
           <tr className="border-b">
-            <th className="text-left py-4 px-4 font-semibold">Fitur</th>
-            <th className="text-center py-4 px-4 font-semibold">Free</th>
-            <th className="text-center py-4 px-4 font-semibold">
-              <div className="inline-flex items-center gap-1">
-                Pro <Crown className="h-4 w-4 text-amber-500" />
+            <th className="text-left py-3 px-3 font-semibold text-sm min-w-[160px]">Fitur</th>
+            <th className="text-center py-3 px-2 font-semibold">Free</th>
+            <th className="text-center py-3 px-2 font-semibold text-blue-600">Pro</th>
+            <th className="text-center py-3 px-2 font-semibold bg-primary/5">
+              <div className="flex items-center justify-center gap-1 text-primary">
+                Premium <Star className="h-3 w-3 fill-primary" />
               </div>
             </th>
-            <th className="text-center py-4 px-4 font-semibold">Enterprise</th>
+            <th className="text-center py-3 px-2 font-semibold text-purple-600">Advance</th>
+            <th className="text-center py-3 px-2 font-semibold text-amber-600">Enterprise</th>
           </tr>
         </thead>
         <tbody>
           {features.map((feature, idx) => {
-            if ((feature as any).header) {
+            if (feature.header) {
               return (
                 <tr key={idx} className="bg-muted/50">
-                  <td colSpan={4} className="py-2 px-4 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                  <td colSpan={6} className="py-2 px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
                     {feature.name}
                   </td>
                 </tr>
@@ -313,28 +321,12 @@ function ComparisonTable() {
             }
             return (
               <tr key={idx} className="border-b last:border-0 hover:bg-muted/20 transition-colors">
-                <td className="py-3 px-4 text-sm">{feature.name}</td>
-                <td className="text-center py-3 px-4">
-                  {typeof feature.free === 'boolean' ? (
-                    feature.free ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                  ) : (
-                    <span className="text-sm">{feature.free}</span>
-                  )}
-                </td>
-                <td className="text-center py-3 px-4 bg-primary/5">
-                  {typeof feature.pro === 'boolean' ? (
-                    feature.pro ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                  ) : (
-                    <span className="text-sm font-medium text-primary">{feature.pro}</span>
-                  )}
-                </td>
-                <td className="text-center py-3 px-4">
-                  {typeof feature.enterprise === 'boolean' ? (
-                    feature.enterprise ? <CheckCircle2 className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/30 mx-auto" />
-                  ) : (
-                    <span className="text-sm">{feature.enterprise}</span>
-                  )}
-                </td>
+                <td className="py-2.5 px-3 text-xs">{feature.name}</td>
+                <td className="text-center py-2.5 px-2">{renderCell(feature.free)}</td>
+                <td className="text-center py-2.5 px-2">{renderCell(feature.pro)}</td>
+                <td className="text-center py-2.5 px-2 bg-primary/5">{renderCell(feature.premium, true)}</td>
+                <td className="text-center py-2.5 px-2">{renderCell(feature.advance)}</td>
+                <td className="text-center py-2.5 px-2">{renderCell(feature.enterprise)}</td>
               </tr>
             );
           })}
@@ -1091,128 +1083,123 @@ export default function Landing() {
             </div>
 
             {/* Pricing Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto mb-12">
-              {/* Free */}
-              <Card className="relative">
-                <CardHeader>
-                  <CardTitle>Free</CardTitle>
-                  <CardDescription>Untuk mencoba fitur dasar</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">Rp 0</span>
-                    <span className="text-muted-foreground">/bulan</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {['5 prompt per hari', '3 mode generasi', 'Simpan 1 proyek', 'Export format teks', '3 industry themes'].map((feature) => (
-                      <li key={feature} className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="/api/login">Mulai Gratis</a>
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Pro - Highlighted */}
-              <Card className="relative border-2 border-primary shadow-xl scale-105">
-                <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-gradient-to-r from-primary to-purple-600 px-4 py-1">
-                    <Crown className="h-3 w-3 mr-1" />
-                    Paling Populer
-                  </Badge>
-                </div>
-                <CardHeader className="pt-8">
-                  <CardTitle>Pro</CardTitle>
-                  <CardDescription>Untuk content creator serius</CardDescription>
-                  <div className="mt-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl text-muted-foreground line-through">Rp 199K</span>
-                      <Badge variant="destructive" className="text-xs">-50%</Badge>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 max-w-6xl mx-auto mb-12">
+              {[
+                {
+                  id: 'free',
+                  name: 'Free',
+                  price: 'Rp 0',
+                  desc: 'Coba dulu gratis',
+                  features: ['5 prompt/hari', '3 mode generasi', '1 proyek', 'Export TXT', '3 industri themes'],
+                  popular: false,
+                  border: '',
+                  cta: 'Mulai Gratis',
+                  ctaVariant: 'outline' as const,
+                  onClick: () => { window.location.href = '/api/login'; },
+                  testId: 'button-subscribe-free',
+                },
+                {
+                  id: 'pro',
+                  name: 'Pro',
+                  price: 'Rp 99K',
+                  desc: 'Mulai berkarya',
+                  features: ['25 prompt/hari', '8 mode generasi', '5 proyek', 'Export TXT/PDF', '8 industri themes', 'Draft Bab & Marketing Kit'],
+                  popular: false,
+                  border: 'border-blue-300 dark:border-blue-700',
+                  cta: 'Pilih Pro',
+                  ctaVariant: 'outline' as const,
+                  onClick: handleProLogin,
+                  testId: 'button-subscribe-pro',
+                },
+                {
+                  id: 'premium',
+                  name: 'Premium',
+                  price: 'Rp 199K',
+                  desc: 'Untuk creator serius',
+                  features: ['75 prompt/hari', '12 mode generasi', '20 proyek', 'Export TXT/PDF/DOCX/MD', '16 industri themes', 'E-Course + GPT Builder', 'AI Image DALL-E 3'],
+                  popular: true,
+                  border: '',
+                  cta: 'Pilih Premium',
+                  ctaVariant: 'default' as const,
+                  onClick: () => { setUpgradeIntent('premium'); window.location.href = '/api/login'; },
+                  testId: 'button-subscribe-premium',
+                },
+                {
+                  id: 'advance',
+                  name: 'Advance',
+                  price: 'Rp 299K',
+                  desc: 'Ekosistem penuh',
+                  features: ['Unlimited prompt', '16 mode generasi', 'Unlimited proyek', 'Export semua format', '24 industri themes', 'Podcast + Audiobook Script', 'Landing Page + TTS', 'Priority support'],
+                  popular: false,
+                  border: 'border-purple-300 dark:border-purple-700',
+                  cta: 'Pilih Advance',
+                  ctaVariant: 'outline' as const,
+                  onClick: () => { setUpgradeIntent('advance'); window.location.href = '/api/login'; },
+                  testId: 'button-subscribe-advance',
+                },
+                {
+                  id: 'enterprise',
+                  name: 'Enterprise',
+                  price: 'Rp 499K',
+                  desc: 'Tim & bisnis',
+                  features: ['Semua fitur Advance', '10 anggota tim', 'White-label export', 'API access', 'Custom AI training', 'SLA & onboarding'],
+                  popular: false,
+                  border: 'border-amber-300 dark:border-amber-700',
+                  cta: 'Hubungi Sales',
+                  ctaVariant: 'outline' as const,
+                  onClick: handleEnterpriseLogin,
+                  testId: 'button-subscribe-enterprise',
+                },
+              ].map((plan) => (
+                <Card
+                  key={plan.id}
+                  className={`relative flex flex-col ${plan.popular ? 'border-2 border-primary shadow-xl' : plan.border ? `border-2 ${plan.border}` : ''}`}
+                  data-testid={`card-pricing-${plan.id}`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 z-10">
+                      <Badge className="bg-gradient-to-r from-primary to-purple-600 px-3 py-1 text-xs whitespace-nowrap">
+                        <Crown className="h-3 w-3 mr-1" />
+                        Paling Populer
+                      </Badge>
                     </div>
-                    <span className="text-4xl font-bold text-primary">Rp 99K</span>
-                    <span className="text-muted-foreground">/bulan</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {[
-                      'Unlimited prompt',
-                      'Semua 16 mode generasi',
-                      'Ekosistem 10-Langkah penuh (ebook → 10 output)',
-                      'Chatbot AI Demo + E-Course Builder',
-                      'Mini App Blueprint + SOP Generator',
-                      'Podcast Script + Audiobook Script',
-                      'Landing Page Copy + Cover HTML Generator',
-                      'Marketing Kit 7 Kanal (IG, TikTok, LinkedIn, dst)',
-                      'AI Image Mockup 3D via DALL-E 3',
-                      'Text-to-Speech (TTS) narasi',
-                      'Unlimited proyek',
-                      'Export TXT/PDF/DOCX/MD/HTML',
-                      '24 industry themes',
-                      'Priority support (WhatsApp & email)',
-                    ].map((feature) => (
-                      <li key={feature} className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button className="w-full bg-gradient-to-r from-primary to-purple-600" data-testid="button-subscribe-pro" onClick={handleProLogin}>
-                    <Zap className="mr-2 h-4 w-4" />
-                    Pilih Pro Sekarang
-                  </Button>
-                </CardFooter>
-              </Card>
-
-              {/* Enterprise */}
-              <Card className="relative">
-                <CardHeader>
-                  <CardTitle>Enterprise</CardTitle>
-                  <CardDescription>Untuk tim dan bisnis</CardDescription>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">Rp 499K</span>
-                    <span className="text-muted-foreground">/bulan</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3">
-                    {[
-                      'Semua fitur Pro',
-                      'Hingga 10 anggota tim',
-                      'White-label export',
-                      'API access',
-                      'Custom AI training',
-                      'Dedicated support',
-                    ].map((feature) => (
-                      <li key={feature} className="flex items-center gap-2">
-                        <Check className="h-4 w-4 text-green-500" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-                <CardFooter>
-                  <Button variant="outline" className="w-full" asChild>
-                    <a href="https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20tertarik%20dengan%20paket%20Enterprise" target="_blank" rel="noopener noreferrer">
-                      Hubungi Sales
-                    </a>
-                  </Button>
-                </CardFooter>
-              </Card>
+                  )}
+                  <CardHeader className={`pb-3 ${plan.popular ? 'pt-8' : ''}`}>
+                    <CardTitle className="text-base">{plan.name}</CardTitle>
+                    <CardDescription className="text-xs">{plan.desc}</CardDescription>
+                    <div className="mt-3">
+                      <span className="text-2xl font-bold">{plan.price}</span>
+                      <span className="text-xs text-muted-foreground">/bln</span>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 pb-3">
+                    <ul className="space-y-2">
+                      {plan.features.map((feature) => (
+                        <li key={feature} className="flex items-start gap-1.5">
+                          <Check className="h-3.5 w-3.5 text-green-500 shrink-0 mt-0.5" />
+                          <span className="text-xs">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                  <CardFooter>
+                    <Button
+                      className={`w-full text-xs ${plan.popular ? 'bg-gradient-to-r from-primary to-purple-600' : ''}`}
+                      variant={plan.ctaVariant}
+                      onClick={plan.onClick}
+                      data-testid={plan.testId}
+                    >
+                      {plan.cta}
+                    </Button>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
 
             {/* Comparison Table */}
-            <Card className="max-w-4xl mx-auto">
+            <Card className="max-w-6xl mx-auto">
               <CardHeader>
-                <CardTitle className="text-center">Perbandingan Fitur Lengkap</CardTitle>
+                <CardTitle className="text-center">Perbandingan Fitur Lengkap — 5 Paket</CardTitle>
               </CardHeader>
               <CardContent>
                 <ComparisonTable />
