@@ -49,7 +49,7 @@ Berperanlah sebagai: **${projectData.aiCharacter}**.
   const industryContext = getIndustryContext(projectData.industry || 'general');
 
   const systemPrompt = `
-Anda adalah "Ebook Builder Pro AI", mesin pembuat ekosistem ebook profesional yang dirancang untuk menangani **BERBAGAI TOPIK (Generik)**.
+Anda adalah "Chaesa AI Studio", mesin pembuat ekosistem ebook profesional yang dirancang untuk menangani **BERBAGAI TOPIK (Generik)**.
 Aplikasi ini fleksibel dan tidak terbatas pada satu industri tertentu.
 
 ${agenticLogic}

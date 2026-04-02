@@ -85,8 +85,8 @@ export function registerAuthRoutes(app: Express): void {
 
       // Return WhatsApp/email contact info for manual upgrade
       const contactInfo = {
-        whatsapp: "https://wa.me/6281234567890?text=Halo%2C+saya+ingin+upgrade+ke+paket+" + targetPlan + "+untuk+akun+" + (user.email || userId),
-        email: "upgrade@ebookbuilderpro.com",
+        whatsapp: "https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20ingin%20upgrade%20ke%20paket%20" + targetPlan + "%20untuk%20akun%20" + encodeURIComponent(user.email || userId),
+        email: "upgrade@chaesaai.com",
         subject: `Upgrade ke ${targetPlan.charAt(0).toUpperCase() + targetPlan.slice(1)} - ${user.email || userId}`,
       };
 

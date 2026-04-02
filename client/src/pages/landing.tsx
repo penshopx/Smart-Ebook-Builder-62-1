@@ -1107,19 +1107,18 @@ export default function Landing() {
                     {[
                       'Unlimited prompt',
                       'Semua 16 mode generasi',
-                      'Pipeline 16-Output penuh',
-                      'Chatbot Demo AI terintegrasi',
-                      'Mockup 3D DALL-E 3',
-                      'Landing Page Copy & HTML',
-                      'Podcast & Audiobook Script',
-                      'Marketing Kit 7 Kanal',
+                      'Ekosistem 10-Langkah penuh (ebook → 10 output)',
+                      'Chatbot AI Demo + E-Course Builder',
+                      'Mini App Blueprint + SOP Generator',
+                      'Podcast Script + Audiobook Script',
+                      'Landing Page Copy + Cover HTML Generator',
+                      'Marketing Kit 7 Kanal (IG, TikTok, LinkedIn, dst)',
+                      'AI Image Mockup 3D via DALL-E 3',
+                      'Text-to-Speech (TTS) narasi',
                       'Unlimited proyek',
                       'Export TXT/PDF/DOCX/MD/HTML',
                       '24 industry themes',
-                      'AI Image via DALL-E 3',
-                      'Text-to-Speech (TTS)',
-                      'Mini App Blueprint + deep-link',
-                      'Priority support',
+                      'Priority support (WhatsApp & email)',
                     ].map((feature) => (
                       <li key={feature} className="flex items-center gap-2">
                         <Check className="h-4 w-4 text-green-500" />
@@ -1166,8 +1165,10 @@ export default function Landing() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button variant="outline" className="w-full">
-                    Hubungi Sales
+                  <Button variant="outline" className="w-full" asChild>
+                    <a href="https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20tertarik%20dengan%20paket%20Enterprise" target="_blank" rel="noopener noreferrer">
+                      Hubungi Sales
+                    </a>
                   </Button>
                 </CardFooter>
               </Card>
@@ -1290,14 +1291,14 @@ export default function Landing() {
                 <span className="font-bold">Chaesa AI Studio</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                AI-powered prompt generator untuk membangun ekosistem konten profesional dari satu ebook — 16 output, 16 mode, 24 industri.
+                AI-powered prompt generator untuk membangun Ekosistem Kompetensi Digital dari satu ebook — 16 mode generasi, 24 industri Indonesia.
               </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Produk</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="hover:text-foreground cursor-pointer">16 Mode Generasi</li>
-                <li className="hover:text-foreground cursor-pointer">Pipeline 16-Output</li>
+                <li className="hover:text-foreground cursor-pointer">Ekosistem 10-Langkah</li>
                 <li className="hover:text-foreground cursor-pointer">Pricing</li>
                 <li className="hover:text-foreground cursor-pointer">FAQ</li>
               </ul>
@@ -1328,7 +1329,7 @@ export default function Landing() {
           </div>
           <div className="pt-8 border-t flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-muted-foreground">
-              © 2025 Chaesa AI Studio. All rights reserved.
+              © 2026 Chaesa AI Studio. All rights reserved.
             </p>
             <div className="flex items-center gap-4 text-sm text-muted-foreground">
               <span className="hover:text-foreground cursor-pointer">Terms</span>

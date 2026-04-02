@@ -86,15 +86,18 @@ const PRICING_PLANS = [
     features: [
       'Unlimited prompt',
       'Semua 16 mode generasi',
-      'Ekosistem 10-Langkah penuh',
+      'Ekosistem 10-Langkah penuh (ebook → 10 output)',
+      'Chatbot AI Demo + E-Course Builder',
+      'Mini App Blueprint + SOP Generator',
       'Podcast Script + Audiobook Script',
-      'Landing Page + Cover HTML Generator',
+      'Landing Page Copy + Cover HTML Generator',
+      'Marketing Kit 7 Kanal (IG, TikTok, LinkedIn, dst)',
+      'AI Image Mockup 3D via DALL-E 3',
+      'Text-to-Speech (TTS) narasi',
       'Unlimited proyek',
       'Export TXT/PDF/DOCX/MD/HTML',
       '24 industry themes',
-      'AI Image via DALL-E 3',
-      'Text-to-Speech (TTS)',
-      'Priority support',
+      'Priority support (WhatsApp & email)',
     ],
     cta: 'Upgrade ke Pro',
     highlight: true,
@@ -416,12 +419,12 @@ export default function Account() {
               <CardContent>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {[
-                    { icon: Layers, title: "16 Mode Generasi", desc: "Semua mode termasuk Podcast, Audiobook, Landing Page, Cover HTML" },
-                    { icon: Zap, title: "Unlimited Prompt", desc: "Generate prompt sebanyak yang Anda mau tanpa batas harian" },
-                    { icon: Download, title: "5 Format Export", desc: "TXT, PDF, DOCX, Markdown, dan HTML siap pakai" },
-                    { icon: Star, title: "Ekosistem 10-Langkah", desc: "Pipeline lengkap dari ebook ke 10 output konten & aset digital" },
-                    { icon: Shield, title: "24 Industry Themes", desc: "Template prompt untuk semua 24 industri Indonesia" },
-                    { icon: Users, title: "Priority Support", desc: "Bantuan prioritas via WhatsApp/email" },
+                    { icon: Layers, title: "16 Mode Generasi", desc: "Semua mode: Chatbot, E-Course, Mini App, Podcast, Audiobook, Landing Page, Cover HTML, dan lainnya" },
+                    { icon: Zap, title: "Unlimited Prompt", desc: "Generate prompt sebanyak yang Anda mau, tanpa batas harian" },
+                    { icon: Star, title: "Ekosistem 10-Langkah", desc: "Pipeline lengkap: 1 ebook → chatbot AI, kursus, mini app, SOP, membership, dan 5 output lainnya" },
+                    { icon: Download, title: "5 Format Export", desc: "TXT, PDF, DOCX, Markdown, dan HTML siap pakai + proteksi watermark" },
+                    { icon: Shield, title: "24 Industry Themes", desc: "Template prompt untuk semua 24 industri Indonesia — engineering, kesehatan, UMKM, fintech, dan lainnya" },
+                    { icon: Users, title: "Priority Support", desc: "Bantuan prioritas via WhatsApp & email, respon cepat" },
                   ].map((item, idx) => (
                     <div key={idx} className="flex items-start gap-3 p-3 rounded-lg bg-muted/40">
                       <div className="h-8 w-8 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
@@ -442,7 +445,7 @@ export default function Account() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Star className="h-4 w-4 text-amber-500 fill-amber-400" />
-                  Mengapa Ebook Builder Pro vs Kompetitor?
+                  Mengapa Chaesa AI Studio vs Kompetitor?
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -506,7 +509,7 @@ export default function Account() {
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
-                  onClick={() => window.open('https://wa.me/6281234567890?text=Halo%2C+saya+butuh+bantuan+dengan+Ebook+Builder+Pro', '_blank')}
+                  onClick={() => window.open('https://wa.me/6281234567890?text=Halo%20Chaesa%2C%20saya%20butuh%20bantuan%20dengan%20Chaesa%20AI%20Studio', '_blank')}
                   data-testid="button-contact-wa"
                 >
                   <MessageSquare className="h-4 w-4 text-green-500" />
@@ -516,7 +519,7 @@ export default function Account() {
                 <Button
                   variant="outline"
                   className="flex-1 gap-2"
-                  onClick={() => window.open('mailto:support@ebookbuilderpro.com', '_blank')}
+                  onClick={() => window.open('mailto:support@chaesaai.com', '_blank')}
                   data-testid="button-contact-email"
                 >
                   <Mail className="h-4 w-4 text-blue-500" />

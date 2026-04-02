@@ -119,7 +119,7 @@ Mulai dari mana dulu?`
             </Avatar>
             <div className="text-left">
               <span className="font-bold block">Chaesa</span>
-              <p className="text-xs text-white/80 font-normal">Asisten Ebook Builder Pro · 13 Mode · 9 Langkah</p>
+              <p className="text-xs text-white/80 font-normal">Asisten Chaesa AI Studio · 13 Mode · 9 Langkah</p>
             </div>
           </SheetTitle>
         </SheetHeader>

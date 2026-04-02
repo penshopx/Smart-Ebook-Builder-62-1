@@ -57,7 +57,7 @@ export function DokumenterChatButton() {
                 <span className="font-semibold text-sm">Eksekusi Prompt Pipeline Anda di Sini</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Salin prompt dari 13 mode generasi Ebook Builder Pro, lalu jalankan di DokumenTender AI untuk hasil optimal dalam Bahasa Indonesia.
+                Salin prompt dari 13 mode generasi Chaesa AI Studio, lalu jalankan di DokumenTender AI untuk hasil optimal dalam Bahasa Indonesia.
               </p>
             </div>
 

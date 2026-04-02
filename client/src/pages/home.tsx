@@ -508,7 +508,7 @@ export default function Home() {
       <footer className="border-t py-6 mt-8">
         <div className="container px-4 mx-auto max-w-screen-2xl">
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
-            <p>Ebook Builder Pro - Smart Prompt Generator</p>
+            <p>Chaesa AI Studio - Smart Prompt Generator</p>
             <p>Gunakan prompt yang dihasilkan dengan AI favorit Anda</p>
           </div>
         </div>
