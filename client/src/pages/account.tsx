@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -144,6 +144,18 @@ export default function Account() {
       toast({ title: "Terjadi kesalahan", description: "Coba lagi beberapa saat", variant: "destructive" });
     },
   });
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const upgrade = params.get('upgrade');
+    if (upgrade === 'pro' || upgrade === 'enterprise') {
+      setTargetPlan(upgrade);
+      setUpgradeResult(null);
+      setUpgradeDialogOpen(true);
+      window.history.replaceState({}, '', '/account');
+      upgradeMutation.mutate(upgrade);
+    }
+  }, []);
 
   const handleUpgradeClick = (planId: string) => {
     if (planId === 'free') return;

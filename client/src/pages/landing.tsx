@@ -344,22 +344,33 @@ function ComparisonTable() {
   );
 }
 
+const PROMO_DURATION_MS = 24 * 60 * 60 * 1000;
+
+function getOrInitPromoEnd(): number {
+  const stored = localStorage.getItem('chaesa_promo_end');
+  if (stored) {
+    const end = parseInt(stored, 10);
+    if (!isNaN(end) && end > Date.now()) return end;
+  }
+  const end = Date.now() + PROMO_DURATION_MS;
+  localStorage.setItem('chaesa_promo_end', String(end));
+  return end;
+}
+
 function CountdownTimer() {
-  const [timeLeft, setTimeLeft] = useState({ hours: 23, minutes: 59, seconds: 59 });
+  const calcTimeLeft = () => {
+    const end = getOrInitPromoEnd();
+    const diff = Math.max(0, end - Date.now());
+    const hours = Math.floor(diff / 3600000);
+    const minutes = Math.floor((diff % 3600000) / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    return { hours, minutes, seconds };
+  };
+
+  const [timeLeft, setTimeLeft] = useState(calcTimeLeft);
 
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
-        } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
-        } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
-        }
-        return { hours: 23, minutes: 59, seconds: 59 };
-      });
-    }, 1000);
+    const timer = setInterval(() => setTimeLeft(calcTimeLeft()), 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -377,7 +388,26 @@ function CountdownTimer() {
   );
 }
 
+function setUpgradeIntent(plan: string) {
+  sessionStorage.setItem('chaesa_upgrade_intent', JSON.stringify({ plan, ts: Date.now() }));
+}
+
+function handleProLogin() {
+  setUpgradeIntent('pro');
+  window.location.href = '/api/login';
+}
+
+function handleEnterpriseLogin() {
+  setUpgradeIntent('enterprise');
+  window.location.href = '/api/login';
+}
+
 export default function Landing() {
+  const scrollToSection = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Sticky Header */}
@@ -392,11 +422,18 @@ export default function Landing() {
               <p className="text-[10px] text-muted-foreground leading-none">AI Prompt Generator · 24 Industri</p>
             </div>
           </div>
+          <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+            <button onClick={() => scrollToSection('features')} className="hover:text-foreground transition-colors">Fitur</button>
+            <button onClick={() => scrollToSection('pricing')} className="hover:text-foreground transition-colors">Harga</button>
+          </nav>
           <div className="flex items-center gap-3">
             <ThemeToggle />
+            <Button variant="ghost" size="sm" asChild className="hidden sm:flex" data-testid="button-login-ghost">
+              <a href="/api/login">Masuk</a>
+            </Button>
             <Button asChild data-testid="button-login">
               <a href="/api/login">
-                Masuk / Daftar
+                Daftar Gratis
                 <ArrowRight className="ml-2 h-4 w-4" />
               </a>
             </Button>
@@ -450,7 +487,7 @@ export default function Landing() {
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </a>
                 </Button>
-                <Button size="lg" variant="outline" className="text-lg px-8" data-testid="button-demo">
+                <Button size="lg" variant="outline" className="text-lg px-8" data-testid="button-demo" onClick={() => scrollToSection('features')}>
                   <Play className="mr-2 h-5 w-5" />
                   Lihat Demo (2 menit)
                 </Button>
@@ -900,7 +937,7 @@ export default function Landing() {
         </section>
 
         {/* 13 Mode Features */}
-        <section className="py-20 border-t bg-muted/30">
+        <section id="features" className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-12">
               <Badge variant="outline" className="mb-4">
@@ -1034,7 +1071,7 @@ export default function Landing() {
         </section>
 
         {/* Pricing with Urgency */}
-        <section className="py-20 border-t bg-muted/30">
+        <section id="pricing" className="py-20 border-t bg-muted/30">
           <div className="container px-4 mx-auto max-w-screen-xl">
             <div className="text-center mb-6">
               <Badge variant="outline" className="mb-4">Pricing</Badge>
@@ -1128,11 +1165,9 @@ export default function Landing() {
                   </ul>
                 </CardContent>
                 <CardFooter>
-                  <Button className="w-full bg-gradient-to-r from-primary to-purple-600" asChild data-testid="button-subscribe-pro">
-                    <a href="/api/login">
-                      <Zap className="mr-2 h-4 w-4" />
-                      Pilih Pro Sekarang
-                    </a>
+                  <Button className="w-full bg-gradient-to-r from-primary to-purple-600" data-testid="button-subscribe-pro" onClick={handleProLogin}>
+                    <Zap className="mr-2 h-4 w-4" />
+                    Pilih Pro Sekarang
                   </Button>
                 </CardFooter>
               </Card>
