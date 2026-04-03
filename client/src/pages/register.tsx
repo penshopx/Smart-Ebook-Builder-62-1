@@ -10,7 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { useAuth } from '@/hooks/use-auth';
 import { ThemeToggle } from '@/components/theme-toggle';
-import { Book, Sparkles, User, Briefcase, Building2, ChevronRight } from 'lucide-react';
+import { Book, Sparkles, User, Briefcase, Building2, ChevronRight, Mail, ShieldCheck } from 'lucide-react';
 
 const INDUSTRIES = [
   { value: 'engineering', label: 'Keteknikan & Engineering' },
@@ -133,6 +133,20 @@ export default function Register() {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
+                  <Label className="flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    Email
+                  </Label>
+                  <div className="flex items-center gap-2 px-3 py-2 rounded-md border bg-muted/50 text-sm">
+                    <span className="flex-1 text-muted-foreground truncate">{user?.email ?? '-'}</span>
+                    <span className="flex items-center gap-1 text-[11px] font-medium text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30 px-2 py-0.5 rounded-full shrink-0">
+                      <ShieldCheck className="h-3 w-3" /> Terverifikasi
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">Email dikonfirmasi melalui login Replit Anda.</p>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="displayName" className="flex items-center gap-1.5">
                     <User className="h-3.5 w-3.5 text-muted-foreground" />
                     Nama Lengkap <span className="text-destructive">*</span>
@@ -215,9 +229,6 @@ export default function Register() {
             </CardContent>
           </Card>
 
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            Login sebagai <span className="font-medium">{user?.email}</span>
-          </p>
         </div>
       </div>
     </div>
