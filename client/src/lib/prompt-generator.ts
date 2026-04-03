@@ -417,7 +417,7 @@ Saya ingin menyusun **Daftar Isi / Outline** lengkap untuk project ebook saya.
 - Alur Struktur: **${taskConfig.fokusLevel || 'Linear'}**
 
 === TUGAS ANDA ===
-${projectData.level === 'Single Ebook' ? `
+${projectData.level === '1 Ebook' ? `
 Buatkan Outline untuk 1 ebook lengkap dengan **${taskConfig.jumlahBab || '7'} bab** dan kedalaman **${taskConfig.outlineDepth || 'Standard'}**:
 - **Prakata / Pendahuluan**
 - **Bab 1 sampai Bab ${taskConfig.jumlahBab || '7'}** (alur: ${taskConfig.fokusLevel || 'Linear'})
@@ -430,8 +430,8 @@ Untuk SETIAP bab, berikan:
 ${taskConfig.outlineDepth === 'Simple' ? '' : `3. Sub-bab (3-5 poin utama yang akan dicover)`}
 ${taskConfig.outlineDepth === 'Detailed' || taskConfig.outlineDepth === 'Full' ? `4. Poin Kunci / Insight penting di setiap sub-bab` : ''}
 ${taskConfig.outlineDepth === 'Full' ? `5. Latihan/Exercise untuk pembaca di akhir bab` : ''}
-` : projectData.level === '3 Ebook (Trilogi Simple)' ? `
-Buatkan Outline untuk TRILOGI (3 Ebook) dengan pembagian:
+` : projectData.level === 'Trilogi 1 (3 Ebook)' ? `
+Buatkan Outline untuk TRILOGI 1 (3 Ebook) dengan pembagian:
 - **Buku 1: Fundamental** (Mindset & Konsep Dasar)
 - **Buku 2: Strategi** (Implementasi & Teknis)
 - **Buku 3: Advanced** (Pengembangan & Scaling)
@@ -441,19 +441,36 @@ Untuk SETIAP buku, rincikan:
 2. Fokus/Tema Utama
 3. Daftar Bab (5-7 bab per buku)
 4. Untuk setiap bab: Judul + 3 Sub-bab utama
-` : `
-Buatkan Outline untuk SERI LENGKAP (9 Ebook) dengan pembagian:
-**LEVEL BASIC (Buku 1-3):**
+` : projectData.level === 'Trilogi 2 (6 Ebook)' ? `
+Buatkan Outline untuk TRILOGI 2 (6 Ebook) dengan pembagian:
+**TRILOGI 1 - LEVEL BASIC (Buku 1-3):**
 - Buku 1: Mindset & Dasar
 - Buku 2: Validasi Market
 - Buku 3: Persiapan Produk
 
-**LEVEL INTERMEDIATE (Buku 4-6):**
+**TRILOGI 2 - LEVEL INTERMEDIATE (Buku 4-6):**
 - Buku 4: Strategi Marketing
 - Buku 5: Funnel & Sales
 - Buku 6: Operasional
 
-**LEVEL ADVANCED (Buku 7-9):**
+Untuk SETIAP buku, rincikan:
+1. Judul Buku yang Spesifik
+2. Tujuan Pembelajaran (Learning Objective)
+3. Daftar Bab (5-7 bab)
+4. Overview singkat tiap bab
+` : `
+Buatkan Outline untuk TRILOGI 3 - SERI LENGKAP (9 Ebook) dengan pembagian:
+**TRILOGI 1 - LEVEL BASIC (Buku 1-3):**
+- Buku 1: Mindset & Dasar
+- Buku 2: Validasi Market
+- Buku 3: Persiapan Produk
+
+**TRILOGI 2 - LEVEL INTERMEDIATE (Buku 4-6):**
+- Buku 4: Strategi Marketing
+- Buku 5: Funnel & Sales
+- Buku 6: Operasional
+
+**TRILOGI 3 - LEVEL ADVANCED (Buku 7-9):**
 - Buku 7: Tim & Delegasi
 - Buku 8: Automasi Sistem
 - Buku 9: Ekspansi & Exit

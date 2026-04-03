@@ -723,18 +723,26 @@ export const MARKETING_ASSETS = [
   "Prompt Video (Untuk Runway/Sora)"
 ] as const;
 
-export const EBOOK_LEVELS = ["Single Ebook", "Trilogi Simple (3 Ebook)", "Modul Kompleks (3 Trilogi = 9 Ebook)"] as const;
+export const EBOOK_LEVELS = ["1 Ebook", "Trilogi 1 (3 Ebook)", "Trilogi 2 (6 Ebook)", "Trilogi 3 (9 Ebook)"] as const;
 
 export const EBOOK_SERIES_DATA: Record<string, Array<{ id: number; label: string; level?: string }>> = {
-  "Single Ebook": [
+  "1 Ebook": [
     { id: 1, label: "Ebook Utama (Single)" }
   ],
-  "Trilogi Simple (3 Ebook)": [
+  "Trilogi 1 (3 Ebook)": [
     { id: 1, label: "Buku 1: Basic (Dasar & Fondasi)", level: "Basic" },
     { id: 2, label: "Buku 2: Intermediate (Strategi & Implementasi)", level: "Intermediate" },
     { id: 3, label: "Buku 3: Advance (Pengembangan & Scaling)", level: "Advance" }
   ],
-  "Modul Kompleks (3 Trilogi = 9 Ebook)": [
+  "Trilogi 2 (6 Ebook)": [
+    { id: 1, label: "Trilogi 1 - Buku 1: Mindset & Dasar", level: "Basic" },
+    { id: 2, label: "Trilogi 1 - Buku 2: Validasi Market", level: "Basic" },
+    { id: 3, label: "Trilogi 1 - Buku 3: Persiapan Produk", level: "Basic" },
+    { id: 4, label: "Trilogi 2 - Buku 1: Strategi Marketing", level: "Intermediate" },
+    { id: 5, label: "Trilogi 2 - Buku 2: Funnel & Sales", level: "Intermediate" },
+    { id: 6, label: "Trilogi 2 - Buku 3: Operasional", level: "Intermediate" }
+  ],
+  "Trilogi 3 (9 Ebook)": [
     { id: 1, label: "Trilogi 1 - Buku 1: Mindset & Dasar", level: "Basic" },
     { id: 2, label: "Trilogi 1 - Buku 2: Validasi Market", level: "Basic" },
     { id: 3, label: "Trilogi 1 - Buku 3: Persiapan Produk", level: "Basic" },
@@ -798,7 +806,7 @@ export const projectDataSchema = z.object({
   bigIdea: z.string(),
   hasilRiset: z.string(),
   produk: z.string(),
-  level: z.string().default('Single Ebook'),
+  level: z.string().default('1 Ebook'),
   industry: z.string().default('general'),
   selectedAiModel: z.string().default('dokumentender'),
 });

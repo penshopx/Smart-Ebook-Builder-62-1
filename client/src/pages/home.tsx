@@ -65,7 +65,7 @@ const defaultProjectData: ProjectData = {
   bigIdea: '',
   hasilRiset: '',
   produk: '',
-  level: 'Single Ebook',
+  level: '1 Ebook',
   industry: 'general',
   selectedAiModel: 'dokumentender',
 };
