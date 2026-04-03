@@ -9,6 +9,7 @@ import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import Account from "@/pages/account";
 import Admin from "@/pages/admin";
+import Register from "@/pages/register";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -21,7 +22,7 @@ function LoadingSpinner() {
 }
 
 function AppContent() {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, user } = useAuth();
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -48,6 +49,10 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return <Landing />;
+  }
+
+  if (user && !user.registrationCompleted) {
+    return <Register />;
   }
 
   return (

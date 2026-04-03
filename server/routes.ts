@@ -152,6 +152,27 @@ export async function registerRoutes(
     next();
   }
 
+  // ===== REGISTRASI PROFIL PENGGUNA =====
+  app.post("/api/auth/complete-registration", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const schema = z.object({
+        displayName: z.string().min(2, "Nama minimal 2 karakter"),
+        profession: z.string().min(2, "Profesi minimal 2 karakter"),
+        organization: z.string().optional(),
+        primaryIndustry: z.string().optional(),
+      });
+      const data = schema.parse(req.body);
+      const user = await authStorage.completeRegistration(userId, data);
+      res.json({ success: true, user });
+    } catch (error: any) {
+      if (error?.name === 'ZodError') {
+        return res.status(400).json({ error: error.errors[0]?.message ?? 'Data tidak valid.' });
+      }
+      res.status(500).json({ error: 'Gagal menyimpan data registrasi.' });
+    }
+  });
+
   // ===== ADMIN SETUP (Klaim Admin Utama) =====
   app.post("/api/admin/claim", isAuthenticated, async (req, res) => {
     try {

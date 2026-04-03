@@ -7,6 +7,7 @@ export interface IAuthStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlan(id: string, plan: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
+  completeRegistration(id: string, data: { displayName: string; profession: string; organization?: string; primaryIndustry?: string }): Promise<User | undefined>;
   trackPromptUsage(id: string): Promise<{ allowed: boolean; used: number; limit: number }>;
   getAllUsers(search?: string, planFilter?: string, roleFilter?: string): Promise<User[]>;
   countAdmins(): Promise<number>;
@@ -50,6 +51,22 @@ class AuthStorage implements IAuthStorage {
     const [user] = await db
       .update(users)
       .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async completeRegistration(id: string, data: { displayName: string; profession: string; organization?: string; primaryIndustry?: string }): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({
+        displayName: data.displayName,
+        profession: data.profession,
+        organization: data.organization ?? null,
+        primaryIndustry: data.primaryIndustry ?? null,
+        registrationCompleted: true,
+        updatedAt: new Date(),
+      })
       .where(eq(users.id, id))
       .returning();
     return user;
