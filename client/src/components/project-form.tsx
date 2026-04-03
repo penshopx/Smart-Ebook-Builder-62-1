@@ -211,6 +211,26 @@ function QuickChipSelect({
 }
 
 export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
+  const selectedIndustries: string[] = projectData.industry
+    ? projectData.industry.split(',').filter(Boolean)
+    : ['general'];
+
+  const toggleIndustry = (industryId: string) => {
+    if (industryId === 'general') {
+      onChange('industry', 'general');
+      return;
+    }
+    let current = selectedIndustries.filter(id => id !== 'general');
+    if (current.includes(industryId)) {
+      current = current.filter(id => id !== industryId);
+    } else {
+      current.push(industryId);
+    }
+    onChange('industry', current.length === 0 ? 'general' : current.join(','));
+  };
+
+  const selectedCount = selectedIndustries.filter(id => id !== 'general').length;
+
   return (
     <div className="space-y-4">
       <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
@@ -218,21 +238,53 @@ export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
           <CardTitle className="flex items-center gap-2 text-base">
             <Factory className="h-4 w-4 text-primary" />
             Pilih Industri / Sektor
+            {selectedCount > 0 && (
+              <Badge className="text-[10px] px-1.5 py-0 h-4 ml-1 bg-primary text-primary-foreground">
+                {selectedCount} dipilih
+              </Badge>
+            )}
           </CardTitle>
           <p className="text-xs text-muted-foreground">
-            Pilih sektor untuk mendapatkan template dan rekomendasi AI yang optimal
+            Pilih satu atau lebih sektor — topik Anda bisa melintasi beberapa industri
           </p>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-2">
+          {selectedCount > 0 && (
+            <div className="flex flex-wrap gap-1 pb-1">
+              {selectedIndustries.filter(id => id !== 'general').map(id => {
+                const ind = INDUSTRIES.find(i => i.id === id);
+                if (!ind) return null;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => toggleIndustry(id)}
+                    data-testid={`chip-selected-industry-${id}`}
+                    className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-red-50 hover:text-red-500 hover:border-red-300 transition-colors"
+                  >
+                    {ind.name} ✕
+                  </button>
+                );
+              })}
+              {selectedCount > 1 && (
+                <button
+                  onClick={() => onChange('industry', 'general')}
+                  data-testid="button-clear-industries"
+                  className="px-2 py-0.5 rounded-full text-[10px] font-medium text-muted-foreground border border-border hover:border-red-300 hover:text-red-500 transition-colors"
+                >
+                  Reset semua
+                </button>
+              )}
+            </div>
+          )}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
             {INDUSTRIES.map((industry) => {
               const Icon = industryIconMap[industry.icon] || Sparkles;
-              const isSelected = projectData.industry === industry.id;
+              const isSelected = selectedIndustries.includes(industry.id);
 
               return (
                 <button
                   key={industry.id}
-                  onClick={() => onChange('industry', industry.id)}
+                  onClick={() => toggleIndustry(industry.id)}
                   data-testid={`button-industry-${industry.id}`}
                   className={cn(
                     "relative flex flex-col items-center gap-1.5 p-2.5 rounded-lg border transition-all text-center",

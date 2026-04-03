@@ -25,6 +25,46 @@ Gunakan istilah teknis yang umum digunakan di sektor ini.
 `;
 }
 
+function getMultiIndustryContext(industryValue: string): { context: string; displayName: string } {
+  const ids = industryValue ? industryValue.split(',').filter(Boolean) : ['general'];
+  const nonGeneral = ids.filter(id => id !== 'general');
+
+  if (nonGeneral.length === 0) {
+    return { context: '', displayName: 'Umum' };
+  }
+
+  if (nonGeneral.length === 1) {
+    const ind = INDUSTRIES.find(i => i.id === nonGeneral[0]);
+    return {
+      context: getIndustryContext(nonGeneral[0]),
+      displayName: ind?.name || 'Umum',
+    };
+  }
+
+  const industries = nonGeneral
+    .map(id => INDUSTRIES.find(i => i.id === id))
+    .filter(Boolean) as typeof INDUSTRIES[number][];
+
+  const names = industries.map(i => i.name).join(', ');
+  const keywords = [...new Set(industries.flatMap(i => i.keywords))].slice(0, 12).join(', ');
+  const allTemplates = [...new Set(
+    nonGeneral.flatMap(id => INDUSTRY_DOCUMENT_TEMPLATES[id] || [])
+  )].slice(0, 6);
+  const templatesText = allTemplates.length > 0
+    ? `\n   Dokumen relevan lintas sektor: ${allTemplates.join(', ')}`
+    : '';
+
+  const context = `
+=== KONTEKS MULTI-INDUSTRI ===
+Ebook ini mencakup persilangan beberapa industri: **${names}**
+- Kata kunci gabungan: ${keywords}${templatesText}
+
+PENTING: Integrasikan perspektif dari SEMUA sektor tersebut. Gunakan contoh kasus nyata dari masing-masing industri dan tunjukkan bagaimana topik ini relevan di setiap sektor. Hindari hanya fokus pada satu industri saja.
+`;
+
+  return { context, displayName: names };
+}
+
 export function generatePrompt(
   activeMode: string,
   projectData: ProjectData,
@@ -46,7 +86,7 @@ Anda adalah **Agentic AI yang Cerdas & Attentive**. Sebelum memberikan jawaban a
 Berperanlah sebagai: **${projectData.aiCharacter}**.
 `;
 
-  const industryContext = getIndustryContext(projectData.industry || 'general');
+  const { context: industryContext, displayName: industryDisplayName } = getMultiIndustryContext(projectData.industry || 'general');
 
   const systemPrompt = `
 Anda adalah "Chaesa AI Studio", mesin pembuat ekosistem ebook profesional yang dirancang untuk menangani **BERBAGAI TOPIK (Generik)**.
@@ -60,7 +100,7 @@ ${industryContext}
 - Target Pembaca: ${projectData.target || '[Belum diisi]'}
 - Level Ebook: ${projectData.level}
 - Pain Point/Masalah: ${projectData.painPoint || '[Belum diisi]'}
-- Industri/Sektor: ${INDUSTRIES.find(i => i.id === projectData.industry)?.name || 'Umum'}
+- Industri/Sektor: ${industryDisplayName}
 
 === PENGATURAN GAYA & FORMAT (WAJIB DIIKUTI) ===
 Instruksi di bawah ini bersifat MANDATORI:
