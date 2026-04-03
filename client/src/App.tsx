@@ -8,6 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import Home from "@/pages/home";
 import Landing from "@/pages/landing";
 import Account from "@/pages/account";
+import Admin from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -53,6 +54,7 @@ function AppContent() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/account" component={Account} />
+      <Route path="/admin" component={Admin} />
       <Route component={NotFound} />
     </Switch>
   );

@@ -131,6 +131,119 @@ export async function registerRoutes(
   await setupAuth(app);
   registerAuthRoutes(app);
 
+  // ===== ADMIN MIDDLEWARE HELPERS =====
+  async function requireAdmin(req: any, res: any, next: any) {
+    const userId = getUserId(req);
+    const user = await authStorage.getUser(userId);
+    if (!user || (user.role !== 'admin' && user.role !== 'sub_admin')) {
+      return res.status(403).json({ error: 'Akses ditolak. Diperlukan hak Admin.' });
+    }
+    (req as any).currentUser = user;
+    next();
+  }
+
+  async function requireMainAdmin(req: any, res: any, next: any) {
+    const userId = getUserId(req);
+    const user = await authStorage.getUser(userId);
+    if (!user || user.role !== 'admin') {
+      return res.status(403).json({ error: 'Akses ditolak. Diperlukan hak Admin Utama.' });
+    }
+    (req as any).currentUser = user;
+    next();
+  }
+
+  // ===== ADMIN SETUP (Klaim Admin Utama) =====
+  app.post("/api/admin/claim", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { secretKey } = z.object({ secretKey: z.string() }).parse(req.body);
+      const validSecret = process.env.ADMIN_SECRET_KEY;
+      if (!validSecret || secretKey !== validSecret) {
+        return res.status(403).json({ error: 'Kunci rahasia tidak valid.' });
+      }
+      const existingAdminCount = await authStorage.countAdmins();
+      const currentUser = await authStorage.getUser(userId);
+      if (existingAdminCount > 0 && currentUser?.role !== 'admin') {
+        return res.status(403).json({ error: 'Admin Utama sudah ada. Hubungi Admin Utama untuk pengelolaan akses.' });
+      }
+      const updated = await authStorage.updateUserRole(userId, 'admin');
+      res.json({ success: true, user: updated, message: 'Selamat! Kamu kini adalah Admin Utama Chaesa AI Studio.' });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengklaim akses admin.' });
+    }
+  });
+
+  // ===== ADMIN: Cek status role user saat ini =====
+  app.get("/api/admin/me", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await authStorage.getUser(userId);
+      res.json({ role: user?.role ?? 'user', isAdmin: user?.role === 'admin', isSubAdmin: user?.role === 'sub_admin' });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil data role.' });
+    }
+  });
+
+  // ===== ADMIN: Statistik pengguna =====
+  app.get("/api/admin/stats", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const stats = await authStorage.getUserStats();
+      res.json(stats);
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil statistik.' });
+    }
+  });
+
+  // ===== ADMIN: Daftar semua pengguna =====
+  app.get("/api/admin/users", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { search, plan, role } = req.query as Record<string, string>;
+      const userList = await authStorage.getAllUsers(search, plan, role);
+      res.json(userList);
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil daftar pengguna.' });
+    }
+  });
+
+  // ===== ADMIN: Update plan pengguna (Admin & Sub Admin) =====
+  app.patch("/api/admin/users/:id/plan", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const currentUser = (req as any).currentUser;
+      const { id } = req.params;
+      const { plan } = z.object({ plan: z.enum(['free', 'pro', 'premium', 'advance', 'enterprise']) }).parse(req.body);
+      const targetUser = await authStorage.getUser(id);
+      if (!targetUser) return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+      if (targetUser.role === 'admin' && currentUser.role !== 'admin') {
+        return res.status(403).json({ error: 'Sub Admin tidak dapat mengubah plan Admin Utama.' });
+      }
+      const updated = await authStorage.updateUserPlan(id, plan);
+      res.json({ success: true, user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengubah plan pengguna.' });
+    }
+  });
+
+  // ===== ADMIN: Update role pengguna (hanya Admin Utama) =====
+  app.patch("/api/admin/users/:id/role", isAuthenticated, requireMainAdmin, async (req, res) => {
+    try {
+      const requesterId = getUserId(req);
+      const { id } = req.params;
+      const { role } = z.object({ role: z.enum(['user', 'sub_admin']) }).parse(req.body);
+      if (id === requesterId) {
+        return res.status(400).json({ error: 'Tidak dapat mengubah role diri sendiri.' });
+      }
+      const targetUser = await authStorage.getUser(id);
+      if (!targetUser) return res.status(404).json({ error: 'Pengguna tidak ditemukan.' });
+      if (targetUser.role === 'admin') {
+        return res.status(403).json({ error: 'Tidak dapat mengubah role Admin Utama.' });
+      }
+      const updated = await authStorage.updateUserRole(id, role);
+      res.json({ success: true, user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengubah role pengguna.' });
+    }
+  });
+
   // ===== USER PLAN ENDPOINTS =====
   app.get("/api/user/plan", isAuthenticated, async (req, res) => {
     try {

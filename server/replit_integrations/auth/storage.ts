@@ -1,14 +1,16 @@
 import { users, type User, type UpsertUser } from "@shared/models/auth";
 import { db } from "../../db";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, desc, ilike, or } from "drizzle-orm";
 
-// Interface for auth storage operations
-// (IMPORTANT) These user operations are mandatory for Replit Auth.
 export interface IAuthStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlan(id: string, plan: string): Promise<User | undefined>;
+  updateUserRole(id: string, role: string): Promise<User | undefined>;
   trackPromptUsage(id: string): Promise<{ allowed: boolean; used: number; limit: number }>;
+  getAllUsers(search?: string, planFilter?: string, roleFilter?: string): Promise<User[]>;
+  countAdmins(): Promise<number>;
+  getUserStats(): Promise<{ total: number; byPlan: Record<string, number>; byRole: Record<string, number> }>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -44,6 +46,57 @@ class AuthStorage implements IAuthStorage {
     return user;
   }
 
+  async updateUserRole(id: string, role: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ role, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getAllUsers(search?: string, planFilter?: string, roleFilter?: string): Promise<User[]> {
+    let query = db.select().from(users).orderBy(desc(users.createdAt)).$dynamic();
+    const conditions = [];
+    if (search) {
+      conditions.push(or(
+        ilike(users.email, `%${search}%`),
+        ilike(users.firstName, `%${search}%`),
+        ilike(users.lastName, `%${search}%`),
+      ));
+    }
+    if (planFilter && planFilter !== 'all') {
+      conditions.push(eq(users.plan, planFilter));
+    }
+    if (roleFilter && roleFilter !== 'all') {
+      conditions.push(eq(users.role, roleFilter));
+    }
+    if (conditions.length > 0) {
+      const { and } = await import("drizzle-orm");
+      query = query.where(and(...conditions));
+    }
+    return query;
+  }
+
+  async countAdmins(): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.role, 'admin'));
+    return Number(result[0]?.count ?? 0);
+  }
+
+  async getUserStats(): Promise<{ total: number; byPlan: Record<string, number>; byRole: Record<string, number> }> {
+    const allUsers = await db.select({ plan: users.plan, role: users.role }).from(users);
+    const byPlan: Record<string, number> = {};
+    const byRole: Record<string, number> = {};
+    for (const u of allUsers) {
+      byPlan[u.plan] = (byPlan[u.plan] ?? 0) + 1;
+      byRole[u.role ?? 'user'] = (byRole[u.role ?? 'user'] ?? 0) + 1;
+    }
+    return { total: allUsers.length, byPlan, byRole };
+  }
+
   async trackPromptUsage(id: string): Promise<{ allowed: boolean; used: number; limit: number }> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     if (!user) return { allowed: false, used: 0, limit: 5 };
@@ -51,7 +104,6 @@ class AuthStorage implements IAuthStorage {
     const today = new Date().toISOString().split('T')[0];
     const isNewDay = user.lastPromptDate !== today;
 
-    // Pro/Enterprise: unlimited
     if (user.plan === 'pro' || user.plan === 'enterprise') {
       if (isNewDay) {
         await db.update(users)
@@ -65,7 +117,6 @@ class AuthStorage implements IAuthStorage {
       return { allowed: true, used: (user.promptsUsedToday ?? 0) + 1, limit: Infinity };
     }
 
-    // Free: 5 per day
     const DAILY_LIMIT = 5;
     const currentUsed = isNewDay ? 0 : (user.promptsUsedToday ?? 0);
 
@@ -73,7 +124,6 @@ class AuthStorage implements IAuthStorage {
       return { allowed: false, used: currentUsed, limit: DAILY_LIMIT };
     }
 
-    // Allow and track
     await db.update(users)
       .set({
         promptsUsedToday: currentUsed + 1,

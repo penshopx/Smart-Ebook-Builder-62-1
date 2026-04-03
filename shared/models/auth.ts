@@ -23,6 +23,8 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   // Subscription plan: 'free' | 'pro' | 'premium' | 'advance' | 'enterprise'
   plan: varchar("plan").default("free").notNull(),
+  // Admin role: 'user' | 'sub_admin' | 'admin'
+  role: varchar("role").default("user").notNull(),
   // Daily prompt tracking
   promptsUsedToday: integer("prompts_used_today").default(0).notNull(),
   lastPromptDate: varchar("last_prompt_date").default(""),

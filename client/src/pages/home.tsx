@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown } from 'lucide-react';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
 import { JudulTerlaris } from '@/components/judul-terlaris';
 import { useAuth } from '@/hooks/use-auth';
@@ -136,6 +136,11 @@ function UserProfileDropdown({ user }: { user: any }) {
     queryKey: ['/api/user/plan'],
     staleTime: 1000 * 60 * 2,
   });
+  const { data: adminMe } = useQuery<{ role: string; isAdmin: boolean; isSubAdmin: boolean }>({
+    queryKey: ['/api/admin/me'],
+    staleTime: 1000 * 60 * 5,
+  });
+  const isAdminOrSub = adminMe?.isAdmin || adminMe?.isSubAdmin;
 
   const plan = planData?.plan ?? user?.plan ?? 'free';
   const promptsUsed = planData?.promptsUsedToday ?? 0;
@@ -211,6 +216,19 @@ function UserProfileDropdown({ user }: { user: any }) {
               Upgrade ke Pro
             </Link>
           </DropdownMenuItem>
+        )}
+        {isAdminOrSub && (
+          <>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem asChild>
+              <Link href="/admin" className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400" data-testid="menu-admin">
+                <Shield className="h-4 w-4" />
+                Admin Panel
+                {adminMe?.isAdmin && <span className="ml-auto text-[10px] bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">Utama</span>}
+                {adminMe?.isSubAdmin && <span className="ml-auto text-[10px] bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 px-1.5 py-0.5 rounded-full font-medium">Sub</span>}
+              </Link>
+            </DropdownMenuItem>
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
