@@ -309,10 +309,16 @@ export default function Home() {
       setSaveDialogOpen(false);
       setProjectName('');
     },
-    onError: () => {
+    onError: (error: any) => {
+      const is401 = error?.message?.startsWith('401');
+      const is403 = error?.message?.startsWith('403');
       toast({
         title: "Gagal menyimpan",
-        description: "Terjadi kesalahan saat menyimpan proyek.",
+        description: is401
+          ? "Sesi login kadaluarsa. Silakan refresh halaman dan login ulang."
+          : is403
+          ? "Batas proyek tercapai pada paket ini. Upgrade ke Pro untuk menyimpan lebih banyak proyek."
+          : "Terjadi kesalahan saat menyimpan proyek. Coba lagi.",
         variant: "destructive",
       });
     },

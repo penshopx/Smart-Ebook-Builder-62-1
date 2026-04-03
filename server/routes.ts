@@ -49,7 +49,10 @@ const projectDataSchema = z.object({
   hasilRiset: z.string(),
   produk: z.string(),
   level: z.string(),
-});
+  industry: z.string().optional().default('general'),
+  selectedAiModel: z.string().optional().default('dokumentender'),
+  ebookStyles: z.record(z.any()).optional().default({}),
+}).passthrough();
 
 const taskConfigSchema = z.object({
   selectedEbookId: z.number(),
@@ -92,7 +95,12 @@ const taskConfigSchema = z.object({
   landingPageBonuses: z.string().optional().default(''),
   landingPageCTA: z.string().optional().default('Beli Sekarang'),
   landingPageOutputFormat: z.string().optional().default('copy'),
-});
+  jumlahIde: z.string().optional().default('5'),
+  brainstormAngle: z.string().optional().default('Problem-Solution'),
+  jumlahBab: z.string().optional().default('7'),
+  outlineDepth: z.string().optional().default('Standard'),
+  strukturAlur: z.string().optional().default('Problem-Solution (Masalah → Solusi per bab)'),
+}).passthrough();
 
 const createProjectSchema = z.object({
   name: z.string().min(1),
