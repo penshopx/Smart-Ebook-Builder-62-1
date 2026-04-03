@@ -9,12 +9,83 @@ import {
   LANGUAGES, OUTPUT_FORMATS, TONES, WRITING_STYLES, AI_CHARACTERS, EBOOK_LEVELS, INDUSTRIES
 } from '@shared/schema';
 import type { ProjectData } from '@shared/schema';
-import { Book, Target, Settings, BrainCircuit, Factory, Wrench, Building2, Mountain, Flame, Zap, Store, Sparkles, ChevronDown } from 'lucide-react';
+import {
+  Book, Target, Settings, BrainCircuit, Factory, Wrench, Building2, Mountain, Flame, Zap,
+  Store, Sparkles, ChevronDown, MessageSquare, HelpCircle, Lightbulb, Briefcase, BarChart2,
+  Palette, Pen
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const industryIconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Wrench, Building2, Mountain, Flame, Zap, Factory, Store, Sparkles,
 };
+
+const AI_CHARACTER_CONFIG = [
+  {
+    value: "Agentic Strategist (Attentive & Proactive)",
+    label: "Agentic Strategist",
+    description: "Proaktif & antisipatif",
+    icon: BrainCircuit,
+    color: "text-violet-500",
+    bg: "bg-violet-500/10",
+    border: "border-violet-500/30",
+  },
+  {
+    value: "Standard Assistant (Helpful & Direct)",
+    label: "Standard Assistant",
+    description: "Membantu & langsung",
+    icon: MessageSquare,
+    color: "text-blue-500",
+    bg: "bg-blue-500/10",
+    border: "border-blue-500/30",
+  },
+  {
+    value: "Socratic Mentor (Guide by Questioning)",
+    label: "Socratic Mentor",
+    description: "Membimbing lewat pertanyaan",
+    icon: HelpCircle,
+    color: "text-amber-500",
+    bg: "bg-amber-500/10",
+    border: "border-amber-500/30",
+  },
+  {
+    value: "Creative Visionary (Out of the Box)",
+    label: "Creative Visionary",
+    description: "Kreatif & inovatif",
+    icon: Lightbulb,
+    color: "text-yellow-500",
+    bg: "bg-yellow-500/10",
+    border: "border-yellow-500/30",
+  },
+  {
+    value: "Strict Professional (Formal & Concise)",
+    label: "Strict Professional",
+    description: "Formal & ringkas",
+    icon: Briefcase,
+    color: "text-slate-500",
+    bg: "bg-slate-500/10",
+    border: "border-slate-500/30",
+  },
+  {
+    value: "Data-Driven Analyst (Logical & Factual)",
+    label: "Data-Driven Analyst",
+    description: "Logis & berbasis data",
+    icon: BarChart2,
+    color: "text-green-500",
+    bg: "bg-green-500/10",
+    border: "border-green-500/30",
+  },
+];
+
+const QUICK_TONES = [
+  "Authoritative", "Professional", "Friendly", "Inspirational",
+  "Persuasive", "Warm", "Formal", "Encouraging", "Conversational", "Serious"
+];
+
+const QUICK_STYLES = [
+  "Instructive", "Conversational", "Narrative", "Technical",
+  "Storytelling", "Informative", "Analytical", "Direct Response", "StoryBrand", "Academic"
+];
 
 interface ProjectFormProps {
   projectData: ProjectData;
@@ -72,6 +143,70 @@ function CollapsibleCard({
         </CardContent>
       )}
     </Card>
+  );
+}
+
+function QuickChipSelect({
+  label,
+  value,
+  onChange,
+  quickOptions,
+  allOptions,
+  testIdPrefix,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  quickOptions: string[];
+  allOptions: readonly string[];
+  testIdPrefix: string;
+}) {
+  const isQuick = quickOptions.includes(value);
+  const otherOptions = allOptions.filter((o) => !quickOptions.includes(o));
+
+  return (
+    <div className="space-y-2">
+      <Label>{label}</Label>
+      <div className="flex flex-wrap gap-1.5">
+        {quickOptions.map((opt) => (
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
+            data-testid={`chip-${testIdPrefix}-${opt.toLowerCase().replace(/\s+/g, '-')}`}
+            className={cn(
+              "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+              value === opt
+                ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+            )}
+          >
+            {opt}
+          </button>
+        ))}
+        <Select
+          value={isQuick ? "" : value}
+          onValueChange={onChange}
+        >
+          <SelectTrigger
+            data-testid={`select-${testIdPrefix}-more`}
+            className={cn(
+              "h-7 px-2.5 rounded-full text-xs w-auto border transition-all",
+              !isQuick
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
+            )}
+          >
+            {!isQuick ? value : "Lainnya ▾"}
+          </SelectTrigger>
+          <SelectContent>
+            {otherOptions.map((opt) => (
+              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
   );
 }
 
@@ -264,9 +399,9 @@ export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
       </CollapsibleCard>
 
       <CollapsibleCard
-        icon={Settings}
-        title="Pengaturan Output"
-        defaultOpen={false}
+        icon={Palette}
+        title="Gaya Penulisan & Output"
+        defaultOpen={true}
         testId="card-header-pengaturan-output"
       >
         <div className="grid grid-cols-2 gap-3">
@@ -302,64 +437,86 @@ export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
               </SelectContent>
             </Select>
           </div>
-          <div className="space-y-2">
-            <Label htmlFor="tone">Tone</Label>
-            <Select
-              value={projectData.tone}
-              onValueChange={(value) => onChange('tone', value)}
-            >
-              <SelectTrigger id="tone" data-testid="select-tone">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TONES.map((tone) => (
-                  <SelectItem key={tone} value={tone}>{tone}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="writingStyle">Gaya Penulisan</Label>
-            <Select
-              value={projectData.writingStyle}
-              onValueChange={(value) => onChange('writingStyle', value)}
-            >
-              <SelectTrigger id="writingStyle" data-testid="select-style">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {WRITING_STYLES.map((style) => (
-                  <SelectItem key={style} value={style}>{style}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
         </div>
+
+        <div className="h-px bg-border" />
+
+        <QuickChipSelect
+          label="Tone Penulisan"
+          value={projectData.tone}
+          onChange={(v) => onChange('tone', v)}
+          quickOptions={QUICK_TONES}
+          allOptions={TONES}
+          testIdPrefix="tone"
+        />
+
+        <QuickChipSelect
+          label="Gaya Penulisan"
+          value={projectData.writingStyle}
+          onChange={(v) => onChange('writingStyle', v)}
+          quickOptions={QUICK_STYLES}
+          allOptions={WRITING_STYLES}
+          testIdPrefix="style"
+        />
       </CollapsibleCard>
 
       <CollapsibleCard
         icon={BrainCircuit}
         title="AI Character / Brain Mode"
-        defaultOpen={false}
+        defaultOpen={true}
         testId="card-header-ai-character"
       >
-        <Select
-          value={projectData.aiCharacter}
-          onValueChange={(value) => onChange('aiCharacter', value)}
-        >
-          <SelectTrigger data-testid="select-ai-character">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {AI_CHARACTERS.map((char) => (
-              <SelectItem key={char} value={char}>{char}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <p className="text-xs text-muted-foreground">
-          Mode AI menentukan bagaimana AI akan "berpikir" dan merespons.
-          <span className="text-primary font-medium"> Agentic Strategist</span> adalah mode paling cerdas yang proaktif dan antisipatif.
+        <p className="text-xs text-muted-foreground -mt-1">
+          Pilih karakter AI yang menentukan cara AI "berpikir" dan merespons konten Anda.
         </p>
+        <div className="grid grid-cols-2 gap-2">
+          {AI_CHARACTER_CONFIG.map((char) => {
+            const Icon = char.icon;
+            const isSelected = projectData.aiCharacter === char.value;
+            return (
+              <button
+                key={char.value}
+                type="button"
+                onClick={() => onChange('aiCharacter', char.value)}
+                data-testid={`button-ai-character-${char.label.toLowerCase().replace(/\s+/g, '-')}`}
+                className={cn(
+                  "relative flex items-start gap-2.5 p-3 rounded-lg border text-left transition-all",
+                  isSelected
+                    ? `${char.border} ${char.bg} ring-1 ring-inset ${char.border}`
+                    : "border-border bg-card hover:border-primary/30 hover:bg-muted/30"
+                )}
+              >
+                {isSelected && (
+                  <div className="absolute top-1.5 right-1.5">
+                    <div className={cn("h-2 w-2 rounded-full animate-pulse", char.color.replace('text-', 'bg-'))} />
+                  </div>
+                )}
+                <div className={cn("flex items-center justify-center h-8 w-8 rounded-md shrink-0 mt-0.5", char.bg)}>
+                  <Icon className={cn("h-4 w-4", char.color)} />
+                </div>
+                <div className="min-w-0">
+                  <p className={cn(
+                    "text-xs font-semibold leading-tight",
+                    isSelected ? char.color : "text-foreground"
+                  )}>
+                    {char.label}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground leading-snug mt-0.5">
+                    {char.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {projectData.aiCharacter === "Agentic Strategist (Attentive & Proactive)" && (
+          <div className="flex items-start gap-2 p-2.5 rounded-lg bg-violet-500/5 border border-violet-500/20">
+            <Sparkles className="h-3.5 w-3.5 text-violet-500 mt-0.5 shrink-0" />
+            <p className="text-[11px] text-violet-600 dark:text-violet-400">
+              <span className="font-semibold">Agentic Strategist</span> adalah mode paling cerdas — proaktif, antisipatif, dan selalu memberikan konteks lebih dari yang diminta.
+            </p>
+          </div>
+        )}
       </CollapsibleCard>
     </div>
   );
