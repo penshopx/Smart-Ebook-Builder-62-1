@@ -121,7 +121,7 @@ export default function AdminPage() {
     },
     onError: async (err: any) => {
       const msg = err?.message ?? "Gagal mengklaim admin.";
-      toast({ title: "Gagal", description: msg.includes("403") ? "Kunci rahasia tidak valid atau Admin Utama sudah ada." : msg, variant: "destructive" });
+      toast({ title: "Gagal", description: msg.includes("403") ? "Kunci rahasia tidak valid. Periksa kunci dan coba lagi." : msg, variant: "destructive" });
     },
   });
 
@@ -185,7 +185,6 @@ export default function AdminPage() {
               </CardTitle>
               <CardDescription>
                 Masukkan kunci rahasia untuk mengklaim akses Admin Utama. Kunci ini hanya diketahui oleh pemilik sistem.
-                Admin Utama hanya bisa satu akun.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">

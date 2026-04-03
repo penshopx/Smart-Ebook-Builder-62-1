@@ -161,11 +161,6 @@ export async function registerRoutes(
       if (!validSecret || secretKey !== validSecret) {
         return res.status(403).json({ error: 'Kunci rahasia tidak valid.' });
       }
-      const existingAdminCount = await authStorage.countAdmins();
-      const currentUser = await authStorage.getUser(userId);
-      if (existingAdminCount > 0 && currentUser?.role !== 'admin') {
-        return res.status(403).json({ error: 'Admin Utama sudah ada. Hubungi Admin Utama untuk pengelolaan akses.' });
-      }
       const updated = await authStorage.updateUserRole(userId, 'admin');
       res.json({ success: true, user: updated, message: 'Selamat! Kamu kini adalah Admin Utama Chaesa AI Studio.' });
     } catch (error) {
