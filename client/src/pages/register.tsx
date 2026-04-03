@@ -68,7 +68,7 @@ export default function Register() {
 
   const registerMutation = useMutation({
     mutationFn: (data: { displayName: string; profession: string; organization?: string; primaryIndustry?: string }) =>
-      apiRequest('/api/auth/complete-registration', { method: 'POST', body: JSON.stringify(data) }),
+      apiRequest('POST', '/api/auth/complete-registration', data),
     onSuccess: async () => {
       await queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
       toast({ title: 'Selamat datang!', description: 'Profil Anda berhasil didaftarkan.' });
