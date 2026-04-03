@@ -217,19 +217,19 @@ function UserProfileDropdown({ user }: { user: any }) {
             </Link>
           </DropdownMenuItem>
         )}
-        {isAdminOrSub && (
-          <>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem asChild>
-              <Link href="/admin" className="flex items-center gap-2 cursor-pointer text-red-600 dark:text-red-400" data-testid="menu-admin">
-                <Shield className="h-4 w-4" />
-                Admin Panel
-                {adminMe?.isAdmin && <span className="ml-auto text-[10px] bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">Utama</span>}
-                {adminMe?.isSubAdmin && <span className="ml-auto text-[10px] bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 px-1.5 py-0.5 rounded-full font-medium">Sub</span>}
-              </Link>
-            </DropdownMenuItem>
-          </>
-        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link
+            href="/admin"
+            className={`flex items-center gap-2 cursor-pointer ${isAdminOrSub ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}
+            data-testid="menu-admin"
+          >
+            <Shield className="h-4 w-4" />
+            {isAdminOrSub ? 'Admin Panel' : 'Setup Admin'}
+            {adminMe?.isAdmin && <span className="ml-auto text-[10px] bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-400 px-1.5 py-0.5 rounded-full font-medium">Utama</span>}
+            {adminMe?.isSubAdmin && <span className="ml-auto text-[10px] bg-sky-100 text-sky-600 dark:bg-sky-900/40 dark:text-sky-400 px-1.5 py-0.5 rounded-full font-medium">Sub</span>}
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
           className="text-destructive focus:text-destructive cursor-pointer"
