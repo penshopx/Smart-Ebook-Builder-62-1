@@ -3,11 +3,17 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { 
-  EBOOK_SERIES_DATA, CHAPTER_TEMPLATES, DOCUMENT_TYPES, PACK_TYPES, MARKETING_ASSETS 
+  EBOOK_SERIES_DATA, CHAPTER_TEMPLATES, DOCUMENT_TYPES, PACK_TYPES, MARKETING_ASSETS,
+  TONES, WRITING_STYLES, AI_CHARACTERS
 } from '@shared/schema';
-import type { ProjectData, TaskConfig, ExtendConfig } from '@shared/schema';
-import { Settings2 } from 'lucide-react';
+import type { ProjectData, TaskConfig, ExtendConfig, EbookStyle } from '@shared/schema';
+import { Settings2, Palette, RotateCcw, Sparkles } from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+const QUICK_TONES_PANEL = ["Authoritative", "Professional", "Technical", "Narrative", "Friendly", "Persuasive", "Conversational", "Instructive"];
+const QUICK_STYLES_PANEL = ["Instructive", "Technical", "Narrative", "Conversational", "Storytelling", "Analytical", "Direct Response", "Informative"];
 
 interface TaskConfigPanelProps {
   activeMode: string;
@@ -16,6 +22,170 @@ interface TaskConfigPanelProps {
   extendConfig: ExtendConfig;
   onTaskConfigChange: (name: string, value: string | number) => void;
   onExtendConfigChange: (name: string, value: string) => void;
+  onEbookStyleChange: (ebookId: number, style: Partial<EbookStyle>) => void;
+}
+
+function EbookStyleOverride({
+  ebookId,
+  ebookLabel,
+  globalStyle,
+  currentStyle,
+  onStyleChange,
+  onReset,
+}: {
+  ebookId: number;
+  ebookLabel: string;
+  globalStyle: EbookStyle;
+  currentStyle: EbookStyle;
+  onStyleChange: (field: keyof EbookStyle, value: string) => void;
+  onReset: () => void;
+}) {
+  const hasOverride =
+    currentStyle.tone !== globalStyle.tone ||
+    currentStyle.writingStyle !== globalStyle.writingStyle ||
+    currentStyle.aiCharacter !== globalStyle.aiCharacter;
+
+  const isQuickTone = QUICK_TONES_PANEL.includes(currentStyle.tone);
+  const isQuickStyle = QUICK_STYLES_PANEL.includes(currentStyle.writingStyle);
+  const otherTones = Array.from(TONES).filter(t => !QUICK_TONES_PANEL.includes(t));
+  const otherStyles = Array.from(WRITING_STYLES).filter(s => !QUICK_STYLES_PANEL.includes(s));
+
+  return (
+    <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1.5">
+          <Palette className="h-3.5 w-3.5 text-primary" />
+          <span className="text-xs font-semibold text-primary">Gaya Khusus Ebook Ini</span>
+          {hasOverride && (
+            <Badge className="text-[9px] px-1.5 py-0 h-3.5 bg-primary text-primary-foreground">Dikustom</Badge>
+          )}
+        </div>
+        {hasOverride && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+            data-testid={`button-reset-ebook-style-${ebookId}`}
+          >
+            <RotateCcw className="h-2.5 w-2.5" />
+            Reset ke default
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-[11px]">Tone</Label>
+        <div className="flex flex-wrap gap-1">
+          {QUICK_TONES_PANEL.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onStyleChange('tone', opt)}
+              data-testid={`chip-ebook-tone-${ebookId}-${opt.toLowerCase()}`}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all",
+                currentStyle.tone === opt
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+          <Select
+            value={isQuickTone ? "" : currentStyle.tone}
+            onValueChange={(v) => onStyleChange('tone', v)}
+          >
+            <SelectTrigger
+              data-testid={`select-ebook-tone-more-${ebookId}`}
+              className={cn(
+                "h-6 px-2 rounded-full text-[10px] w-auto border transition-all",
+                !isQuickTone
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border"
+              )}
+            >
+              {!isQuickTone ? currentStyle.tone : "Lainnya ▾"}
+            </SelectTrigger>
+            <SelectContent>
+              {otherTones.map(t => (
+                <SelectItem key={t} value={t}>{t}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-[11px]">Gaya Penulisan</Label>
+        <div className="flex flex-wrap gap-1">
+          {QUICK_STYLES_PANEL.map(opt => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onStyleChange('writingStyle', opt)}
+              data-testid={`chip-ebook-style-${ebookId}-${opt.toLowerCase().replace(/\s+/g, '-')}`}
+              className={cn(
+                "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all",
+                currentStyle.writingStyle === opt
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
+              )}
+            >
+              {opt}
+            </button>
+          ))}
+          <Select
+            value={isQuickStyle ? "" : currentStyle.writingStyle}
+            onValueChange={(v) => onStyleChange('writingStyle', v)}
+          >
+            <SelectTrigger
+              data-testid={`select-ebook-style-more-${ebookId}`}
+              className={cn(
+                "h-6 px-2 rounded-full text-[10px] w-auto border transition-all",
+                !isQuickStyle
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-background text-muted-foreground border-border"
+              )}
+            >
+              {!isQuickStyle ? currentStyle.writingStyle : "Lainnya ▾"}
+            </SelectTrigger>
+            <SelectContent>
+              {otherStyles.map(s => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-[11px]">AI Character</Label>
+        <Select
+          value={currentStyle.aiCharacter}
+          onValueChange={(v) => onStyleChange('aiCharacter', v)}
+        >
+          <SelectTrigger data-testid={`select-ebook-ai-character-${ebookId}`} className="h-8 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {Array.from(AI_CHARACTERS).map(c => (
+              <SelectItem key={c} value={c} className="text-xs">{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {hasOverride && (
+        <div className="flex items-start gap-1.5 rounded-md bg-primary/10 p-2">
+          <Sparkles className="h-3 w-3 text-primary mt-0.5 shrink-0" />
+          <p className="text-[10px] text-primary/80 leading-snug">
+            Ebook ini akan menggunakan gaya <strong>{currentStyle.tone} / {currentStyle.writingStyle}</strong> yang berbeda dari setting global.
+          </p>
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function TaskConfigPanel({
@@ -25,8 +195,23 @@ export function TaskConfigPanel({
   extendConfig,
   onTaskConfigChange,
   onExtendConfigChange,
+  onEbookStyleChange,
 }: TaskConfigPanelProps) {
   const currentSeriesList = EBOOK_SERIES_DATA[projectData.level] || [];
+  const isMultiEbook = currentSeriesList.length > 1;
+
+  const globalStyle: EbookStyle = {
+    tone: projectData.tone,
+    writingStyle: projectData.writingStyle,
+    aiCharacter: projectData.aiCharacter,
+  };
+
+  const getEbookStyle = (ebookId: number): EbookStyle => {
+    const override = projectData.ebookStyles?.[ebookId.toString()];
+    return override
+      ? { ...globalStyle, ...override }
+      : { ...globalStyle };
+  };
 
   const renderContent = () => {
     switch (activeMode) {
@@ -255,6 +440,22 @@ export function TaskConfigPanel({
                 data-testid="textarea-tujuan-bab"
               />
             </div>
+            {isMultiEbook && (
+              <EbookStyleOverride
+                ebookId={taskConfig.selectedEbookId}
+                ebookLabel={currentSeriesList.find(e => e.id === taskConfig.selectedEbookId)?.label || ''}
+                globalStyle={globalStyle}
+                currentStyle={getEbookStyle(taskConfig.selectedEbookId)}
+                onStyleChange={(field, value) =>
+                  onEbookStyleChange(taskConfig.selectedEbookId, { [field]: value })
+                }
+                onReset={() => {
+                  const newStyles = { ...(projectData.ebookStyles || {}) };
+                  delete newStyles[taskConfig.selectedEbookId.toString()];
+                  onEbookStyleChange(taskConfig.selectedEbookId, globalStyle);
+                }}
+              />
+            )}
           </div>
         );
 

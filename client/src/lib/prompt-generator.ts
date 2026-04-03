@@ -72,7 +72,18 @@ export function generatePrompt(
   extendConfig: ExtendConfig,
   uploadedFiles: UploadedFile[]
 ): string {
-  const agenticLogic = projectData.aiCharacter.includes("Agentic") 
+  // Resolve effective style: per-ebook override (if set) takes priority over global
+  const perEbookStyle = projectData.ebookStyles?.[taskConfig.selectedEbookId.toString()];
+  const effectiveTone = perEbookStyle?.tone || projectData.tone;
+  const effectiveStyle = perEbookStyle?.writingStyle || projectData.writingStyle;
+  const effectiveCharacter = perEbookStyle?.aiCharacter || projectData.aiCharacter;
+  const hasPerEbookOverride = !!perEbookStyle && (
+    perEbookStyle.tone !== projectData.tone ||
+    perEbookStyle.writingStyle !== projectData.writingStyle ||
+    perEbookStyle.aiCharacter !== projectData.aiCharacter
+  );
+
+  const agenticLogic = effectiveCharacter.includes("Agentic") 
     ? `
 === AGENTIC THOUGHT PROCESS (ATTENTIVE MODE) ===
 Anda adalah **Agentic AI yang Cerdas & Attentive**. Sebelum memberikan jawaban akhir, lakukan langkah berikut di dalam "pikiran" Anda:
@@ -83,7 +94,7 @@ Anda adalah **Agentic AI yang Cerdas & Attentive**. Sebelum memberikan jawaban a
 ` 
     : `
 === KARAKTER AI ===
-Berperanlah sebagai: **${projectData.aiCharacter}**.
+Berperanlah sebagai: **${effectiveCharacter}**.
 `;
 
   const { context: industryContext, displayName: industryDisplayName } = getMultiIndustryContext(projectData.industry || 'general');
@@ -106,8 +117,8 @@ ${industryContext}
 Instruksi di bawah ini bersifat MANDATORI:
 1. BAHASA OUTPUT: Gunakan **${projectData.language}** sepenuhnya.
 2. FORMAT STRUKTUR: **${projectData.outputFormat}**.
-3. NADA BICARA (TONE): **${projectData.tone}**.
-4. GAYA PENULISAN (STYLE): **${projectData.writingStyle}**.
+3. NADA BICARA (TONE): **${effectiveTone}**${hasPerEbookOverride ? ' *(kustom untuk ebook ini)*' : ''}.
+4. GAYA PENULISAN (STYLE): **${effectiveStyle}**${hasPerEbookOverride ? ' *(kustom untuk ebook ini)*' : ''}.
 
 === REKOMENDASI EKSEKUSI ===
 Setelah prompt ini selesai, disarankan untuk mengeksekusi di **chat.dokumentender.com** 
@@ -119,7 +130,7 @@ Kerjakan tugas di bawah ini dengan output yang TERSTRUKTUR, MENDALAM, dan SIAP P
 
   let taskInstruction = "";
   const styleReminder = `
-[PENTING: Pastikan Output menggunakan format: ${projectData.outputFormat}, Tone: ${projectData.tone}, Style: ${projectData.writingStyle}, Bahasa: ${projectData.language}]
+[PENTING: Pastikan Output menggunakan format: ${projectData.outputFormat}, Tone: ${effectiveTone}, Style: ${effectiveStyle}, Bahasa: ${projectData.language}]
 `;
 
   const finalJudulBab = taskConfig.judulBab === "Custom / Tulis Judul Sendiri..." ? taskConfig.manualJudulBab : taskConfig.judulBab;
@@ -405,7 +416,7 @@ Buatkan Teks Konfigurasi Lengkap dengan struktur berikut:
    - Definisikan Persona secara detail (Kamu adalah...).
    - Definisikan Misi (Membantu pembaca memahami topik ${projectData.topik}).
    - **Knowledge Base Rules (PENTING):** Instruksikan bot untuk SELALU mencari jawaban di file yang diupload ("Knowledge") TERLEBIH DAHULU sebelum menggunakan pengetahuan umum. Jika jawaban ada di buku, kutip halamannya.
-   - **Tone & Style:** ${projectData.tone} dan ${projectData.writingStyle}.
+   - **Tone & Style:** ${effectiveTone} dan ${effectiveStyle}.
    - **Guardrails:** Apa yang TIDAK boleh dilakukan (misal: memberi saran medis/hukum sembarangan jika topik sensitif).
 4. **Conversation Starters:** 4 Contoh pertanyaan pemancing yang relevan dengan isi ebook.
 `;

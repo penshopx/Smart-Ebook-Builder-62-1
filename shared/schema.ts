@@ -792,6 +792,14 @@ export const MODES = [
 ] as const;
 
 // Project data schema
+export const ebookStyleSchema = z.object({
+  tone: z.string(),
+  writingStyle: z.string(),
+  aiCharacter: z.string(),
+});
+
+export type EbookStyle = z.infer<typeof ebookStyleSchema>;
+
 export const projectDataSchema = z.object({
   topik: z.string(),
   judul: z.string(),
@@ -809,6 +817,7 @@ export const projectDataSchema = z.object({
   level: z.string().default('1 Ebook'),
   industry: z.string().default('general'),
   selectedAiModel: z.string().default('dokumentender'),
+  ebookStyles: z.record(z.string(), ebookStyleSchema).optional().default({}),
 });
 
 export const taskConfigSchema = z.object({

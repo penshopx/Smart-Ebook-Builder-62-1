@@ -68,6 +68,7 @@ const defaultProjectData: ProjectData = {
   level: '1 Ebook',
   industry: 'general',
   selectedAiModel: 'dokumentender',
+  ebookStyles: {},
 };
 
 const defaultTaskConfig: TaskConfig = {
@@ -253,6 +254,24 @@ export default function Home() {
 
   const handleExtendConfigChange = (name: string, value: string) => {
     setExtendConfig(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleEbookStyleChange = (ebookId: number, style: Partial<import('@shared/schema').EbookStyle>) => {
+    setProjectData(prev => {
+      const globalStyle = { tone: prev.tone, writingStyle: prev.writingStyle, aiCharacter: prev.aiCharacter };
+      const merged = { ...globalStyle, ...(prev.ebookStyles?.[ebookId.toString()] || {}), ...style };
+      const isIdenticalToGlobal =
+        merged.tone === globalStyle.tone &&
+        merged.writingStyle === globalStyle.writingStyle &&
+        merged.aiCharacter === globalStyle.aiCharacter;
+      const newStyles = { ...(prev.ebookStyles || {}) };
+      if (isIdenticalToGlobal) {
+        delete newStyles[ebookId.toString()];
+      } else {
+        newStyles[ebookId.toString()] = merged;
+      }
+      return { ...prev, ebookStyles: newStyles };
+    });
   };
 
   const handleReset = () => {
@@ -466,6 +485,7 @@ export default function Home() {
                     extendConfig={extendConfig}
                     onTaskConfigChange={handleTaskConfigChange}
                     onExtendConfigChange={handleExtendConfigChange}
+                    onEbookStyleChange={handleEbookStyleChange}
                   />
                 </div>
               </TabsContent>
