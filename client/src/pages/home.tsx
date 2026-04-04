@@ -524,6 +524,7 @@ export default function Home() {
               </TabsContent>
             </Tabs>
             <EcosystemTracker />
+            <TopicAssistant projectData={projectData} />
           </div>
 
           <div className="space-y-4">
@@ -594,11 +595,9 @@ export default function Home() {
         </DialogContent>
       </Dialog>
 
-      {/* Chat Buttons: Left = DokumenTender (eksekusi prompt), Right = Chaesa (knowledge base) */}
+      {/* Floating Chat Buttons: Left = DokumenTender (prompt executor), Right = Chaesa (help desk) */}
       <DokumenterChatButton />
       <ChaesaChatbot />
-      {/* Topic-specific Agentic AI — per project topic */}
-      <TopicAssistant projectData={projectData} />
     </div>
   );
 }

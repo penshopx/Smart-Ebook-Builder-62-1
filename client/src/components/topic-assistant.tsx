@@ -1,16 +1,14 @@
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import {
-  Sheet, SheetContent, SheetHeader, SheetTitle,
-} from '@/components/ui/sheet';
-import {
-  BrainCircuit, Send, X, Minimize2, Maximize2,
+  BrainCircuit, Send, X, ChevronDown, ChevronUp,
   Lightbulb, FileText, TrendingUp, Search, HelpCircle, Sparkles,
+  MessageSquareText, RotateCcw,
 } from 'lucide-react';
 import type { ProjectData } from '@shared/schema';
 
@@ -55,59 +53,47 @@ function renderMarkdown(text: string): React.ReactNode {
   const lines = text.split('\n');
   const result: React.ReactNode[] = [];
   let i = 0;
-
   while (i < lines.length) {
     const line = lines[i];
-
-    if (line.match(/^\*\*\[[\w\s]+\]\*\*/)) {
-      const agentMatch = line.match(/^\*\*\[([\w\s]+)\]\*\*(.*)/);
-      if (agentMatch) {
-        const agentName = agentMatch[1];
-        const rest = agentMatch[2];
-        const colorClass = AGENT_COLORS[agentName] || 'text-violet-600 dark:text-violet-400';
-        const icon = AGENT_ICONS[agentName] || '🤖';
-        result.push(
-          <div key={i} className="mb-2">
-            <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-muted ${colorClass}`}>
-              <span>{icon}</span> {agentName}
-            </span>
-            {rest && <span>{inlineFormat(rest)}</span>}
-          </div>
-        );
-        i++;
-        continue;
-      }
-    }
-
-    if (line.startsWith('### ')) {
-      result.push(<h3 key={i} className="font-bold text-sm mt-3 mb-1">{inlineFormat(line.slice(4))}</h3>);
-    } else if (line.startsWith('## ')) {
-      result.push(<h2 key={i} className="font-bold text-sm mt-3 mb-1">{inlineFormat(line.slice(3))}</h2>);
+    const agentMatch = line.match(/^\*\*\[([\w\s]+)\]\*\*(.*)/);
+    if (agentMatch) {
+      const agentName = agentMatch[1];
+      const rest = agentMatch[2];
+      const colorClass = AGENT_COLORS[agentName] || 'text-violet-600 dark:text-violet-400';
+      const icon = AGENT_ICONS[agentName] || '🤖';
+      result.push(
+        <div key={i} className="mb-1.5">
+          <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-muted ${colorClass}`}>
+            <span>{icon}</span> {agentName}
+          </span>
+          {rest && <span className="text-xs">{inlineFormat(rest)}</span>}
+        </div>
+      );
+    } else if (line.startsWith('### ') || line.startsWith('## ')) {
+      result.push(<p key={i} className="font-bold text-xs mt-2 mb-0.5">{inlineFormat(line.replace(/^#+\s/, ''))}</p>);
     } else if (line.startsWith('- ') || line.startsWith('• ')) {
       result.push(
-        <div key={i} className="flex gap-1.5 my-0.5 text-xs">
+        <div key={i} className="flex gap-1 my-0.5 text-xs">
           <span className="text-muted-foreground mt-0.5 shrink-0">•</span>
           <span>{inlineFormat(line.slice(2))}</span>
         </div>
       );
     } else if (line.match(/^\d+\.\s/)) {
-      const match = line.match(/^(\d+)\.\s(.*)/);
-      if (match) {
-        result.push(
-          <div key={i} className="flex gap-1.5 my-0.5 text-xs">
-            <span className="text-muted-foreground shrink-0 font-medium">{match[1]}.</span>
-            <span>{inlineFormat(match[2])}</span>
-          </div>
-        );
-      }
-    } else if (line.startsWith('💡') || line.startsWith('🎯') || line.startsWith('✅') || line.startsWith('📌')) {
+      const m = line.match(/^(\d+)\.\s(.*)/);
+      if (m) result.push(
+        <div key={i} className="flex gap-1 my-0.5 text-xs">
+          <span className="text-muted-foreground shrink-0 font-medium">{m[1]}.</span>
+          <span>{inlineFormat(m[2])}</span>
+        </div>
+      );
+    } else if (line.startsWith('💡') || line.startsWith('🎯') || line.startsWith('✅')) {
       result.push(
-        <div key={i} className="mt-2 text-xs bg-muted/60 rounded-md px-2.5 py-1.5 border-l-2 border-primary/40 italic text-muted-foreground">
+        <div key={i} className="mt-1.5 text-[10px] bg-violet-50 dark:bg-violet-950/30 rounded-md px-2 py-1 border-l-2 border-violet-400/50 italic text-muted-foreground">
           {inlineFormat(line)}
         </div>
       );
     } else if (line === '') {
-      result.push(<div key={i} className="h-1.5" />);
+      result.push(<div key={i} className="h-1" />);
     } else {
       result.push(<p key={i} className="text-xs leading-relaxed">{inlineFormat(line)}</p>);
     }
@@ -119,15 +105,9 @@ function renderMarkdown(text: string): React.ReactNode {
 function inlineFormat(text: string): React.ReactNode {
   const parts = text.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/);
   return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
-    }
-    if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) {
-      return <em key={i} className="italic">{part.slice(1, -1)}</em>;
-    }
-    if (part.startsWith('`') && part.endsWith('`')) {
-      return <code key={i} className="bg-muted px-1 rounded text-[10px] font-mono">{part.slice(1, -1)}</code>;
-    }
+    if (part.startsWith('**') && part.endsWith('**')) return <strong key={i} className="font-semibold">{part.slice(2, -2)}</strong>;
+    if (part.startsWith('*') && part.endsWith('*') && !part.startsWith('**')) return <em key={i} className="italic">{part.slice(1, -1)}</em>;
+    if (part.startsWith('`') && part.endsWith('`')) return <code key={i} className="bg-muted px-1 rounded text-[10px] font-mono">{part.slice(1, -1)}</code>;
     return part;
   });
 }
@@ -142,7 +122,6 @@ const QUICK_CHIPS = [
 ];
 
 export function TopicAssistant({ projectData }: TopicAssistantProps) {
-  const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -156,48 +135,44 @@ export function TopicAssistant({ projectData }: TopicAssistantProps) {
   const topicLabel = projectData.topik || 'Topik Ebook';
 
   useEffect(() => {
-    if (isOpen && messages.length === 0 && hasTopic) {
-      const greeting: Message = {
+    if (isExpanded && messages.length === 0 && hasTopic) {
+      setMessages([{
         role: 'assistant',
         content: `**[ORCHESTRATOR]**
 
-Selamat datang! Saya **CHAESA PRIME** — Agentic AI Orchestrator untuk proyek Anda.
+Halo! Saya **CHAESA PRIME** — Agentic AI khusus untuk topik proyek Anda.
 
 🎯 **Topik aktif**: *${projectData.topik}*
 ${projectData.industry && projectData.industry !== 'general' ? `🏭 **Industri**: ${INDUSTRY_LABELS[projectData.industry] || projectData.industry}` : ''}
 
-Saya mengoordinasi tim agen spesialis yang siap membantu:
-- 📚 **Content Architect** — Struktur & konten ebook
-- 🏭 **Industry Expert** — Pengetahuan industri mendalam  
+Saya mengorkestrasi 5 agen spesialis:
+- 📚 **Content Architect** — Struktur & narasi ebook
+- 🏭 **Industry Expert** — Pengetahuan industri mendalam
 - 📣 **Marketing Strategist** — Positioning & angle unik
 - 🔍 **Research Guide** — Eksplorasi & validasi ide
 - ❓ **Interactive Coach** — Klarifikasi & pengarahan
 
-${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi: *"${projectData.painPoint}"*. ` : ''}Mulai dari mana kita?
+${projectData.painPoint ? `Saya sudah menangkap pain point: *"${projectData.painPoint}"*. ` : ''}Mulai percakapan dari bawah!
 
-💡 *Pertanyaan lanjutan: Aspek mana dari topik "${projectData.topik}" yang paling ingin kamu eksplorasi lebih dalam?*`
-      };
-      setMessages([greeting]);
+💡 *Coba tanya: Apa angle unik yang bisa membedakan ebook saya tentang "${projectData.topik}"?*`
+      }]);
     }
-  }, [isOpen, hasTopic]);
+  }, [isExpanded, hasTopic]);
 
   useEffect(() => {
-    scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (isExpanded) scrollEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, isExpanded]);
 
   const sendMessage = async (messageText?: string) => {
     const text = (messageText || input).trim();
     if (!text || isStreaming || !hasTopic) return;
-
     setInput('');
     const userMsg: Message = { role: 'user', content: text };
     const updatedMessages = [...messages, userMsg];
     setMessages([...updatedMessages, { role: 'assistant', content: '', streaming: true }]);
     setIsStreaming(true);
-
     const abort = new AbortController();
     abortRef.current = abort;
-
     try {
       const response = await fetch('/api/topic-assistant', {
         method: 'POST',
@@ -206,31 +181,22 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
         body: JSON.stringify({
           messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
           projectContext: {
-            topik: projectData.topik,
-            judul: projectData.judul,
-            target: projectData.target,
-            industry: projectData.industry,
-            painPoint: projectData.painPoint,
-            bigIdea: projectData.bigIdea,
-            tujuan: projectData.tujuan,
-            tone: projectData.tone,
-            writingStyle: projectData.writingStyle,
-            aiCharacter: projectData.aiCharacter,
+            topik: projectData.topik, judul: projectData.judul, target: projectData.target,
+            industry: projectData.industry, painPoint: projectData.painPoint,
+            bigIdea: projectData.bigIdea, tujuan: projectData.tujuan,
+            tone: projectData.tone, writingStyle: projectData.writingStyle, aiCharacter: projectData.aiCharacter,
           },
         }),
         signal: abort.signal,
       });
-
-      if (!response.ok) throw new Error('Request failed');
+      if (!response.ok) throw new Error('Failed');
       const reader = response.body!.getReader();
       const decoder = new TextDecoder();
       let accumulated = '';
-
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        const chunk = decoder.decode(value);
-        const lines = chunk.split('\n');
+        const lines = decoder.decode(value).split('\n');
         for (const line of lines) {
           if (line.startsWith('data: ')) {
             try {
@@ -239,37 +205,54 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
               if (data.content) {
                 accumulated += data.content;
                 setMessages(prev => {
-                  const updated = [...prev];
-                  updated[updated.length - 1] = { role: 'assistant', content: accumulated, streaming: true };
-                  return updated;
+                  const u = [...prev];
+                  u[u.length - 1] = { role: 'assistant', content: accumulated, streaming: true };
+                  return u;
                 });
               }
             } catch {}
           }
         }
       }
-
       setMessages(prev => {
-        const updated = [...prev];
-        updated[updated.length - 1] = { role: 'assistant', content: accumulated, streaming: false };
-        return updated;
+        const u = [...prev];
+        u[u.length - 1] = { role: 'assistant', content: accumulated, streaming: false };
+        return u;
       });
     } catch (err: any) {
       if (err.name !== 'AbortError') {
         setMessages(prev => {
-          const updated = [...prev];
-          updated[updated.length - 1] = {
-            role: 'assistant',
-            content: 'Maaf, terjadi kesalahan koneksi. Silakan coba lagi.',
-            streaming: false,
-          };
-          return updated;
+          const u = [...prev];
+          u[u.length - 1] = { role: 'assistant', content: 'Maaf, terjadi kesalahan koneksi. Silakan coba lagi.', streaming: false };
+          return u;
         });
       }
     } finally {
       setIsStreaming(false);
       abortRef.current = null;
     }
+  };
+
+  const stopStreaming = () => {
+    abortRef.current?.abort();
+    setIsStreaming(false);
+    setMessages(prev => {
+      const u = [...prev];
+      if (u[u.length - 1]?.streaming) u[u.length - 1] = { ...u[u.length - 1], streaming: false };
+      return u;
+    });
+  };
+
+  const resetChat = () => {
+    setMessages([]);
+    setTimeout(() => {
+      if (isExpanded && hasTopic) {
+        setMessages([{
+          role: 'assistant',
+          content: `**[ORCHESTRATOR]**\n\nSesi baru dimulai! Saya siap membantu dengan topik *"${projectData.topik}"*. Apa yang ingin kamu eksplorasi?\n\n💡 *Mulai dengan salah satu chip cepat di bawah, atau ketik pertanyaanmu.*`
+        }]);
+      }
+    }, 100);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -279,143 +262,126 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
     }
   };
 
-  const stopStreaming = () => {
-    abortRef.current?.abort();
-    setIsStreaming(false);
-    setMessages(prev => {
-      const updated = [...prev];
-      if (updated[updated.length - 1]?.streaming) {
-        updated[updated.length - 1] = { ...updated[updated.length - 1], streaming: false };
-      }
-      return updated;
-    });
-  };
-
-  const clearChat = () => {
-    setMessages([]);
-    setIsOpen(false);
-    setTimeout(() => setIsOpen(true), 100);
-  };
+  const messageCount = messages.filter(m => m.role === 'user').length;
 
   return (
-    <>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={() => hasTopic ? setIsOpen(true) : undefined}
-            data-testid="button-topic-assistant"
-            className={`fixed bottom-24 right-4 z-50 flex flex-col items-center justify-center gap-0.5 h-14 w-14 rounded-2xl shadow-lg border transition-all duration-200 ${
-              hasTopic
-                ? 'bg-gradient-to-br from-violet-600 to-purple-700 hover:from-violet-500 hover:to-purple-600 border-violet-400/30 text-white cursor-pointer hover:scale-105 active:scale-95'
-                : 'bg-muted border-border text-muted-foreground cursor-not-allowed opacity-50'
-            }`}
-          >
-            <BrainCircuit className="h-5 w-5" />
-            <span className="text-[8px] font-semibold leading-none tracking-tight">PRIME</span>
-          </button>
-        </TooltipTrigger>
-        <TooltipContent side="left" className="max-w-[180px]">
-          {hasTopic
-            ? <p className="text-xs">Chaesa Prime — Agentic AI untuk topik <strong>"{topicLabel}"</strong></p>
-            : <p className="text-xs">Isi topik ebook dulu untuk mengaktifkan Asisten Topik</p>
-          }
-        </TooltipContent>
-      </Tooltip>
-
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetContent
-          side="right"
-          className={`flex flex-col p-0 gap-0 transition-all duration-300 ${isExpanded ? 'w-[680px] max-w-[95vw]' : 'w-[420px] max-w-[95vw]'}`}
+    <Card className={`border-violet-200/60 dark:border-violet-800/40 overflow-hidden transition-all duration-300 ${
+      isExpanded ? 'shadow-md ring-1 ring-violet-300/30 dark:ring-violet-700/30' : 'hover:border-violet-300/80 dark:hover:border-violet-700/60'
+    }`}>
+      <CardHeader className="p-0">
+        <button
+          onClick={() => hasTopic ? setIsExpanded(e => !e) : undefined}
+          className={`w-full flex items-center justify-between px-4 py-3 transition-colors ${
+            hasTopic
+              ? 'cursor-pointer hover:bg-violet-50/50 dark:hover:bg-violet-900/10'
+              : 'cursor-not-allowed opacity-60'
+          }`}
+          data-testid="button-toggle-topic-assistant"
         >
-          <SheetHeader className="px-4 py-3 border-b bg-gradient-to-r from-violet-600 to-purple-700 text-white shrink-0">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="h-8 w-8 rounded-xl bg-white/20 flex items-center justify-center">
-                  <BrainCircuit className="h-4 w-4 text-white" />
-                </div>
-                <div>
-                  <SheetTitle className="text-white text-sm font-bold leading-tight">
-                    Chaesa Prime
-                  </SheetTitle>
-                  <p className="text-[10px] text-white/70 truncate max-w-[200px]">
-                    🎯 {topicLabel}
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <Badge variant="secondary" className="text-[9px] bg-white/20 text-white border-white/30 hover:bg-white/30">
-                  {industryShort}
+          <div className="flex items-center gap-3">
+            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shrink-0">
+              <BrainCircuit className="h-4 w-4 text-white" />
+            </div>
+            <div className="text-left">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-sm font-semibold text-foreground">Asisten Topik</span>
+                <Badge variant="outline" className="text-[9px] py-0 h-4 border-violet-300/60 dark:border-violet-700/60 text-violet-600 dark:text-violet-400 bg-violet-50/50 dark:bg-violet-900/20">
+                  Chaesa Prime
                 </Badge>
-                <button
-                  onClick={() => setIsExpanded(e => !e)}
-                  className="p-1 rounded-lg hover:bg-white/20 transition-colors"
-                  title={isExpanded ? "Perkecil" : "Perluas"}
-                >
-                  {isExpanded ? <Minimize2 className="h-3.5 w-3.5 text-white" /> : <Maximize2 className="h-3.5 w-3.5 text-white" />}
-                </button>
-                <button
-                  onClick={clearChat}
-                  className="p-1 rounded-lg hover:bg-white/20 transition-colors"
-                  title="Reset chat"
-                >
-                  <X className="h-3.5 w-3.5 text-white" />
-                </button>
+                {messageCount > 0 && (
+                  <Badge variant="secondary" className="text-[9px] py-0 h-4">
+                    {messageCount} pesan
+                  </Badge>
+                )}
               </div>
+              <p className="text-[10px] text-muted-foreground mt-0.5">
+                {hasTopic
+                  ? <span>5 agen spesialis · Topik: <span className="text-violet-600 dark:text-violet-400 font-medium truncate">{topicLabel}</span></span>
+                  : 'Isi topik ebook untuk mengaktifkan asisten ini'
+                }
+              </p>
             </div>
-            <div className="flex items-center gap-1.5 mt-1">
-              {['Content Architect', 'Industry Expert', 'Marketing Strategist', 'Research Guide', 'Interactive Coach'].map(agent => (
-                <span key={agent} className="text-[8px] bg-white/15 px-1.5 py-0.5 rounded-full text-white/80">
-                  {AGENT_ICONS[agent]} {agent.split(' ')[0]}
-                </span>
-              ))}
-            </div>
-          </SheetHeader>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {hasTopic && (
+              <Badge className="text-[9px] py-0 h-5 bg-violet-100 dark:bg-violet-900/40 text-violet-700 dark:text-violet-300 border-violet-200 dark:border-violet-700 hover:bg-violet-100">
+                {industryShort}
+              </Badge>
+            )}
+            {isExpanded
+              ? <ChevronUp className="h-4 w-4 text-muted-foreground" />
+              : <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            }
+          </div>
+        </button>
 
-          <ScrollArea className="flex-1 px-4 py-3">
-            <div className="space-y-4">
+        {isExpanded && (
+          <div className="px-4 pb-2 flex items-center gap-1.5 flex-wrap border-t border-violet-100 dark:border-violet-900/30 pt-2 bg-violet-50/30 dark:bg-violet-950/10">
+            <span className="text-[9px] text-muted-foreground font-medium mr-1">AGEN:</span>
+            {[
+              { name: 'Content Architect', icon: '📚', color: 'text-blue-600 dark:text-blue-400' },
+              { name: 'Industry Expert', icon: '🏭', color: 'text-amber-600 dark:text-amber-400' },
+              { name: 'Marketing Strategist', icon: '📣', color: 'text-rose-600 dark:text-rose-400' },
+              { name: 'Research Guide', icon: '🔍', color: 'text-teal-600 dark:text-teal-400' },
+              { name: 'Interactive Coach', icon: '❓', color: 'text-green-600 dark:text-green-400' },
+            ].map(a => (
+              <span key={a.name} className={`text-[9px] bg-white dark:bg-muted px-1.5 py-0.5 rounded-full border border-border/50 ${a.color}`}>
+                {a.icon} {a.name.split(' ')[0]}
+              </span>
+            ))}
+            {messageCount > 0 && (
+              <button
+                onClick={(e) => { e.stopPropagation(); resetChat(); }}
+                className="ml-auto flex items-center gap-1 text-[9px] text-muted-foreground hover:text-destructive transition-colors"
+                title="Reset percakapan"
+              >
+                <RotateCcw className="h-2.5 w-2.5" /> Reset
+              </button>
+            )}
+          </div>
+        )}
+      </CardHeader>
+
+      {isExpanded && (
+        <CardContent className="p-0">
+          <ScrollArea className="h-[340px] px-4 py-3">
+            <div className="space-y-3">
               {messages.length === 0 && (
                 <div className="text-center py-8 text-muted-foreground">
-                  <BrainCircuit className="h-10 w-10 mx-auto mb-3 opacity-20" />
-                  <p className="text-xs">Memuat asisten topik...</p>
+                  <BrainCircuit className="h-8 w-8 mx-auto mb-2 opacity-20" />
+                  <p className="text-xs">Memuat asisten...</p>
                 </div>
               )}
-
               {messages.map((msg, idx) => (
-                <div key={idx} className={`flex gap-2.5 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                <div key={idx} className={`flex gap-2 ${msg.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
                   {msg.role === 'assistant' && (
-                    <Avatar className="h-6 w-6 shrink-0 mt-0.5">
-                      <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-[9px] text-white font-bold">CP</AvatarFallback>
+                    <Avatar className="h-5 w-5 shrink-0 mt-0.5">
+                      <AvatarFallback className="bg-gradient-to-br from-violet-500 to-purple-600 text-[8px] text-white font-bold">CP</AvatarFallback>
                     </Avatar>
                   )}
-                  <div className={`max-w-[85%] rounded-2xl px-3 py-2.5 ${
+                  <div className={`max-w-[88%] rounded-xl px-3 py-2 text-xs ${
                     msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground ml-auto rounded-tr-sm'
-                      : 'bg-muted border border-border/40 rounded-tl-sm'
+                      ? 'bg-primary text-primary-foreground rounded-tr-sm ml-auto'
+                      : 'bg-muted border border-border/30 rounded-tl-sm'
                   }`}>
                     {msg.role === 'user'
-                      ? <p className="text-xs leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      ? <p className="leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                       : (
-                        <div className="prose-chaesa">
+                        <div>
                           {msg.content
                             ? renderMarkdown(msg.content)
                             : (
                               <div className="flex items-center gap-1.5 py-1">
                                 <div className="flex gap-0.5">
                                   {[0, 150, 300].map(d => (
-                                    <div
-                                      key={d}
-                                      className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce"
-                                      style={{ animationDelay: `${d}ms` }}
-                                    />
+                                    <div key={d} className="h-1.5 w-1.5 rounded-full bg-violet-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
                                   ))}
                                 </div>
-                                <span className="text-[10px] text-muted-foreground">Agen bekerja...</span>
+                                <span className="text-[10px] text-muted-foreground">Agen berpikir...</span>
                               </div>
                             )
                           }
-                          {msg.streaming && msg.content && (
-                            <span className="inline-block h-3 w-0.5 bg-violet-500 ml-0.5 animate-pulse" />
-                          )}
+                          {msg.streaming && msg.content && <span className="inline-block h-3 w-0.5 bg-violet-500 ml-0.5 animate-pulse" />}
                         </div>
                       )
                     }
@@ -427,15 +393,15 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
           </ScrollArea>
 
           {messages.length <= 1 && !isStreaming && (
-            <div className="px-4 pb-2 shrink-0">
-              <p className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wide">Mulai dengan:</p>
-              <div className="grid grid-cols-2 gap-1.5">
+            <div className="px-4 pb-2 border-t border-border/30">
+              <p className="text-[9px] text-muted-foreground my-2 font-medium uppercase tracking-wide">Mulai dengan pertanyaan cepat:</p>
+              <div className="grid grid-cols-2 gap-1">
                 {QUICK_CHIPS.map((chip) => (
                   <button
                     key={chip.label}
                     onClick={() => sendMessage(chip.q)}
-                    className="flex items-center gap-1.5 text-[10px] text-left px-2.5 py-1.5 rounded-lg border border-border/60 bg-muted/40 hover:bg-muted hover:border-violet-400/50 transition-all text-muted-foreground hover:text-foreground"
-                    data-testid={`chip-${chip.label.toLowerCase().replace(/\s+/g, '-')}`}
+                    className="flex items-center gap-1.5 text-[10px] text-left px-2 py-1.5 rounded-lg border border-border/50 bg-background hover:bg-muted hover:border-violet-300/60 dark:hover:border-violet-700/60 transition-all text-muted-foreground hover:text-foreground"
+                    data-testid={`chip-topic-${chip.label.toLowerCase().replace(/\s+/g, '-')}`}
                   >
                     <chip.icon className="h-3 w-3 shrink-0 text-violet-500" />
                     <span className="leading-tight">{chip.label}</span>
@@ -445,17 +411,17 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
             </div>
           )}
 
-          <div className="px-4 py-3 border-t bg-background shrink-0">
+          <div className="px-4 py-3 border-t border-border/30 bg-muted/20">
             <div className="flex items-end gap-2">
               <Textarea
                 ref={textareaRef}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder={hasTopic ? `Tanya tentang "${topicLabel}"... (Enter kirim, Shift+Enter baris baru)` : 'Isi topik dulu...'}
+                placeholder={hasTopic ? `Tanya tentang "${topicLabel}"... (Enter kirim, Shift+Enter baris baru)` : ''}
                 disabled={!hasTopic || isStreaming}
                 rows={2}
-                className="resize-none text-xs min-h-[52px] max-h-[120px] flex-1"
+                className="resize-none text-xs min-h-[44px] max-h-[100px] flex-1 bg-background"
                 data-testid="input-topic-assistant"
               />
               {isStreaming ? (
@@ -463,29 +429,29 @@ ${projectData.painPoint ? `Saya sudah memahami pain point yang Anda identifikasi
                   size="sm"
                   variant="outline"
                   onClick={stopStreaming}
-                  className="h-[52px] px-3 shrink-0 border-destructive text-destructive hover:bg-destructive/10"
-                  data-testid="button-stop-stream"
+                  className="h-[44px] px-3 shrink-0 border-destructive/60 text-destructive hover:bg-destructive/10"
+                  data-testid="button-stop-stream-topic"
                 >
-                  <X className="h-4 w-4" />
+                  <X className="h-3.5 w-3.5" />
                 </Button>
               ) : (
                 <Button
                   size="sm"
                   onClick={() => sendMessage()}
                   disabled={!input.trim() || !hasTopic}
-                  className="h-[52px] px-3 shrink-0 bg-violet-600 hover:bg-violet-700"
+                  className="h-[44px] px-3 shrink-0 bg-violet-600 hover:bg-violet-700 text-white"
                   data-testid="button-send-topic"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send className="h-3.5 w-3.5" />
                 </Button>
               )}
             </div>
             <p className="text-[9px] text-muted-foreground text-center mt-1.5">
-              Chaesa Prime · 5 agen spesialis · Konteks: <span className="font-medium">{topicLabel}</span>
+              Chaesa Prime · OpenClaw Multi-Agent Protocol · Topik: <span className="font-medium">{topicLabel}</span>
             </p>
           </div>
-        </SheetContent>
-      </Sheet>
-    </>
+        </CardContent>
+      )}
+    </Card>
   );
 }
