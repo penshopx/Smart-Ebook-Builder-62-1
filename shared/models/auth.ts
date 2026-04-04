@@ -52,6 +52,9 @@ export const emailWhitelist = pgTable("email_whitelist", {
   email: varchar("email").notNull().unique(),
   addedBy: varchar("added_by"),
   note: varchar("note"),
+  // If set, the user will be automatically granted this role when they first log in
+  // e.g. 'admin' to make them Admin Utama on first login
+  grantRole: varchar("grant_role"),
   createdAt: timestamp("created_at").defaultNow(),
 });
 

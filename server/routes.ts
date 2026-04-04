@@ -234,8 +234,8 @@ export async function registerRoutes(
   app.post("/api/admin/whitelist", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const adminId = getUserId(req);
-      const { email, note } = z.object({ email: z.string().email(), note: z.string().optional() }).parse(req.body);
-      const entry = await authStorage.addToWhitelist(email, adminId, note);
+      const { email, note, grantRole } = z.object({ email: z.string().email(), note: z.string().optional(), grantRole: z.string().optional() }).parse(req.body);
+      const entry = await authStorage.addToWhitelist(email, adminId, note, grantRole);
       res.json({ success: true, entry });
     } catch (error: any) {
       res.status(500).json({ error: 'Gagal menambahkan email ke whitelist.' });

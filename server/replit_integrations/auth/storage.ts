@@ -16,7 +16,7 @@ export interface IAuthStorage {
   getUserStats(): Promise<{ total: number; byPlan: Record<string, number>; byRole: Record<string, number> }>;
   // Email whitelist
   getWhitelist(): Promise<EmailWhitelistEntry[]>;
-  addToWhitelist(email: string, addedBy?: string, note?: string): Promise<EmailWhitelistEntry>;
+  addToWhitelist(email: string, addedBy?: string, note?: string, grantRole?: string): Promise<EmailWhitelistEntry>;
   removeFromWhitelist(email: string): Promise<void>;
   isEmailWhitelisted(email: string): Promise<boolean>;
 }
@@ -32,11 +32,19 @@ class AuthStorage implements IAuthStorage {
     const existing = await db.select().from(users).where(eq(users.id, userData.id as string)).limit(1);
     const isReturning = existing.length > 0;
 
-    // For new users, check whitelist to determine initial account status
+    // For new users, check whitelist to determine initial account status AND role
     let initialStatus: 'pending' | 'approved' = 'pending';
+    let grantedRole: string | undefined;
     if (!isReturning && userData.email) {
-      const whitelisted = await this.isEmailWhitelisted(userData.email);
-      if (whitelisted) initialStatus = 'approved';
+      const [whitelistEntry] = await db
+        .select()
+        .from(emailWhitelist)
+        .where(eq(emailWhitelist.email, userData.email.toLowerCase().trim()))
+        .limit(1);
+      if (whitelistEntry) {
+        initialStatus = 'approved';
+        if (whitelistEntry.grantRole) grantedRole = whitelistEntry.grantRole;
+      }
     }
 
     const [user] = await db
@@ -44,6 +52,7 @@ class AuthStorage implements IAuthStorage {
       .values({
         ...userData,
         accountStatus: initialStatus,
+        ...(grantedRole ? { role: grantedRole } : {}),
       })
       .onConflictDoUpdate({
         target: users.id,
@@ -134,16 +143,20 @@ class AuthStorage implements IAuthStorage {
     return db.select().from(emailWhitelist).orderBy(desc(emailWhitelist.createdAt));
   }
 
-  async addToWhitelist(email: string, addedBy?: string, note?: string): Promise<EmailWhitelistEntry> {
+  async addToWhitelist(email: string, addedBy?: string, note?: string, grantRole?: string): Promise<EmailWhitelistEntry> {
     const normalized = email.toLowerCase().trim();
     const [entry] = await db
       .insert(emailWhitelist)
-      .values({ email: normalized, addedBy, note })
-      .onConflictDoUpdate({ target: emailWhitelist.email, set: { note, addedBy } })
+      .values({ email: normalized, addedBy, note, grantRole })
+      .onConflictDoUpdate({ target: emailWhitelist.email, set: { note, addedBy, grantRole } })
       .returning();
-    // Auto-approve any existing user with this email
+    // Auto-approve (and optionally promote) any existing user with this email
     await db.update(users)
-      .set({ accountStatus: 'approved', updatedAt: new Date() })
+      .set({
+        accountStatus: 'approved',
+        ...(grantRole ? { role: grantRole } : {}),
+        updatedAt: new Date(),
+      })
       .where(eq(users.email, normalized));
     return entry;
   }

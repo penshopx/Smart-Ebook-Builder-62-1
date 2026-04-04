@@ -87,6 +87,7 @@ export default function AdminPage() {
   const [changeRoleDialog, setChangeRoleDialog] = useState<{ open: boolean; targetUser: User | null; newRole: string }>({ open: false, targetUser: null, newRole: "" });
   const [whitelistEmail, setWhitelistEmail] = useState("");
   const [whitelistNote, setWhitelistNote] = useState("");
+  const [whitelistGrantAdmin, setWhitelistGrantAdmin] = useState(false);
 
   const { data: adminMe } = useQuery<{ role: string; isAdmin: boolean; isSubAdmin: boolean }>({
     queryKey: ["/api/admin/me"],
@@ -184,12 +185,17 @@ export default function AdminPage() {
 
   const addWhitelistMutation = useMutation({
     mutationFn: async () => {
-      const res = await apiRequest("POST", "/api/admin/whitelist", { email: whitelistEmail, note: whitelistNote || undefined });
+      const res = await apiRequest("POST", "/api/admin/whitelist", {
+        email: whitelistEmail,
+        note: whitelistNote || undefined,
+        grantRole: whitelistGrantAdmin ? 'admin' : undefined,
+      });
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Berhasil!", description: `Email ${whitelistEmail} ditambahkan ke whitelist.` });
-      setWhitelistEmail(""); setWhitelistNote("");
+      const roleLabel = whitelistGrantAdmin ? " sebagai Admin Utama" : "";
+      toast({ title: "Berhasil!", description: `Email ${whitelistEmail} ditambahkan ke whitelist${roleLabel}.` });
+      setWhitelistEmail(""); setWhitelistNote(""); setWhitelistGrantAdmin(false);
       queryClient.invalidateQueries({ queryKey: ["/api/admin/whitelist"] });
     },
     onError: () => toast({ title: "Gagal", description: "Gagal menambahkan email ke whitelist.", variant: "destructive" }),
@@ -545,35 +551,49 @@ export default function AdminPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   {/* Add to whitelist */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    <div className="relative flex-1">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <div className="flex flex-col gap-2">
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <div className="relative flex-1">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="email@contoh.com"
+                          value={whitelistEmail}
+                          onChange={(e) => setWhitelistEmail(e.target.value)}
+                          className="pl-9"
+                          data-testid="input-whitelist-email"
+                          onKeyDown={(e) => e.key === 'Enter' && whitelistEmail && addWhitelistMutation.mutate()}
+                        />
+                      </div>
                       <Input
-                        type="email"
-                        placeholder="email@contoh.com"
-                        value={whitelistEmail}
-                        onChange={(e) => setWhitelistEmail(e.target.value)}
-                        className="pl-9"
-                        data-testid="input-whitelist-email"
-                        onKeyDown={(e) => e.key === 'Enter' && whitelistEmail && addWhitelistMutation.mutate()}
+                        placeholder="Catatan (opsional)"
+                        value={whitelistNote}
+                        onChange={(e) => setWhitelistNote(e.target.value)}
+                        className="sm:w-48"
+                        data-testid="input-whitelist-note"
                       />
+                      <Button
+                        className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+                        onClick={() => addWhitelistMutation.mutate()}
+                        disabled={!whitelistEmail || addWhitelistMutation.isPending}
+                        data-testid="btn-add-whitelist"
+                      >
+                        {addWhitelistMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                        Tambahkan
+                      </Button>
                     </div>
-                    <Input
-                      placeholder="Catatan (opsional)"
-                      value={whitelistNote}
-                      onChange={(e) => setWhitelistNote(e.target.value)}
-                      className="sm:w-48"
-                      data-testid="input-whitelist-note"
-                    />
-                    <Button
-                      className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shrink-0"
-                      onClick={() => addWhitelistMutation.mutate()}
-                      disabled={!whitelistEmail || addWhitelistMutation.isPending}
-                      data-testid="btn-add-whitelist"
-                    >
-                      {addWhitelistMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-                      Tambahkan
-                    </Button>
+                    {/* Grant Admin toggle */}
+                    <label className="flex items-center gap-2 cursor-pointer select-none w-fit" data-testid="toggle-grant-admin">
+                      <div
+                        className={`relative w-9 h-5 rounded-full transition-colors ${whitelistGrantAdmin ? 'bg-red-500' : 'bg-muted-foreground/30'}`}
+                        onClick={() => setWhitelistGrantAdmin(!whitelistGrantAdmin)}
+                      >
+                        <div className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${whitelistGrantAdmin ? 'translate-x-4' : ''}`} />
+                      </div>
+                      <span className="text-sm text-muted-foreground">
+                        Jadikan <strong className={whitelistGrantAdmin ? 'text-red-600 dark:text-red-400' : ''}>Admin Utama</strong> saat pertama login
+                      </span>
+                    </label>
                   </div>
 
                   {/* Whitelist table */}
@@ -589,6 +609,7 @@ export default function AdminPage() {
                         <TableHeader>
                           <TableRow>
                             <TableHead>Email</TableHead>
+                            <TableHead>Peran</TableHead>
                             <TableHead>Catatan</TableHead>
                             <TableHead>Ditambahkan</TableHead>
                             <TableHead className="w-16"></TableHead>
@@ -598,6 +619,15 @@ export default function AdminPage() {
                           {whitelist.map((entry) => (
                             <TableRow key={entry.id}>
                               <TableCell className="font-medium text-sm">{entry.email}</TableCell>
+                              <TableCell>
+                                {(entry as any).grantRole === 'admin' ? (
+                                  <span className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                                    <Crown className="h-3 w-3" /> Admin Utama
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-muted-foreground">Pengguna</span>
+                                )}
+                              </TableCell>
                               <TableCell className="text-xs text-muted-foreground">{entry.note || '-'}</TableCell>
                               <TableCell className="text-xs text-muted-foreground">
                                 {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('id-ID') : '-'}
