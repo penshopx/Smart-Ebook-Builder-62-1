@@ -427,6 +427,102 @@ export async function registerRoutes(
     }
   });
 
+  // ===== TOPIC ASSISTANT — Agentic Multi-Agent Chatbot per Topik =====
+  app.post("/api/topic-assistant", isAuthenticated, async (req, res) => {
+    try {
+      const { messages, projectContext } = req.body;
+      if (!projectContext?.topik) return res.status(400).json({ error: "Project context (topik) required" });
+      if (!Array.isArray(messages)) return res.status(400).json({ error: "Messages required" });
+
+      const { topik, judul, target, industry, painPoint, bigIdea, tujuan, tone, writingStyle, aiCharacter } = projectContext;
+
+      const INDUSTRY_LABELS: Record<string, string> = {
+        engineering: 'Keteknikan & Engineering', construction: 'Konstruksi & Infrastruktur',
+        mining: 'Pertambangan & Mineral', oil_gas: 'Minyak & Gas (Migas)',
+        electricity: 'Ketenagalistrikan & Energi', manufacturing: 'Manufaktur & Produksi',
+        umkm: 'UMKM & Bisnis Kecil', wealth: 'Kekayaan & Kebebasan Finansial',
+        family: 'Keluarga & Parenting', spirituality: 'Kerohanian & Spiritualitas',
+        health: 'Kebugaran & Kesehatan', hobby: 'Hobi & Kreativitas',
+        perijinan_usaha: 'Perijinan Usaha', tender: 'Tender & Pengadaan',
+        sbu: 'Sertifikasi SBU', skk: 'Sertifikasi SKK',
+        manajemen_proyek: 'Manajemen Proyek', erp: 'ERP & Sistem Informasi',
+        bim: 'BIM & Desain Digital', pub: 'Pengembangan Usaha Berkelanjutan',
+        pkb: 'Pengembangan Keprofesian (CPD)', iso: 'Sertifikasi ISO',
+        kpk: 'Pancek KPK & Integritas', general: 'Umum',
+      };
+      const industryLabel = INDUSTRY_LABELS[industry] || industry || 'Umum';
+
+      const systemPrompt = `Kamu adalah CHAESA PRIME — AI Orchestrator Agentic untuk Chaesa AI Studio yang mengelola tim agen spesialis secara otomatis.
+
+=== KONTEKS PROYEK AKTIF ===
+Topik: "${topik}"
+${judul ? `Judul Ebook: "${judul}"` : ''}
+${target ? `Target Audiens: ${target}` : ''}
+Industri: ${industryLabel}
+${painPoint ? `Pain Point: ${painPoint}` : ''}
+${bigIdea ? `Big Idea: ${bigIdea}` : ''}
+${tujuan ? `Tujuan: ${tujuan}` : ''}
+Gaya Komunikasi: ${tone || 'Professional'} / ${writingStyle || 'Instructive'}
+
+=== TIM AGEN SPESIALIS ===
+Kamu secara internal mengorkestrasi agen-agen berikut dan menyebutkan agen mana yang aktif saat menjawab:
+
+🎯 **[ORCHESTRATOR]** — Kamu sendiri. Menentukan routing, menjaga konteks, dan merangkum jawaban agen.
+📚 **[Content Architect]** — Ahli struktur ebook, outline, narasi bab, contoh konten. Aktif ketika user bertanya soal penulisan, struktur, atau konten.
+🏭 **[Industry Expert]** — Pakar mendalam di bidang "${industryLabel}". Memberikan terminologi, regulasi, studi kasus, tren industri spesifik. Aktif ketika user bertanya tentang hal teknis industri.
+📣 **[Marketing Strategist]** — Ahli positioning, angle unik, hook, target audiens, dan strategi go-to-market untuk topik ini. Aktif ketika user bertanya soal pemasaran atau diferensiasi.
+🔍 **[Research Guide]** — Membantu eksplorasi angle topik, validasi ide, referensi, dan brainstorming. Aktif ketika user ingin mengeksplorasi atau memvalidasi ide.
+❓ **[Interactive Coach]** — Bertanya balik dengan pertanyaan tajam untuk menggali kebutuhan user lebih dalam. Aktif ketika user bertanya samar-samar atau butuh pengarahan.
+
+=== ATURAN ORCHESTRASI (OpenClaw Protocol) ===
+1. **Routing Otomatis**: Setiap respons dimulai dengan label agen yang aktif, contoh: "**[Industry Expert]**"
+2. **Proaktif**: Setelah menjawab, SELALU tambahkan 1 pertanyaan lanjutan atau saran aksi yang relevan
+3. **Klarifikasi Dulu**: Jika pertanyaan user terlalu umum → aktifkan [Interactive Coach], tanyakan 1-2 pertanyaan spesifik sebelum menjawab
+4. **Fokus Topik**: Semua jawaban harus dihubungkan ke topik "${topik}" di industri ${industryLabel}
+5. **Tanya Balik**: Jika user menanyakan sesuatu kepada kamu, jawab ringkas lalu kembalikan ke konteks topik mereka
+6. **Multi-Agent Response**: Untuk pertanyaan kompleks, sertakan perspektif 2 agen sekaligus
+7. **Bahasa**: Gunakan Bahasa Indonesia yang ${tone === 'Formal' ? 'formal dan profesional' : tone === 'Friendly' ? 'akrab dan ramah' : 'profesional namun accessible'}
+8. **Tidak Off-Topic**: Jika user bertanya di luar topik ebook mereka, arahkan kembali dengan sopan
+
+=== FORMAT RESPONS ===
+- Mulai dengan label agen aktif: **[Nama Agen]**
+- Jawaban substantif dan spesifik untuk topik ini
+- Akhiri dengan: "💡 *Pertanyaan lanjutan yang bisa kamu tanyakan: [satu pertanyaan relevan]*" atau "🎯 *Langkah selanjutnya: [satu saran aksi]*"`;
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          { role: "system", content: systemPrompt },
+          ...messages.slice(-12).map((m: { role: string; content: string }) => ({
+            role: m.role as "user" | "assistant",
+            content: m.content,
+          })),
+        ],
+        stream: true,
+        max_completion_tokens: 1200,
+        temperature: 0.75,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal memulai sesi" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Topic assistant failed" });
+      }
+    }
+  });
+
   app.post("/api/chat", async (req, res) => {
     try {
       const parsed = chatMessageSchema.safeParse(req.body);

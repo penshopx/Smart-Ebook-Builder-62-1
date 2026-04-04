@@ -10,6 +10,7 @@ import { SavedProjects } from '@/components/saved-projects';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DokumenterChatButton } from '@/components/dokumentender-chat-button';
 import { ChaesaChatbot } from '@/components/chaesa-chatbot';
+import { TopicAssistant } from '@/components/topic-assistant';
 import { BookPreview } from '@/components/book-preview';
 import { EcosystemTracker } from '@/components/ecosystem-tracker';
 import { generatePrompt } from '@/lib/prompt-generator';
@@ -596,6 +597,8 @@ export default function Home() {
       {/* Chat Buttons: Left = DokumenTender (eksekusi prompt), Right = Chaesa (knowledge base) */}
       <DokumenterChatButton />
       <ChaesaChatbot />
+      {/* Topic-specific Agentic AI — per project topic */}
+      <TopicAssistant projectData={projectData} />
     </div>
   );
 }
