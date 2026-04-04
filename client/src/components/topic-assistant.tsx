@@ -11,6 +11,7 @@ import {
   MessageSquareText, RotateCcw,
 } from 'lucide-react';
 import type { ProjectData } from '@shared/schema';
+import type { AssistantPersona } from '@/components/persona-config-tab';
 
 interface Message {
   role: 'user' | 'assistant';
@@ -21,6 +22,7 @@ interface Message {
 interface TopicAssistantProps {
   projectData: ProjectData;
   initialExpanded?: boolean;
+  assistantPersona?: AssistantPersona;
 }
 
 const AGENT_COLORS: Record<string, string> = {
@@ -122,7 +124,7 @@ const QUICK_CHIPS = [
   { icon: Sparkles, label: 'Target audiens', q: 'Siapa target audiens paling tepat untuk topik ini dan apa yang paling mereka butuhkan?' },
 ];
 
-export function TopicAssistant({ projectData, initialExpanded = false }: TopicAssistantProps) {
+export function TopicAssistant({ projectData, initialExpanded = false, assistantPersona }: TopicAssistantProps) {
   const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
@@ -135,16 +137,24 @@ export function TopicAssistant({ projectData, initialExpanded = false }: TopicAs
   const industryShort = INDUSTRY_LABELS[projectData.industry] || 'Umum';
   const topicLabel = projectData.topik || 'Topik Ebook';
 
+  const hasPersona = !!(assistantPersona?.namaAsisten || assistantPersona?.knowledgeBase);
+  const personaName = assistantPersona?.namaAsisten || 'CHAESA PRIME';
+  const personaJob = assistantPersona?.jabatan ? ` — ${assistantPersona.jabatan}` : '';
+
   useEffect(() => {
     if (isExpanded && messages.length === 0 && hasTopic) {
+      const welcomePersona = hasPersona && assistantPersona?.sapaanKhas
+        ? assistantPersona.sapaanKhas
+        : null;
       setMessages([{
         role: 'assistant',
         content: `**[ORCHESTRATOR]**
 
-Halo! Saya **CHAESA PRIME** — Agentic AI khusus untuk topik proyek Anda.
+${welcomePersona ? welcomePersona + '\n\n---\n\n' : ''}Halo! Saya **${personaName}**${personaJob} — Agentic AI khusus untuk topik proyek Anda.
 
 🎯 **Topik aktif**: *${projectData.topik}*
 ${projectData.industry && projectData.industry !== 'general' ? `🏭 **Industri**: ${INDUSTRY_LABELS[projectData.industry] || projectData.industry}` : ''}
+${hasPersona && assistantPersona?.kepribadian?.length ? `✨ **Karakter**: ${assistantPersona.kepribadian.slice(0, 4).join(', ')}` : ''}
 
 Saya mengorkestrasi 5 agen spesialis:
 - 📚 **Content Architect** — Struktur & narasi ebook
@@ -187,6 +197,18 @@ ${projectData.painPoint ? `Saya sudah menangkap pain point: *"${projectData.pain
             bigIdea: projectData.bigIdea, tujuan: projectData.tujuan,
             tone: projectData.tone, writingStyle: projectData.writingStyle, aiCharacter: projectData.aiCharacter,
           },
+          assistantPersona: assistantPersona ? {
+            namaAsisten: assistantPersona.namaAsisten,
+            jabatan: assistantPersona.jabatan,
+            tagline: assistantPersona.tagline,
+            kepribadian: assistantPersona.kepribadian,
+            knowledgeBase: assistantPersona.knowledgeBase,
+            metodeFavorit: assistantPersona.metodeFavorit,
+            caseStudy: assistantPersona.caseStudy,
+            topikFokus: assistantPersona.topikFokus,
+            topikHindari: assistantPersona.topikHindari,
+            instruksiKhusus: assistantPersona.instruksiKhusus,
+          } : null,
         }),
         signal: abort.signal,
       });

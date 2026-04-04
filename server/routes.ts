@@ -430,7 +430,7 @@ export async function registerRoutes(
   // ===== TOPIC ASSISTANT — Agentic Multi-Agent Chatbot per Topik =====
   app.post("/api/topic-assistant", isAuthenticated, async (req, res) => {
     try {
-      const { messages, projectContext } = req.body;
+      const { messages, projectContext, assistantPersona } = req.body;
       if (!projectContext?.topik) return res.status(400).json({ error: "Project context (topik) required" });
       if (!Array.isArray(messages)) return res.status(400).json({ error: "Messages required" });
 
@@ -452,8 +452,27 @@ export async function registerRoutes(
       };
       const industryLabel = INDUSTRY_LABELS[industry] || industry || 'Umum';
 
-      const systemPrompt = `Kamu adalah CHAESA PRIME — AI Orchestrator Agentic untuk Chaesa AI Studio yang mengelola tim agen spesialis secara otomatis.
+      const hasPersona = !!(assistantPersona?.namaAsisten || assistantPersona?.knowledgeBase);
+      const personaName = assistantPersona?.namaAsisten || 'CHAESA PRIME';
+      const personaJobTitle = assistantPersona?.jabatan ? ` (${assistantPersona.jabatan})` : '';
 
+      const personaSection = hasPersona ? `
+=== PERSONA ASISTEN YANG DIKONFIGURASI USER ===
+Nama Asisten: ${personaName}${personaJobTitle}
+${assistantPersona?.tagline ? `Tagline: ${assistantPersona.tagline}` : ''}
+${assistantPersona?.kepribadian?.length ? `Karakter & Kepribadian: ${assistantPersona.kepribadian.join(', ')}` : ''}
+${assistantPersona?.knowledgeBase ? `\nKNOWLEDGE BASE (Gunakan ini sebagai sumber pengetahuan utama dalam menjawab):\n---\n${assistantPersona.knowledgeBase}\n---` : ''}
+${assistantPersona?.metodeFavorit ? `Metode/Framework Favorit: ${assistantPersona.metodeFavorit}` : ''}
+${assistantPersona?.caseStudy ? `Case Study / Contoh Kasus: ${assistantPersona.caseStudy}` : ''}
+${assistantPersona?.topikFokus ? `Topik yang Harus Difokuskan: ${assistantPersona.topikFokus}` : ''}
+${assistantPersona?.topikHindari ? `Topik yang Harus Dihindari: ${assistantPersona.topikHindari}` : ''}
+${assistantPersona?.instruksiKhusus ? `Instruksi Khusus dari User: ${assistantPersona.instruksiKhusus}` : ''}
+
+PENTING: Kamu harus memerankan persona "${personaName}" ini sepenuhnya. Jadikan knowledge base di atas sebagai fondasi utama jawabanmu. Kalau kepribadiannya "Tegas", jawab dengan tegas. Kalau "Humoris", tambahkan humor ringan. Tetap gunakan format agen (label agen aktif) tapi respon harus mencerminkan karakter persona ini.
+` : '';
+
+      const systemPrompt = `Kamu adalah ${personaName}${personaJobTitle} — ${hasPersona ? 'Asisten AI topik khusus' : 'AI Orchestrator Agentic'} untuk Chaesa AI Studio yang mengelola tim agen spesialis secara otomatis.
+${personaSection}
 === KONTEKS PROYEK AKTIF ===
 Topik: "${topik}"
 ${judul ? `Judul Ebook: "${judul}"` : ''}
@@ -483,10 +502,11 @@ Kamu secara internal mengorkestrasi agen-agen berikut dan menyebutkan agen mana 
 6. **Multi-Agent Response**: Untuk pertanyaan kompleks, sertakan perspektif 2 agen sekaligus
 7. **Bahasa**: Gunakan Bahasa Indonesia yang ${tone === 'Formal' ? 'formal dan profesional' : tone === 'Friendly' ? 'akrab dan ramah' : 'profesional namun accessible'}
 8. **Tidak Off-Topic**: Jika user bertanya di luar topik ebook mereka, arahkan kembali dengan sopan
+${hasPersona ? `9. **Persona Aktif**: Selalu jawab sebagai "${personaName}" sesuai karakter dan knowledge base yang dikonfigurasi.` : ''}
 
 === FORMAT RESPONS ===
 - Mulai dengan label agen aktif: **[Nama Agen]**
-- Jawaban substantif dan spesifik untuk topik ini
+- Jawaban substantif dan spesifik untuk topik ini${hasPersona && assistantPersona?.knowledgeBase ? '\n- Prioritaskan informasi dari knowledge base yang dikonfigurasi jika relevan' : ''}
 - Akhiri dengan: "💡 *Pertanyaan lanjutan yang bisa kamu tanyakan: [satu pertanyaan relevan]*" atau "🎯 *Langkah selanjutnya: [satu saran aksi]*"`;
 
       res.setHeader("Content-Type", "text/event-stream");

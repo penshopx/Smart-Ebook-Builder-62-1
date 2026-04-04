@@ -32,6 +32,8 @@ import {
 import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
 import { JudulTerlaris } from '@/components/judul-terlaris';
+import { PersonaConfigTab, defaultAssistantPersona } from '@/components/persona-config-tab';
+import type { AssistantPersona } from '@/components/persona-config-tab';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
@@ -249,6 +251,7 @@ export default function Home() {
   const [taskConfig, setTaskConfig] = useState<TaskConfig>(defaultTaskConfig);
   const [extendConfig, setExtendConfig] = useState<ExtendConfig>(defaultExtendConfig);
   const [uploadedFiles, setUploadedFiles] = useState<UploadedFile[]>([]);
+  const [assistantPersona, setAssistantPersona] = useState<AssistantPersona>(defaultAssistantPersona);
   const [activeMode, setActiveMode] = useState('BRAINSTORM');
   const [refreshKey, setRefreshKey] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
@@ -264,6 +267,10 @@ export default function Home() {
 
   const handleProjectChange = (name: string, value: string) => {
     setProjectData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handlePersonaChange = (field: keyof AssistantPersona, value: string | string[]) => {
+    setAssistantPersona(prev => ({ ...prev, [field]: value }));
   };
 
   const handleTaskConfigChange = (name: string, value: string | number) => {
@@ -463,15 +470,21 @@ export default function Home() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
             <Tabs defaultValue="project" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="project" data-testid="tab-project">
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="project" data-testid="tab-project" className="text-xs">
                   Data Proyek
                 </TabsTrigger>
-                <TabsTrigger value="config" data-testid="tab-config">
+                <TabsTrigger value="config" data-testid="tab-config" className="text-xs">
                   Konfigurasi
                 </TabsTrigger>
-                <TabsTrigger value="files" data-testid="tab-files">
-                  File Referensi
+                <TabsTrigger value="files" data-testid="tab-files" className="text-xs">
+                  File
+                </TabsTrigger>
+                <TabsTrigger value="persona" data-testid="tab-persona" className="text-xs relative">
+                  Asisten AI
+                  {(assistantPersona.namaAsisten || assistantPersona.knowledgeBase) && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-violet-500" />
+                  )}
                 </TabsTrigger>
               </TabsList>
               <TabsContent value="project" className="mt-4">
@@ -521,6 +534,16 @@ export default function Home() {
                   />
                 </div>
               </TabsContent>
+              <TabsContent value="persona" className="mt-4">
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                  <PersonaConfigTab
+                    persona={assistantPersona}
+                    onChange={handlePersonaChange}
+                    projectTopik={projectData.topik}
+                    industry={projectData.industry}
+                  />
+                </div>
+              </TabsContent>
             </Tabs>
             <EcosystemTracker />
           </div>
@@ -544,6 +567,7 @@ export default function Home() {
                 uploadedFiles={uploadedFiles}
                 onTopicUpdate={handleTopicUpdate}
                 projectData={projectData}
+                assistantPersona={assistantPersona}
               />
             </div>
           </div>

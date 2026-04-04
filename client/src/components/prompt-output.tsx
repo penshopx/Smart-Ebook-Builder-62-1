@@ -63,6 +63,7 @@ interface PromptOutputProps {
   uploadedFiles?: { name: string; type: string; size: string }[];
   onTopicUpdate?: (topik: string, judul?: string) => void;
   projectData?: ProjectData;
+  assistantPersona?: import('@/components/persona-config-tab').AssistantPersona;
 }
 
 const WORKFLOW_STEPS = [
@@ -103,7 +104,7 @@ function getSuggestedQuestions(topik: string): string[] {
 
 interface ChapterItem { id: string; number: number; title: string; subTopics: string; content: string; loading: boolean; }
 
-export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate, projectData }: PromptOutputProps) {
+export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate, projectData, assistantPersona }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
@@ -2672,7 +2673,7 @@ ${bodyHtml}
               </Button>
               {showTopicAssistant && projectData && (
                 <div className="col-span-2 mt-0">
-                  <TopicAssistant projectData={projectData} initialExpanded={true} />
+                  <TopicAssistant projectData={projectData} initialExpanded={true} assistantPersona={assistantPersona} />
                 </div>
               )}
               {showTopicAssistant && !projectData && (
