@@ -7,13 +7,16 @@ export interface IAuthStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlan(id: string, plan: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
-  updateAccountStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<User | undefined>;
+  updateAccountStatus(id: string, status: 'approved' | 'rejected'): Promise<User | undefined>;
   completeRegistration(id: string, data: { displayName: string; profession: string; organization?: string; primaryIndustry?: string }): Promise<User | undefined>;
   trackPromptUsage(id: string): Promise<{ allowed: boolean; used: number; limit: number }>;
   getAllUsers(search?: string, planFilter?: string, roleFilter?: string): Promise<User[]>;
-  getPendingUsers(): Promise<User[]>;
   countAdmins(): Promise<number>;
   getUserStats(): Promise<{ total: number; byPlan: Record<string, number>; byRole: Record<string, number> }>;
+  // Admin role requests
+  requestAdminAccess(userId: string, reason?: string): Promise<User | undefined>;
+  getAdminRequests(): Promise<User[]>;
+  processAdminRequest(userId: string, approve: boolean): Promise<User | undefined>;
   // Email whitelist
   getWhitelist(): Promise<EmailWhitelistEntry[]>;
   addToWhitelist(email: string, addedBy?: string, note?: string, grantRole?: string): Promise<EmailWhitelistEntry>;
@@ -32,8 +35,8 @@ class AuthStorage implements IAuthStorage {
     const existing = await db.select().from(users).where(eq(users.id, userData.id as string)).limit(1);
     const isReturning = existing.length > 0;
 
-    // For new users, check whitelist to determine initial account status AND role
-    let initialStatus: 'pending' | 'approved' = 'pending';
+    // All new users are approved by default — app is free to use for registered users
+    // Check whitelist only to potentially grant a role (super_admin / admin)
     let grantedRole: string | undefined;
     if (!isReturning && userData.email) {
       const [whitelistEntry] = await db
@@ -41,17 +44,14 @@ class AuthStorage implements IAuthStorage {
         .from(emailWhitelist)
         .where(eq(emailWhitelist.email, userData.email.toLowerCase().trim()))
         .limit(1);
-      if (whitelistEntry) {
-        initialStatus = 'approved';
-        if (whitelistEntry.grantRole) grantedRole = whitelistEntry.grantRole;
-      }
+      if (whitelistEntry?.grantRole) grantedRole = whitelistEntry.grantRole;
     }
 
     const [user] = await db
       .insert(users)
       .values({
         ...userData,
-        accountStatus: initialStatus,
+        accountStatus: 'approved',
         ...(grantedRole ? { role: grantedRole } : {}),
       })
       .onConflictDoUpdate({
@@ -125,7 +125,7 @@ class AuthStorage implements IAuthStorage {
     return query;
   }
 
-  async updateAccountStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<User | undefined> {
+  async updateAccountStatus(id: string, status: 'approved' | 'rejected'): Promise<User | undefined> {
     const [user] = await db
       .update(users)
       .set({ accountStatus: status, updatedAt: new Date() })
@@ -134,8 +134,35 @@ class AuthStorage implements IAuthStorage {
     return user;
   }
 
-  async getPendingUsers(): Promise<User[]> {
-    return db.select().from(users).where(eq(users.accountStatus, 'pending')).orderBy(desc(users.createdAt));
+  // ====== Admin Role Requests ======
+
+  async requestAdminAccess(userId: string, _reason?: string): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ adminRequestStatus: 'pending', updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async getAdminRequests(): Promise<User[]> {
+    return db.select().from(users)
+      .where(eq(users.adminRequestStatus, 'pending'))
+      .orderBy(desc(users.createdAt));
+  }
+
+  async processAdminRequest(userId: string, approve: boolean): Promise<User | undefined> {
+    const newRole = approve ? 'admin' : undefined;
+    const [user] = await db
+      .update(users)
+      .set({
+        adminRequestStatus: approve ? 'approved' : 'rejected',
+        ...(newRole ? { role: newRole } : {}),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   // ====== Email Whitelist ======
@@ -150,7 +177,7 @@ class AuthStorage implements IAuthStorage {
       .values({ email: normalized, addedBy, note, grantRole })
       .onConflictDoUpdate({ target: emailWhitelist.email, set: { note, addedBy, grantRole } })
       .returning();
-    // Auto-approve (and optionally promote) any existing user with this email
+    // If existing user with this email: approve and optionally promote role
     await db.update(users)
       .set({
         accountStatus: 'approved',
@@ -193,10 +220,13 @@ class AuthStorage implements IAuthStorage {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     if (!user) return { allowed: false, used: 0, limit: 5 };
 
+    const isStaff = user.role === 'super_admin' || user.role === 'admin' || user.role === 'sub_admin';
+    if (isStaff) return { allowed: true, used: 0, limit: Infinity };
+
     const today = new Date().toISOString().split('T')[0];
     const isNewDay = user.lastPromptDate !== today;
 
-    if (user.plan === 'pro' || user.plan === 'enterprise') {
+    if (user.plan === 'pro' || user.plan === 'premium' || user.plan === 'advance' || user.plan === 'enterprise') {
       if (isNewDay) {
         await db.update(users)
           .set({ promptsUsedToday: 1, lastPromptDate: today, updatedAt: new Date() })

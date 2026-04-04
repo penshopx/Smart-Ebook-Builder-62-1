@@ -23,13 +23,14 @@ export const users = pgTable("users", {
   profileImageUrl: varchar("profile_image_url"),
   // Subscription plan: 'free' | 'pro' | 'premium' | 'advance' | 'enterprise'
   plan: varchar("plan").default("free").notNull(),
-  // Admin role: 'user' | 'sub_admin' | 'admin'
+  // Role hierarchy: 'user' | 'sub_admin' | 'admin' | 'super_admin'
   role: varchar("role").default("user").notNull(),
-  // Account access status: 'pending' | 'approved' | 'rejected'
-  // pending = new user waiting for admin approval
-  // approved = can access the system
-  // rejected = access denied
-  accountStatus: varchar("account_status").default("pending").notNull(),
+  // Account access status: 'approved' | 'rejected'
+  // All registered users are approved by default — no waiting required to use the app
+  accountStatus: varchar("account_status").default("approved").notNull(),
+  // Admin role request: null | 'pending' | 'approved' | 'rejected'
+  // Users can apply for admin role; only Super Admin can approve
+  adminRequestStatus: varchar("admin_request_status"),
   // Registration / onboarding profile
   displayName: varchar("display_name"),
   profession: varchar("profession"),
@@ -46,14 +47,14 @@ export const users = pgTable("users", {
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
 
-// Email whitelist table — pre-approved emails that can access directly without admin approval
+// Email whitelist table — pre-approved emails that get auto-approved and optionally a role on first login
 export const emailWhitelist = pgTable("email_whitelist", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   email: varchar("email").notNull().unique(),
   addedBy: varchar("added_by"),
   note: varchar("note"),
   // If set, the user will be automatically granted this role when they first log in
-  // e.g. 'admin' to make them Admin Utama on first login
+  // e.g. 'super_admin' or 'admin'
   grantRole: varchar("grant_role"),
   createdAt: timestamp("created_at").defaultNow(),
 });

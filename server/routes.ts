@@ -140,10 +140,13 @@ export async function registerRoutes(
   registerAuthRoutes(app);
 
   // ===== ADMIN MIDDLEWARE HELPERS =====
+  const ADMIN_ROLES = ['super_admin', 'admin', 'sub_admin'];
+  const MAIN_ADMIN_ROLES = ['super_admin', 'admin'];
+
   async function requireAdmin(req: any, res: any, next: any) {
     const userId = getUserId(req);
     const user = await authStorage.getUser(userId);
-    if (!user || (user.role !== 'admin' && user.role !== 'sub_admin')) {
+    if (!user || !ADMIN_ROLES.includes(user.role)) {
       return res.status(403).json({ error: 'Akses ditolak. Diperlukan hak Admin.' });
     }
     (req as any).currentUser = user;
@@ -153,8 +156,18 @@ export async function registerRoutes(
   async function requireMainAdmin(req: any, res: any, next: any) {
     const userId = getUserId(req);
     const user = await authStorage.getUser(userId);
-    if (!user || user.role !== 'admin') {
+    if (!user || !MAIN_ADMIN_ROLES.includes(user.role)) {
       return res.status(403).json({ error: 'Akses ditolak. Diperlukan hak Admin Utama.' });
+    }
+    (req as any).currentUser = user;
+    next();
+  }
+
+  async function requireSuperAdmin(req: any, res: any, next: any) {
+    const userId = getUserId(req);
+    const user = await authStorage.getUser(userId);
+    if (!user || user.role !== 'super_admin') {
+      return res.status(403).json({ error: 'Akses ditolak. Diperlukan hak Super Admin.' });
     }
     (req as any).currentUser = user;
     next();
@@ -257,9 +270,54 @@ export async function registerRoutes(
     try {
       const userId = getUserId(req);
       const user = await authStorage.getUser(userId);
-      res.json({ role: user?.role ?? 'user', isAdmin: user?.role === 'admin', isSubAdmin: user?.role === 'sub_admin' });
+      const role = user?.role ?? 'user';
+      res.json({
+        role,
+        isSuperAdmin: role === 'super_admin',
+        isAdmin: role === 'admin' || role === 'super_admin',
+        isSubAdmin: role === 'sub_admin',
+      });
     } catch (error) {
       res.status(500).json({ error: 'Gagal mengambil data role.' });
+    }
+  });
+
+  // ===== PERMOHONAN ADMIN (User → request; Super Admin → approve/reject) =====
+  app.post("/api/user/request-admin", isAuthenticated, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await authStorage.getUser(userId);
+      if (!user) return res.status(404).json({ error: 'User tidak ditemukan.' });
+      if (user.role === 'admin' || user.role === 'super_admin') {
+        return res.status(400).json({ error: 'Anda sudah memiliki hak Admin.' });
+      }
+      if (user.adminRequestStatus === 'pending') {
+        return res.status(400).json({ error: 'Permohonan Anda sedang diproses.' });
+      }
+      const updated = await authStorage.requestAdminAccess(userId);
+      res.json({ success: true, user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengirim permohonan admin.' });
+    }
+  });
+
+  app.get("/api/super-admin/admin-requests", isAuthenticated, requireSuperAdmin, async (req, res) => {
+    try {
+      const requests = await authStorage.getAdminRequests();
+      res.json(requests);
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil daftar permohonan admin.' });
+    }
+  });
+
+  app.patch("/api/super-admin/admin-requests/:userId", isAuthenticated, requireSuperAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { approve } = z.object({ approve: z.boolean() }).parse(req.body);
+      const user = await authStorage.processAdminRequest(userId, approve);
+      res.json({ success: true, user });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal memproses permohonan admin.' });
     }
   });
 

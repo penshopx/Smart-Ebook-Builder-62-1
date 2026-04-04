@@ -35,7 +35,12 @@ import {
   Activity,
   Layers,
   Download,
+  ShieldCheck,
+  Clock,
+  XCircle,
+  Loader2,
 } from 'lucide-react';
+import { queryClient } from '@/lib/queryClient';
 import { Link } from 'wouter';
 
 const PLAN_COLORS: Record<string, string> = {
@@ -213,6 +218,24 @@ export default function Account() {
     upgradeMutation.mutate(planId);
   };
 
+  const requestAdminMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest('POST', '/api/user/request-admin', {});
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Permohonan Terkirim!", description: "Permohonan Anda menjadi Admin sedang diproses oleh Super Admin." });
+      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
+    },
+    onError: async (err: any) => {
+      const text = typeof err?.message === 'string' ? err.message : 'Gagal mengirim permohonan.';
+      let desc = text;
+      if (text.includes('sudah memiliki')) desc = 'Anda sudah memiliki hak Admin.';
+      else if (text.includes('sedang diproses')) desc = 'Permohonan Anda sedang dalam proses. Mohon tunggu.';
+      toast({ title: "Gagal", description: desc, variant: "destructive" });
+    },
+  });
+
   const currentPlan = planData?.plan ?? user?.plan ?? 'free';
   const PlanIcon = PLAN_ICONS[currentPlan] ?? Sparkles;
 
@@ -375,6 +398,63 @@ export default function Account() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Request Admin Access — only for non-admin users */}
+            {user && user.role !== 'admin' && user.role !== 'super_admin' && (
+              <Card className={
+                (user as any).adminRequestStatus === 'pending'
+                  ? 'border-amber-300 dark:border-amber-700'
+                  : (user as any).adminRequestStatus === 'rejected'
+                  ? 'border-red-300 dark:border-red-700'
+                  : 'border-dashed'
+              }>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-violet-500" />
+                    Hak Akses Admin
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {(user as any).adminRequestStatus === 'pending' ? (
+                    <div className="flex items-start gap-2 text-amber-600 dark:text-amber-400">
+                      <Clock className="h-4 w-4 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Permohonan Dikirim</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Sedang menunggu persetujuan Super Admin. Kami akan memberi tahu Anda segera.</p>
+                      </div>
+                    </div>
+                  ) : (user as any).adminRequestStatus === 'rejected' ? (
+                    <div className="flex items-start gap-2 text-red-500 dark:text-red-400">
+                      <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-sm font-medium">Permohonan Ditolak</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">Permohonan Admin Anda tidak disetujui. Anda masih bisa menggunakan semua fitur pengguna.</p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-xs text-muted-foreground">
+                        Sebagai Admin, Anda dapat mengelola konten dan membantu mengembangkan platform ini.
+                      </p>
+                      <Button
+                        size="sm"
+                        className="w-full gap-2 bg-violet-600 hover:bg-violet-700 text-white"
+                        onClick={() => requestAdminMutation.mutate()}
+                        disabled={requestAdminMutation.isPending}
+                        data-testid="btn-request-admin"
+                      >
+                        {requestAdminMutation.isPending ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <ShieldCheck className="h-3.5 w-3.5" />
+                        )}
+                        Ajukan Permohonan Admin
+                      </Button>
+                    </>
+                  )}
+                </CardContent>
+              </Card>
+            )}
           </div>
 
           {/* RIGHT: Pricing & Features */}

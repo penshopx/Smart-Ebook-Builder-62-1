@@ -31,9 +31,10 @@ const PLAN_LABELS: Record<string, { label: string; color: string }> = {
 };
 
 const ROLE_LABELS: Record<string, { label: string; color: string; icon: any }> = {
-  user:      { label: "User",       color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400", icon: Users },
-  sub_admin: { label: "Sub Admin",  color: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300",     icon: ShieldCheck },
-  admin:     { label: "Admin Utama",color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",     icon: Crown },
+  user:        { label: "User",        color: "bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400",       icon: Users },
+  sub_admin:   { label: "Sub Admin",   color: "bg-sky-100 text-sky-700 dark:bg-sky-900 dark:text-sky-300",           icon: ShieldCheck },
+  admin:       { label: "Admin",       color: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",           icon: Crown },
+  super_admin: { label: "Super Admin", color: "bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-300", icon: Crown },
 };
 
 function RoleBadge({ role }: { role: string }) {
@@ -89,7 +90,7 @@ export default function AdminPage() {
   const [whitelistNote, setWhitelistNote] = useState("");
   const [whitelistGrantAdmin, setWhitelistGrantAdmin] = useState(false);
 
-  const { data: adminMe } = useQuery<{ role: string; isAdmin: boolean; isSubAdmin: boolean }>({
+  const { data: adminMe } = useQuery<{ role: string; isSuperAdmin: boolean; isAdmin: boolean; isSubAdmin: boolean }>({
     queryKey: ["/api/admin/me"],
   });
 
@@ -158,23 +159,23 @@ export default function AdminPage() {
     onError: () => toast({ title: "Gagal", description: "Gagal mengubah role pengguna.", variant: "destructive" }),
   });
 
-  // Pending Users
-  const { data: pendingUsers = [], refetch: refetchPending } = useQuery<User[]>({
-    queryKey: ["/api/admin/pending-users"],
-    enabled: adminMe?.isAdmin || adminMe?.isSubAdmin,
+  // Admin Role Requests (only super_admin can see + process)
+  const { data: adminRequests = [], refetch: refetchAdminRequests } = useQuery<User[]>({
+    queryKey: ["/api/super-admin/admin-requests"],
+    enabled: adminMe?.isSuperAdmin,
   });
 
-  const approveUserMutation = useMutation({
-    mutationFn: async ({ userId, status }: { userId: string; status: 'approved' | 'rejected' | 'pending' }) => {
-      const res = await apiRequest("PATCH", `/api/admin/users/${userId}/status`, { status });
+  const processAdminRequestMutation = useMutation({
+    mutationFn: async ({ userId, approve }: { userId: string; approve: boolean }) => {
+      const res = await apiRequest("PATCH", `/api/super-admin/admin-requests/${userId}`, { approve });
       return res.json();
     },
     onSuccess: (_, vars) => {
-      toast({ title: vars.status === 'approved' ? "Disetujui!" : vars.status === 'rejected' ? "Ditolak" : "Diperbarui", description: "Status akun pengguna telah diperbarui." });
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/pending-users"] });
+      toast({ title: vars.approve ? "Permohonan Disetujui!" : "Permohonan Ditolak", description: vars.approve ? "Pengguna kini memiliki hak Admin." : "Permohonan admin ditolak." });
+      queryClient.invalidateQueries({ queryKey: ["/api/super-admin/admin-requests"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
     },
-    onError: () => toast({ title: "Gagal", description: "Gagal memperbarui status akun.", variant: "destructive" }),
+    onError: () => toast({ title: "Gagal", description: "Gagal memproses permohonan admin.", variant: "destructive" }),
   });
 
   // Email Whitelist
@@ -400,7 +401,7 @@ export default function AdminPage() {
                         </TableRow>
                       ) : userList.map((u) => {
                         const isCurrentUser = u.id === user?.id;
-                        const isTargetAdmin = u.role === "admin";
+                        const isTargetAdmin = u.role === "admin" || u.role === "super_admin";
                         return (
                           <TableRow key={u.id} className={isCurrentUser ? "bg-primary/5" : ""} data-testid={`row-user-${u.id}`}>
                             <TableCell>
@@ -466,76 +467,76 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            {/* ── PENDING USERS — Waiting Approval ── */}
-            <Card className="border-amber-200 dark:border-amber-800">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
-                      <Clock className="h-5 w-5" />
-                      Antrian Persetujuan Akun
-                      {pendingUsers.length > 0 && (
-                        <span className="ml-1 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers.length}</span>
-                      )}
-                    </CardTitle>
-                    <CardDescription className="mt-1">
-                      Pengguna baru yang belum disetujui aksesnya. Setujui atau tolak setiap permintaan.
-                    </CardDescription>
+            {/* ── PERMOHONAN MENJADI ADMIN — Super Admin only ── */}
+            {adminMe?.isSuperAdmin && (
+              <Card className="border-amber-200 dark:border-amber-800">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                        <ShieldCheck className="h-5 w-5" />
+                        Permohonan Hak Admin
+                        {adminRequests.length > 0 && (
+                          <span className="ml-1 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{adminRequests.length}</span>
+                        )}
+                      </CardTitle>
+                      <CardDescription className="mt-1">
+                        Pengguna yang mengajukan permohonan menjadi Admin. Hanya Super Admin yang bisa menyetujui.
+                      </CardDescription>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => refetchAdminRequests()} className="gap-2" data-testid="btn-refresh-admin-requests">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => refetchPending()} className="gap-2" data-testid="btn-refresh-pending">
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
-              </CardHeader>
-              <CardContent>
-                {pendingUsers.length === 0 ? (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-400 opacity-50" />
-                    <p className="text-sm">Tidak ada permintaan akses yang menunggu.</p>
-                    <p className="text-xs mt-1">Semua pengguna sudah diproses.</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {pendingUsers.map((u) => (
-                      <div key={u.id} className="flex items-center justify-between p-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/50">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="h-9 w-9 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
-                            <Mail className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                </CardHeader>
+                <CardContent>
+                  {adminRequests.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-400 opacity-50" />
+                      <p className="text-sm">Belum ada permohonan Admin yang masuk.</p>
+                      <p className="text-xs mt-1">Pengguna dapat mengajukan permohonan dari halaman akun mereka.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {adminRequests.map((u) => (
+                        <div key={u.id} className="flex items-center justify-between p-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/50">
+                          <div className="flex items-center gap-3 min-w-0">
+                            <div className="h-9 w-9 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                              <ShieldCheck className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="font-medium text-sm truncate">{u.displayName || u.email}</p>
+                              <p className="text-xs text-muted-foreground">{u.email} · {u.profession || '-'}</p>
+                            </div>
                           </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-sm truncate">{u.email}</p>
-                            <p className="text-xs text-muted-foreground">
-                              Mendaftar: {u.createdAt ? new Date(u.createdAt).toLocaleDateString('id-ID') : '-'}
-                            </p>
+                          <div className="flex items-center gap-2 shrink-0 ml-3">
+                            <Button
+                              size="sm"
+                              className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white"
+                              onClick={() => processAdminRequestMutation.mutate({ userId: u.id, approve: true })}
+                              disabled={processAdminRequestMutation.isPending}
+                              data-testid={`btn-approve-admin-${u.id}`}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" /> Setujui
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="h-8 gap-1 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/20"
+                              onClick={() => processAdminRequestMutation.mutate({ userId: u.id, approve: false })}
+                              disabled={processAdminRequestMutation.isPending}
+                              data-testid={`btn-reject-admin-${u.id}`}
+                            >
+                              <XCircle className="h-3.5 w-3.5" /> Tolak
+                            </Button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0 ml-3">
-                          <Button
-                            size="sm"
-                            className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white"
-                            onClick={() => approveUserMutation.mutate({ userId: u.id, status: 'approved' })}
-                            disabled={approveUserMutation.isPending}
-                            data-testid={`btn-approve-${u.id}`}
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5" /> Setujui
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-8 gap-1 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/20"
-                            onClick={() => approveUserMutation.mutate({ userId: u.id, status: 'rejected' })}
-                            disabled={approveUserMutation.isPending}
-                            data-testid={`btn-reject-${u.id}`}
-                          >
-                            <XCircle className="h-3.5 w-3.5" /> Tolak
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* ── EMAIL WHITELIST — Admin only ── */}
             {adminMe?.isAdmin && (
@@ -662,19 +663,30 @@ export default function AdminPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                <div className="grid sm:grid-cols-3 gap-4 text-sm">
                   <div className="space-y-2">
-                    <div className="flex items-center gap-2 font-semibold text-red-600 dark:text-red-400">
-                      <Crown className="h-4 w-4" /> Admin Utama
+                    <div className="flex items-center gap-2 font-semibold text-violet-600 dark:text-violet-400">
+                      <Crown className="h-4 w-4" /> Super Admin
                     </div>
                     <ul className="space-y-1 text-muted-foreground pl-6 list-disc">
                       <li>Melihat semua pengguna</li>
-                      <li>Mengubah paket langganan pengguna</li>
-                      <li>Memberikan / mencabut akses Sub Admin</li>
-                      <li>Melihat statistik penggunaan sistem</li>
-                      <li>Menyetujui/menolak pengguna baru</li>
-                      <li>Mengelola whitelist email akses langsung</li>
-                      <li>Satu-satunya yang diklaim via kunci rahasia</li>
+                      <li>Mengubah paket & role pengguna</li>
+                      <li>Menyetujui permohonan menjadi Admin</li>
+                      <li>Mengelola whitelist email</li>
+                      <li>Melihat statistik sistem</li>
+                      <li>Kewenangan penuh sistem</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 font-semibold text-red-600 dark:text-red-400">
+                      <Crown className="h-4 w-4" /> Admin
+                    </div>
+                    <ul className="space-y-1 text-muted-foreground pl-6 list-disc">
+                      <li>Melihat semua pengguna</li>
+                      <li>Mengubah paket langganan</li>
+                      <li>Memberikan / mencabut Sub Admin</li>
+                      <li>Melihat statistik sistem</li>
+                      <li className="line-through opacity-50">Tidak dapat setujui permohonan Admin</li>
                     </ul>
                   </div>
                   <div className="space-y-2">
@@ -683,10 +695,10 @@ export default function AdminPage() {
                     </div>
                     <ul className="space-y-1 text-muted-foreground pl-6 list-disc">
                       <li>Melihat semua pengguna</li>
-                      <li>Mengubah paket langganan pengguna</li>
-                      <li>Melihat statistik penggunaan sistem</li>
-                      <li className="line-through opacity-50">Tidak dapat mengubah role pengguna</li>
-                      <li className="line-through opacity-50">Tidak dapat mengakses akun Admin Utama</li>
+                      <li>Mengubah paket langganan</li>
+                      <li>Melihat statistik sistem</li>
+                      <li className="line-through opacity-50">Tidak dapat mengubah role</li>
+                      <li className="line-through opacity-50">Tidak dapat setujui permohonan Admin</li>
                     </ul>
                   </div>
                 </div>
