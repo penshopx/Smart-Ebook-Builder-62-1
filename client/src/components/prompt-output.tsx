@@ -5,13 +5,15 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign, CalendarDays, BookOpen } from 'lucide-react';
+import { Copy, Check, ExternalLink, Maximize2, Minimize2, Sparkles, Rocket, Bot, Star, Zap, MessageCircle, Brain, Globe, Search, FileText, Download, Loader2, AlertCircle, FileDown, ImagePlus, X, Monitor, ChevronLeft, ChevronRight, Pencil, Hash, Megaphone, Video, Mic, Mail, MessageSquare, ShoppingBag, Camera, Linkedin, ShieldCheck, Volume2, Play, Pause, Smartphone, ClipboardList, Send, GraduationCap, ChevronDown, ChevronUp, Palette, HelpCircle, Settings2, DollarSign, CalendarDays, BookOpen, BrainCircuit } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { AI_MODEL_RECOMMENDATIONS } from '@shared/schema';
+import type { ProjectData } from '@shared/schema';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { apiRequest } from '@/lib/queryClient';
 import { markEcoUsed } from '@/components/ecosystem-tracker';
+import { TopicAssistant } from '@/components/topic-assistant';
 import {
   Dialog,
   DialogContent,
@@ -60,6 +62,7 @@ interface PromptOutputProps {
   projectTarget?: string;
   uploadedFiles?: { name: string; type: string; size: string }[];
   onTopicUpdate?: (topik: string, judul?: string) => void;
+  projectData?: ProjectData;
 }
 
 const WORKFLOW_STEPS = [
@@ -100,7 +103,7 @@ function getSuggestedQuestions(topik: string): string[] {
 
 interface ChapterItem { id: string; number: number; title: string; subTopics: string; content: string; loading: boolean; }
 
-export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate }: PromptOutputProps) {
+export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate, projectData }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [isDocDialogOpen, setIsDocDialogOpen] = useState(false);
@@ -118,6 +121,7 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [pickerImages, setPickerImages] = useState<string[]>([]);
   const [isPresentationMode, setIsPresentationMode] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [showTopicAssistant, setShowTopicAssistant] = useState(false);
   const [editedContent, setEditedContent] = useState('');
   const [slideIndex, setSlideIndex] = useState(0);
   const [imgPickerType, setImgPickerType] = useState<'illustration' | 'infographic'>('illustration');
@@ -2649,6 +2653,33 @@ ${bodyHtml}
               </div>
             </div>
             <div className="grid grid-cols-2 gap-2">
+              <Button
+                onClick={() => setShowTopicAssistant(v => !v)}
+                className={`col-span-2 text-white text-xs h-10 justify-start relative overflow-hidden transition-all ${
+                  showTopicAssistant
+                    ? 'bg-gradient-to-r from-violet-700 to-purple-700 hover:from-violet-800 hover:to-purple-800 ring-2 ring-violet-400/50'
+                    : 'bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700'
+                }`}
+                data-testid="button-topic-assistant-main"
+              >
+                <BrainCircuit className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">Asisten Topik · Chaesa Prime</span>
+                  <span className="text-[10px] opacity-80">{showTopicAssistant ? '▲ Tutup asisten' : `5 agen spesialis · ${projectTopik ? `Topik: ${projectTopik.slice(0, 30)}` : 'Isi topik untuk mengaktifkan'}`}</span>
+                </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">OpenClaw</span>
+                {showTopicAssistant && <div className="absolute right-0 top-0 bottom-0 w-1 bg-violet-300" />}
+              </Button>
+              {showTopicAssistant && projectData && (
+                <div className="col-span-2 mt-0">
+                  <TopicAssistant projectData={projectData} initialExpanded={true} />
+                </div>
+              )}
+              {showTopicAssistant && !projectData && (
+                <div className="col-span-2 flex items-center justify-center py-4 text-xs text-muted-foreground bg-muted/30 rounded-lg">
+                  <BrainCircuit className="h-4 w-4 mr-2 opacity-40" /> Isi data topik di panel kiri untuk mengaktifkan asisten
+                </div>
+              )}
               <Button
                 onClick={handleChatDemo}
                 className="bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 text-white text-xs h-10 justify-start relative overflow-hidden"

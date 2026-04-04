@@ -20,6 +20,7 @@ interface Message {
 
 interface TopicAssistantProps {
   projectData: ProjectData;
+  initialExpanded?: boolean;
 }
 
 const AGENT_COLORS: Record<string, string> = {
@@ -121,8 +122,8 @@ const QUICK_CHIPS = [
   { icon: Sparkles, label: 'Target audiens', q: 'Siapa target audiens paling tepat untuk topik ini dan apa yang paling mereka butuhkan?' },
 ];
 
-export function TopicAssistant({ projectData }: TopicAssistantProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function TopicAssistant({ projectData, initialExpanded = false }: TopicAssistantProps) {
+  const [isExpanded, setIsExpanded] = useState(initialExpanded);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);

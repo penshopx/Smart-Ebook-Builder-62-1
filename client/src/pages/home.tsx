@@ -10,7 +10,6 @@ import { SavedProjects } from '@/components/saved-projects';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { DokumenterChatButton } from '@/components/dokumentender-chat-button';
 import { ChaesaChatbot } from '@/components/chaesa-chatbot';
-import { TopicAssistant } from '@/components/topic-assistant';
 import { BookPreview } from '@/components/book-preview';
 import { EcosystemTracker } from '@/components/ecosystem-tracker';
 import { generatePrompt } from '@/lib/prompt-generator';
@@ -524,7 +523,6 @@ export default function Home() {
               </TabsContent>
             </Tabs>
             <EcosystemTracker />
-            <TopicAssistant projectData={projectData} />
           </div>
 
           <div className="space-y-4">
@@ -545,6 +543,7 @@ export default function Home() {
                 projectTarget={projectData.target}
                 uploadedFiles={uploadedFiles}
                 onTopicUpdate={handleTopicUpdate}
+                projectData={projectData}
               />
             </div>
           </div>
