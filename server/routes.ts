@@ -345,18 +345,21 @@ export async function registerRoutes(
       const parsed = createProjectSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
 
-      // Enforce project limit for free plan
+      // Enforce project limit based on plan (admin/sub_admin bypass limit)
       const user = await authStorage.getUser(userId);
-      const plan = (user?.plan ?? 'free') as keyof typeof PLAN_LIMITS;
-      const limits = PLAN_LIMITS[plan];
-      if (limits.maxProjects !== Infinity) {
-        const count = await storage.countProjects(userId);
-        if (count >= (limits.maxProjects as number)) {
-          return res.status(403).json({
-            error: 'Batas proyek tercapai',
-            message: `Paket ${limits.label} hanya mendukung ${limits.maxProjects} proyek. Upgrade ke Pro untuk unlimited proyek.`,
-            code: 'PROJECT_LIMIT_EXCEEDED',
-          });
+      const isAdminRole = user?.role === 'admin' || user?.role === 'sub_admin';
+      if (!isAdminRole) {
+        const plan = (user?.plan ?? 'free') as keyof typeof PLAN_LIMITS;
+        const limits = PLAN_LIMITS[plan];
+        if (limits.maxProjects !== Infinity) {
+          const count = await storage.countProjects(userId);
+          if (count >= (limits.maxProjects as number)) {
+            return res.status(403).json({
+              error: 'Batas proyek tercapai',
+              message: `Paket ${limits.label} hanya mendukung ${limits.maxProjects} proyek. Upgrade ke Pro untuk lebih banyak proyek.`,
+              code: 'PROJECT_LIMIT_EXCEEDED',
+            });
+          }
         }
       }
 

@@ -45,7 +45,7 @@ export type User = typeof users.$inferSelect;
 export const PLAN_LIMITS = {
   free: {
     promptsPerDay: 5,
-    maxProjects: 1,
+    maxProjects: 3,
     allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE'],
     exports: ['txt'],
     label: 'Free',
@@ -53,7 +53,7 @@ export const PLAN_LIMITS = {
   },
   pro: {
     promptsPerDay: 25,
-    maxProjects: 5,
+    maxProjects: 25,
     allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT'],
     exports: ['txt', 'pdf'],
     label: 'Pro',
@@ -61,7 +61,7 @@ export const PLAN_LIMITS = {
   },
   premium: {
     promptsPerDay: 75,
-    maxProjects: 20,
+    maxProjects: Infinity,
     allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT', 'E_COURSE', 'GPT_BUILDER', 'DOCUMENT_GENERATOR', 'MINI_APP'],
     exports: ['txt', 'pdf', 'docx', 'md'],
     label: 'Premium',

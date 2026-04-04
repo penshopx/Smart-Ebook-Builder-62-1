@@ -255,7 +255,7 @@ function ComparisonTable() {
     { name: "— PENGGUNAAN DASAR —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
     { name: "Prompt per hari", free: "5/hari", pro: "25/hari", premium: "75/hari", advance: "Unlimited", enterprise: "Unlimited" },
     { name: "Mode generasi AI", free: "3 mode", pro: "8 mode", premium: "12 mode", advance: "16 mode", enterprise: "16 + Custom" },
-    { name: "Proyek tersimpan", free: "1", pro: "5", premium: "20", advance: "Unlimited", enterprise: "Unlimited" },
+    { name: "Proyek tersimpan", free: "3", pro: "25", premium: "Unlimited", advance: "Unlimited", enterprise: "Unlimited" },
     { name: "Industri themes", free: "3", pro: "8", premium: "16", advance: "24", enterprise: "24 + Custom" },
     { name: "— FONDASI EBOOK —", header: true, free: "", pro: "", premium: "", advance: "", enterprise: "" },
     { name: "Ebook Outline & Chapter Builder", free: "Terbatas", pro: "Dasar", premium: "Penuh", advance: "Penuh", enterprise: "Penuh" },
