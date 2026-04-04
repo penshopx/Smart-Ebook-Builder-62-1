@@ -18,8 +18,9 @@ import {
 import {
   Shield, ShieldCheck, ShieldAlert, Users, ArrowLeft, Search, Crown,
   UserCog, BarChart3, RefreshCw, ChevronDown, Key, Loader2, Eye,
+  ListFilter, Clock, CheckCircle2, XCircle, Plus, Trash2, Mail, ShieldBan,
 } from "lucide-react";
-import type { User } from "@shared/models/auth";
+import type { User, EmailWhitelistEntry } from "@shared/models/auth";
 
 const PLAN_LABELS: Record<string, { label: string; color: string }> = {
   free:       { label: "Free",       color: "bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300" },
@@ -84,6 +85,8 @@ export default function AdminPage() {
   const [roleFilter, setRoleFilter] = useState("all");
   const [changePlanDialog, setChangePlanDialog] = useState<{ open: boolean; targetUser: User | null; newPlan: string }>({ open: false, targetUser: null, newPlan: "" });
   const [changeRoleDialog, setChangeRoleDialog] = useState<{ open: boolean; targetUser: User | null; newRole: string }>({ open: false, targetUser: null, newRole: "" });
+  const [whitelistEmail, setWhitelistEmail] = useState("");
+  const [whitelistNote, setWhitelistNote] = useState("");
 
   const { data: adminMe } = useQuery<{ role: string; isAdmin: boolean; isSubAdmin: boolean }>({
     queryKey: ["/api/admin/me"],
@@ -152,6 +155,56 @@ export default function AdminPage() {
       setChangeRoleDialog({ open: false, targetUser: null, newRole: "" });
     },
     onError: () => toast({ title: "Gagal", description: "Gagal mengubah role pengguna.", variant: "destructive" }),
+  });
+
+  // Pending Users
+  const { data: pendingUsers = [], refetch: refetchPending } = useQuery<User[]>({
+    queryKey: ["/api/admin/pending-users"],
+    enabled: adminMe?.isAdmin || adminMe?.isSubAdmin,
+  });
+
+  const approveUserMutation = useMutation({
+    mutationFn: async ({ userId, status }: { userId: string; status: 'approved' | 'rejected' | 'pending' }) => {
+      const res = await apiRequest("PATCH", `/api/admin/users/${userId}/status`, { status });
+      return res.json();
+    },
+    onSuccess: (_, vars) => {
+      toast({ title: vars.status === 'approved' ? "Disetujui!" : vars.status === 'rejected' ? "Ditolak" : "Diperbarui", description: "Status akun pengguna telah diperbarui." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/pending-users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+    },
+    onError: () => toast({ title: "Gagal", description: "Gagal memperbarui status akun.", variant: "destructive" }),
+  });
+
+  // Email Whitelist
+  const { data: whitelist = [], refetch: refetchWhitelist } = useQuery<EmailWhitelistEntry[]>({
+    queryKey: ["/api/admin/whitelist"],
+    enabled: adminMe?.isAdmin,
+  });
+
+  const addWhitelistMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/admin/whitelist", { email: whitelistEmail, note: whitelistNote || undefined });
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Berhasil!", description: `Email ${whitelistEmail} ditambahkan ke whitelist.` });
+      setWhitelistEmail(""); setWhitelistNote("");
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/whitelist"] });
+    },
+    onError: () => toast({ title: "Gagal", description: "Gagal menambahkan email ke whitelist.", variant: "destructive" }),
+  });
+
+  const removeWhitelistMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const res = await apiRequest("DELETE", `/api/admin/whitelist/${encodeURIComponent(email)}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Dihapus", description: "Email dihapus dari whitelist." });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/whitelist"] });
+    },
+    onError: () => toast({ title: "Gagal", description: "Gagal menghapus email.", variant: "destructive" }),
   });
 
   const isAdminOrSub = adminMe?.isAdmin || adminMe?.isSubAdmin;
@@ -407,6 +460,170 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
+            {/* ── PENDING USERS — Waiting Approval ── */}
+            <Card className="border-amber-200 dark:border-amber-800">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                      <Clock className="h-5 w-5" />
+                      Antrian Persetujuan Akun
+                      {pendingUsers.length > 0 && (
+                        <span className="ml-1 bg-amber-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">{pendingUsers.length}</span>
+                      )}
+                    </CardTitle>
+                    <CardDescription className="mt-1">
+                      Pengguna baru yang belum disetujui aksesnya. Setujui atau tolak setiap permintaan.
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => refetchPending()} className="gap-2" data-testid="btn-refresh-pending">
+                    <RefreshCw className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {pendingUsers.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <CheckCircle2 className="h-10 w-10 mx-auto mb-2 text-green-400 opacity-50" />
+                    <p className="text-sm">Tidak ada permintaan akses yang menunggu.</p>
+                    <p className="text-xs mt-1">Semua pengguna sudah diproses.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {pendingUsers.map((u) => (
+                      <div key={u.id} className="flex items-center justify-between p-3 rounded-lg border bg-amber-50/50 dark:bg-amber-950/10 border-amber-200 dark:border-amber-800/50">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="h-9 w-9 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0">
+                            <Mail className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm truncate">{u.email}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Mendaftar: {u.createdAt ? new Date(u.createdAt).toLocaleDateString('id-ID') : '-'}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                          <Button
+                            size="sm"
+                            className="h-8 gap-1 bg-green-600 hover:bg-green-700 text-white"
+                            onClick={() => approveUserMutation.mutate({ userId: u.id, status: 'approved' })}
+                            disabled={approveUserMutation.isPending}
+                            data-testid={`btn-approve-${u.id}`}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" /> Setujui
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-8 gap-1 border-red-300 text-red-600 hover:bg-red-50 dark:border-red-700 dark:text-red-400 dark:hover:bg-red-950/20"
+                            onClick={() => approveUserMutation.mutate({ userId: u.id, status: 'rejected' })}
+                            disabled={approveUserMutation.isPending}
+                            data-testid={`btn-reject-${u.id}`}
+                          >
+                            <XCircle className="h-3.5 w-3.5" /> Tolak
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* ── EMAIL WHITELIST — Admin only ── */}
+            {adminMe?.isAdmin && (
+              <Card className="border-violet-200 dark:border-violet-800">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-violet-700 dark:text-violet-400">
+                    <ListFilter className="h-5 w-5" />
+                    Whitelist Email
+                  </CardTitle>
+                  <CardDescription>
+                    Email yang di-whitelist akan langsung disetujui otomatis tanpa menunggu persetujuan manual. Cocok untuk kolega dan rekan yang sudah dipercaya.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Add to whitelist */}
+                  <div className="flex flex-col sm:flex-row gap-2">
+                    <div className="relative flex-1">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="email@contoh.com"
+                        value={whitelistEmail}
+                        onChange={(e) => setWhitelistEmail(e.target.value)}
+                        className="pl-9"
+                        data-testid="input-whitelist-email"
+                        onKeyDown={(e) => e.key === 'Enter' && whitelistEmail && addWhitelistMutation.mutate()}
+                      />
+                    </div>
+                    <Input
+                      placeholder="Catatan (opsional)"
+                      value={whitelistNote}
+                      onChange={(e) => setWhitelistNote(e.target.value)}
+                      className="sm:w-48"
+                      data-testid="input-whitelist-note"
+                    />
+                    <Button
+                      className="gap-2 bg-violet-600 hover:bg-violet-700 text-white shrink-0"
+                      onClick={() => addWhitelistMutation.mutate()}
+                      disabled={!whitelistEmail || addWhitelistMutation.isPending}
+                      data-testid="btn-add-whitelist"
+                    >
+                      {addWhitelistMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+                      Tambahkan
+                    </Button>
+                  </div>
+
+                  {/* Whitelist table */}
+                  {whitelist.length === 0 ? (
+                    <div className="text-center py-6 text-muted-foreground border rounded-lg border-dashed">
+                      <ListFilter className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                      <p className="text-sm">Belum ada email dalam whitelist.</p>
+                      <p className="text-xs mt-1">Tambahkan email yang boleh langsung mengakses sistem.</p>
+                    </div>
+                  ) : (
+                    <div className="rounded-lg border overflow-hidden">
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Catatan</TableHead>
+                            <TableHead>Ditambahkan</TableHead>
+                            <TableHead className="w-16"></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {whitelist.map((entry) => (
+                            <TableRow key={entry.id}>
+                              <TableCell className="font-medium text-sm">{entry.email}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">{entry.note || '-'}</TableCell>
+                              <TableCell className="text-xs text-muted-foreground">
+                                {entry.createdAt ? new Date(entry.createdAt).toLocaleDateString('id-ID') : '-'}
+                              </TableCell>
+                              <TableCell>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950/20"
+                                  onClick={() => removeWhitelistMutation.mutate(entry.email)}
+                                  disabled={removeWhitelistMutation.isPending}
+                                  data-testid={`btn-remove-whitelist-${entry.id}`}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
             {/* Perbedaan Kewenangan */}
             <Card className="bg-muted/30">
               <CardHeader className="pb-3">
@@ -425,6 +642,8 @@ export default function AdminPage() {
                       <li>Mengubah paket langganan pengguna</li>
                       <li>Memberikan / mencabut akses Sub Admin</li>
                       <li>Melihat statistik penggunaan sistem</li>
+                      <li>Menyetujui/menolak pengguna baru</li>
+                      <li>Mengelola whitelist email akses langsung</li>
                       <li>Satu-satunya yang diklaim via kunci rahasia</li>
                     </ul>
                   </div>

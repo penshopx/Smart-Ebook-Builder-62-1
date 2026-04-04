@@ -10,6 +10,7 @@ import Landing from "@/pages/landing";
 import Account from "@/pages/account";
 import Admin from "@/pages/admin";
 import Register from "@/pages/register";
+import PendingApproval from "@/pages/pending-approval";
 import NotFound from "@/pages/not-found";
 import { Loader2 } from "lucide-react";
 
@@ -49,6 +50,12 @@ function AppContent() {
 
   if (!isAuthenticated) {
     return <Landing />;
+  }
+
+  // Email filter: block pending/rejected users (except admin/sub_admin who bypass)
+  const isAdminRole = user?.role === 'admin' || user?.role === 'sub_admin';
+  if (user && !isAdminRole && (user.accountStatus === 'pending' || user.accountStatus === 'rejected')) {
+    return <PendingApproval />;
   }
 
   if (user && !user.registrationCompleted) {

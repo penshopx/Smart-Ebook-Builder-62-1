@@ -25,6 +25,11 @@ export const users = pgTable("users", {
   plan: varchar("plan").default("free").notNull(),
   // Admin role: 'user' | 'sub_admin' | 'admin'
   role: varchar("role").default("user").notNull(),
+  // Account access status: 'pending' | 'approved' | 'rejected'
+  // pending = new user waiting for admin approval
+  // approved = can access the system
+  // rejected = access denied
+  accountStatus: varchar("account_status").default("pending").notNull(),
   // Registration / onboarding profile
   displayName: varchar("display_name"),
   profession: varchar("profession"),
@@ -40,6 +45,18 @@ export const users = pgTable("users", {
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// Email whitelist table — pre-approved emails that can access directly without admin approval
+export const emailWhitelist = pgTable("email_whitelist", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull().unique(),
+  addedBy: varchar("added_by"),
+  note: varchar("note"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export type EmailWhitelistEntry = typeof emailWhitelist.$inferSelect;
+export type InsertEmailWhitelist = typeof emailWhitelist.$inferInsert;
 
 // Plan limits
 export const PLAN_LIMITS = {

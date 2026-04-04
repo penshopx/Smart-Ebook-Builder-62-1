@@ -190,10 +190,65 @@ export async function registerRoutes(
       if (!validSecret || secretKey !== validSecret) {
         return res.status(403).json({ error: 'Kunci rahasia tidak valid.' });
       }
-      const updated = await authStorage.updateUserRole(userId, 'admin');
+      await authStorage.updateUserRole(userId, 'admin');
+      // Admin diklaim = auto-approve akses
+      const updated = await authStorage.updateAccountStatus(userId, 'approved');
       res.json({ success: true, user: updated, message: 'Selamat! Kamu kini adalah Admin Utama Chaesa AI Studio.' });
     } catch (error) {
       res.status(500).json({ error: 'Gagal mengklaim akses admin.' });
+    }
+  });
+
+  // ===== ADMIN: Approve / Reject user =====
+  app.patch("/api/admin/users/:userId/status", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const { status } = z.object({ status: z.enum(['approved', 'rejected', 'pending']) }).parse(req.body);
+      const updated = await authStorage.updateAccountStatus(userId, status);
+      res.json({ success: true, user: updated });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal memperbarui status akun.' });
+    }
+  });
+
+  // ===== ADMIN: Pending users =====
+  app.get("/api/admin/pending-users", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const pending = await authStorage.getPendingUsers();
+      res.json(pending);
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil data pending.' });
+    }
+  });
+
+  // ===== ADMIN: Email Whitelist =====
+  app.get("/api/admin/whitelist", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const list = await authStorage.getWhitelist();
+      res.json(list);
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal mengambil whitelist.' });
+    }
+  });
+
+  app.post("/api/admin/whitelist", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const adminId = getUserId(req);
+      const { email, note } = z.object({ email: z.string().email(), note: z.string().optional() }).parse(req.body);
+      const entry = await authStorage.addToWhitelist(email, adminId, note);
+      res.json({ success: true, entry });
+    } catch (error: any) {
+      res.status(500).json({ error: 'Gagal menambahkan email ke whitelist.' });
+    }
+  });
+
+  app.delete("/api/admin/whitelist/:email", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const email = decodeURIComponent(req.params.email);
+      await authStorage.removeFromWhitelist(email);
+      res.json({ success: true });
+    } catch (error) {
+      res.status(500).json({ error: 'Gagal menghapus email dari whitelist.' });
     }
   });
 

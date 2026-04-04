@@ -1,4 +1,4 @@
-import { users, type User, type UpsertUser } from "@shared/models/auth";
+import { users, emailWhitelist, type User, type UpsertUser, type EmailWhitelistEntry } from "@shared/models/auth";
 import { db } from "../../db";
 import { eq, sql, desc, ilike, or } from "drizzle-orm";
 
@@ -7,11 +7,18 @@ export interface IAuthStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPlan(id: string, plan: string): Promise<User | undefined>;
   updateUserRole(id: string, role: string): Promise<User | undefined>;
+  updateAccountStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<User | undefined>;
   completeRegistration(id: string, data: { displayName: string; profession: string; organization?: string; primaryIndustry?: string }): Promise<User | undefined>;
   trackPromptUsage(id: string): Promise<{ allowed: boolean; used: number; limit: number }>;
   getAllUsers(search?: string, planFilter?: string, roleFilter?: string): Promise<User[]>;
+  getPendingUsers(): Promise<User[]>;
   countAdmins(): Promise<number>;
   getUserStats(): Promise<{ total: number; byPlan: Record<string, number>; byRole: Record<string, number> }>;
+  // Email whitelist
+  getWhitelist(): Promise<EmailWhitelistEntry[]>;
+  addToWhitelist(email: string, addedBy?: string, note?: string): Promise<EmailWhitelistEntry>;
+  removeFromWhitelist(email: string): Promise<void>;
+  isEmailWhitelisted(email: string): Promise<boolean>;
 }
 
 class AuthStorage implements IAuthStorage {
@@ -21,9 +28,23 @@ class AuthStorage implements IAuthStorage {
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
+    // Check if user already exists (returning user)
+    const existing = await db.select().from(users).where(eq(users.id, userData.id as string)).limit(1);
+    const isReturning = existing.length > 0;
+
+    // For new users, check whitelist to determine initial account status
+    let initialStatus: 'pending' | 'approved' = 'pending';
+    if (!isReturning && userData.email) {
+      const whitelisted = await this.isEmailWhitelisted(userData.email);
+      if (whitelisted) initialStatus = 'approved';
+    }
+
     const [user] = await db
       .insert(users)
-      .values(userData)
+      .values({
+        ...userData,
+        accountStatus: initialStatus,
+      })
       .onConflictDoUpdate({
         target: users.id,
         set: {
@@ -93,6 +114,47 @@ class AuthStorage implements IAuthStorage {
       query = query.where(and(...conditions));
     }
     return query;
+  }
+
+  async updateAccountStatus(id: string, status: 'pending' | 'approved' | 'rejected'): Promise<User | undefined> {
+    const [user] = await db
+      .update(users)
+      .set({ accountStatus: status, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async getPendingUsers(): Promise<User[]> {
+    return db.select().from(users).where(eq(users.accountStatus, 'pending')).orderBy(desc(users.createdAt));
+  }
+
+  // ====== Email Whitelist ======
+  async getWhitelist(): Promise<EmailWhitelistEntry[]> {
+    return db.select().from(emailWhitelist).orderBy(desc(emailWhitelist.createdAt));
+  }
+
+  async addToWhitelist(email: string, addedBy?: string, note?: string): Promise<EmailWhitelistEntry> {
+    const normalized = email.toLowerCase().trim();
+    const [entry] = await db
+      .insert(emailWhitelist)
+      .values({ email: normalized, addedBy, note })
+      .onConflictDoUpdate({ target: emailWhitelist.email, set: { note, addedBy } })
+      .returning();
+    // Auto-approve any existing user with this email
+    await db.update(users)
+      .set({ accountStatus: 'approved', updatedAt: new Date() })
+      .where(eq(users.email, normalized));
+    return entry;
+  }
+
+  async removeFromWhitelist(email: string): Promise<void> {
+    await db.delete(emailWhitelist).where(eq(emailWhitelist.email, email.toLowerCase().trim()));
+  }
+
+  async isEmailWhitelisted(email: string): Promise<boolean> {
+    const [entry] = await db.select().from(emailWhitelist).where(eq(emailWhitelist.email, email.toLowerCase().trim())).limit(1);
+    return !!entry;
   }
 
   async countAdmins(): Promise<number> {
