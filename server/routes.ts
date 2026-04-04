@@ -12,6 +12,14 @@ function getUserId(req: any): string {
   return req.user?.claims?.sub ?? req.user?.id ?? '';
 }
 
+// Middleware lebih toleran — cukup cek ada user di sesi (tanpa validasi OIDC token expiry)
+// Digunakan untuk endpoint admin-claim karena kunci rahasia sudah menjadi lapisan keamanan utama
+const isSessionActive = (req: any, res: any, next: any) => {
+  const userId = getUserId(req);
+  if (userId) return next();
+  return res.status(401).json({ message: "Unauthorized. Silakan login ulang dan coba lagi." });
+};
+
 async function checkPlanLimit(req: any, res: any): Promise<boolean> {
   const userId = getUserId(req);
   if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return false; }
@@ -174,7 +182,7 @@ export async function registerRoutes(
   });
 
   // ===== ADMIN SETUP (Klaim Admin Utama) =====
-  app.post("/api/admin/claim", isAuthenticated, async (req, res) => {
+  app.post("/api/admin/claim", isSessionActive, async (req, res) => {
     try {
       const userId = getUserId(req);
       const { secretKey } = z.object({ secretKey: z.string() }).parse(req.body);

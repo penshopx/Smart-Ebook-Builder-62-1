@@ -121,7 +121,10 @@ export default function AdminPage() {
     },
     onError: async (err: any) => {
       const msg = err?.message ?? "Gagal mengklaim admin.";
-      toast({ title: "Gagal", description: msg.includes("403") ? "Kunci rahasia tidak valid. Periksa kunci dan coba lagi." : msg, variant: "destructive" });
+      let desc = msg;
+      if (msg.includes("403")) desc = "Kunci rahasia tidak valid. Pastikan kunci benar dan coba lagi.";
+      else if (msg.includes("401")) desc = "Sesi login habis. Silakan logout lalu login ulang, kemudian coba klaim admin kembali.";
+      toast({ title: "Gagal", description: desc, variant: "destructive" });
     },
   });
 
