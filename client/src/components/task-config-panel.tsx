@@ -622,44 +622,124 @@ export function TaskConfigPanel({
 
       case 'GPT_BUILDER':
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-5">
+            {/* IDENTITAS BOT */}
+            <div className="space-y-1">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identitas Bot</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nama Bot (Opsional)</Label>
+                  <Input
+                    placeholder="Contoh: Mentor Bisnis AI"
+                    value={taskConfig.botName}
+                    onChange={(e) => onTaskConfigChange('botName', e.target.value)}
+                    data-testid="input-bot-name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Peran Bot</Label>
+                  <Select
+                    value={taskConfig.botRole}
+                    onValueChange={(value) => onTaskConfigChange('botRole', value)}
+                  >
+                    <SelectTrigger data-testid="select-bot-role">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Mentor Pribadi">Mentor Pribadi</SelectItem>
+                      <SelectItem value="Konsultan Ahli">Konsultan Ahli</SelectItem>
+                      <SelectItem value="Tutor Pembelajaran">Tutor Pembelajaran</SelectItem>
+                      <SelectItem value="Asisten Produktivitas">Asisten Produktivitas</SelectItem>
+                      <SelectItem value="Coach Bisnis">Coach Bisnis</SelectItem>
+                      <SelectItem value="Customer Service AI">Customer Service AI</SelectItem>
+                      <SelectItem value="Sales Assistant">Sales Assistant</SelectItem>
+                      <SelectItem value="Onboarding Bot">Onboarding Bot</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* PERSONA */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Persona</p>
               <div className="space-y-2">
-                <Label>Nama Bot (Opsional)</Label>
+                <Label>Kepribadian Bot</Label>
                 <Input
-                  placeholder="Contoh: Mentor Bisnis AI"
-                  value={taskConfig.botName}
-                  onChange={(e) => onTaskConfigChange('botName', e.target.value)}
-                  data-testid="input-bot-name"
+                  placeholder="Contoh: Ramah, Suportif, dan Berbasis Data"
+                  value={taskConfig.botPersonality}
+                  onChange={(e) => onTaskConfigChange('botPersonality', e.target.value)}
+                  data-testid="input-bot-personality"
                 />
               </div>
               <div className="space-y-2">
-                <Label>Peran Bot</Label>
-                <Select
-                  value={taskConfig.botRole}
-                  onValueChange={(value) => onTaskConfigChange('botRole', value)}
-                >
-                  <SelectTrigger data-testid="select-bot-role">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Mentor Pribadi">Mentor Pribadi</SelectItem>
-                    <SelectItem value="Konsultan Ahli">Konsultan Ahli</SelectItem>
-                    <SelectItem value="Tutor Pembelajaran">Tutor Pembelajaran</SelectItem>
-                    <SelectItem value="Asisten Produktivitas">Asisten Produktivitas</SelectItem>
-                    <SelectItem value="Coach Bisnis">Coach Bisnis</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Deskripsi Persona Detail <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Textarea
+                  placeholder={`Contoh: Bot ini berbicara seperti seorang mentor berpengalaman — tegas tapi hangat. Selalu memberi contoh nyata dan menghindari teori yang terlalu abstrak. Jika ada pertanyaan di luar topik ebook, bot mengarahkan kembali dengan sopan.`}
+                  rows={3}
+                  value={taskConfig.botPersonaDetail}
+                  onChange={(e) => onTaskConfigChange('botPersonaDetail', e.target.value)}
+                  data-testid="textarea-bot-persona-detail"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Bahasa Chatbot</Label>
+                  <Select
+                    value={taskConfig.botLanguage}
+                    onValueChange={(value) => onTaskConfigChange('botLanguage', value)}
+                  >
+                    <SelectTrigger data-testid="select-bot-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Bahasa Indonesia">Bahasa Indonesia</SelectItem>
+                      <SelectItem value="English">English</SelectItem>
+                      <SelectItem value="Bilingual (Indonesia + English)">Bilingual (ID + EN)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Target Pengguna Bot <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                  <Input
+                    placeholder="Contoh: Pengusaha UMKM pemula"
+                    value={taskConfig.botAudience}
+                    onChange={(e) => onTaskConfigChange('botAudience', e.target.value)}
+                    data-testid="input-bot-audience"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Topik yang Harus Dihindari <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Input
+                  placeholder="Contoh: Saran medis, hukum, investasi saham"
+                  value={taskConfig.botAvoidTopics}
+                  onChange={(e) => onTaskConfigChange('botAvoidTopics', e.target.value)}
+                  data-testid="input-bot-avoid-topics"
+                />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Kepribadian Bot</Label>
-              <Input
-                placeholder="Contoh: Ramah, Suportif, dan Berbasis Data"
-                value={taskConfig.botPersonality}
-                onChange={(e) => onTaskConfigChange('botPersonality', e.target.value)}
-                data-testid="input-bot-personality"
-              />
+
+            {/* SYSTEM PROMPT KUSTOM */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">System Prompt Kustom</p>
+              <div className="space-y-2">
+                <Label>
+                  Instruksi Tambahan / System Prompt
+                  <span className="text-muted-foreground text-xs ml-2">(opsional — akan ditambahkan ke hasil generate)</span>
+                </Label>
+                <Textarea
+                  placeholder={`Tulis instruksi khusus yang ingin kamu sertakan langsung di system prompt.\n\nContoh:\n- Selalu akhiri setiap jawaban dengan pertanyaan lanjutan.\n- Jika user menanyakan harga, arahkan ke link: https://yoursite.com/beli\n- Jawab maksimal 3 paragraf per respons.`}
+                  rows={5}
+                  value={taskConfig.botSystemPrompt}
+                  onChange={(e) => onTaskConfigChange('botSystemPrompt', e.target.value)}
+                  data-testid="textarea-bot-system-prompt"
+                  className="font-mono text-xs"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                💡 Jika kosong, AI akan generate system prompt otomatis dari data ebook & konfigurasi di atas.
+              </p>
             </div>
           </div>
         );

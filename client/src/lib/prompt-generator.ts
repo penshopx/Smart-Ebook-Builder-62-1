@@ -405,20 +405,32 @@ Tolong buatkan **Instruksi Konfigurasi (System Prompt)** lengkap yang siap saya 
 - **Nama Bot:** ${taskConfig.botName || 'Mentor ' + (projectData.judul || projectData.topik)}
 - **Peran (Role):** ${taskConfig.botRole}
 - **Kepribadian:** ${taskConfig.botPersonality}
+- **Bahasa:** ${taskConfig.botLanguage || 'Bahasa Indonesia'}
 - **Sumber Pengetahuan:** Konten dari ebook "${projectData.judul}" (Saya akan upload file ebooknya ke Knowledge Base GPTs).
+${taskConfig.botAudience ? `- **Target Pengguna Bot:** ${taskConfig.botAudience}` : ''}
+${taskConfig.botAvoidTopics ? `- **Topik yang Harus Dihindari:** ${taskConfig.botAvoidTopics}` : ''}
 
+=== PERSONA DETAIL ===
+${taskConfig.botPersonaDetail
+  ? taskConfig.botPersonaDetail
+  : `Bot ini berperan sebagai ${taskConfig.botRole} yang ${taskConfig.botPersonality}. Bot fokus membantu pembaca memahami dan menerapkan isi ebook "${projectData.judul}" dalam konteks topik ${projectData.topik}.`
+}
+${taskConfig.botSystemPrompt ? `\n=== INSTRUKSI KUSTOM DARI PENULIS ===\n${taskConfig.botSystemPrompt}\n\n(Pastikan instruksi kustom di atas tercermin langsung dalam bagian System Prompt yang kamu buat.)\n` : ''}
 === TUGAS ANDA ===
 Buatkan Teks Konfigurasi Lengkap dengan struktur berikut:
 
-1. **Name:** Usulan nama bot yang menarik.
+1. **Name:** Usulan nama bot yang menarik dan relevan dengan topik.
 2. **Description:** Deskripsi singkat 1 kalimat untuk ditampilkan di store.
 3. **Instructions (System Prompt Inti):**
-   - Definisikan Persona secara detail (Kamu adalah...).
-   - Definisikan Misi (Membantu pembaca memahami topik ${projectData.topik}).
+   - Definisikan Persona secara detail (Kamu adalah...) — sertakan kepribadian, gaya komunikasi, dan nada bicara.
+   - Definisikan Misi (Membantu pengguna memahami dan mengimplementasikan topik ${projectData.topik}).
+   - **Bahasa:** Bot berbicara dalam ${taskConfig.botLanguage || 'Bahasa Indonesia'}.
+   ${taskConfig.botAudience ? `- **Segmen Pengguna:** ${taskConfig.botAudience}.` : ''}
    - **Knowledge Base Rules (PENTING):** Instruksikan bot untuk SELALU mencari jawaban di file yang diupload ("Knowledge") TERLEBIH DAHULU sebelum menggunakan pengetahuan umum. Jika jawaban ada di buku, kutip halamannya.
    - **Tone & Style:** ${effectiveTone} dan ${effectiveStyle}.
-   - **Guardrails:** Apa yang TIDAK boleh dilakukan (misal: memberi saran medis/hukum sembarangan jika topik sensitif).
-4. **Conversation Starters:** 4 Contoh pertanyaan pemancing yang relevan dengan isi ebook.
+   - **Guardrails:** Apa yang TIDAK boleh dilakukan${taskConfig.botAvoidTopics ? ` — khususnya hindari: ${taskConfig.botAvoidTopics}` : ' (misal: memberi saran medis/hukum sembarangan jika topik sensitif)'}.
+   ${taskConfig.botSystemPrompt ? '- **Instruksi Tambahan:** Terapkan semua instruksi kustom dari penulis yang sudah disebutkan di atas.' : ''}
+4. **Conversation Starters:** 4 Contoh pertanyaan pemancing yang relevan dengan isi ebook dan cocok untuk target pengguna${taskConfig.botAudience ? ` (${taskConfig.botAudience})` : ''}.
 `;
       break;
 
