@@ -804,48 +804,115 @@ Buat sedetail dan sekonkret mungkin. Gunakan format yang rapi dan mudah dibaca.
       break;
     }
 
-    case 'QUIZ_MAKER':
+    case 'QUIZ_MAKER': {
+      const quizScopeMap: Record<string, string> = {
+        pre_test: 'Pre-Test (Asesmen Awal sebelum Materi Dimulai)',
+        per_bab: 'Quiz Per Bab',
+        per_sesi: 'Quiz Per Sesi / Modul',
+        akhir_modul: 'Quiz Akhir Modul',
+        post_test: 'Post-Test (Asesmen Akhir setelah Semua Materi)',
+        komprehensif: 'Ujian Komprehensif (Seluruh Materi)',
+        remedial: 'Remedial / Pengulangan untuk Peserta yang Belum Lulus',
+        sertifikasi: 'Ujian Sertifikasi Formal',
+      };
+      const quizFormatMap: Record<string, string> = {
+        plain: 'Plain Text (siap copy-paste)',
+        google_form: 'Template Google Form (dengan instruksi cara mengisi)',
+        cetak: 'Format Lembar Ujian (siap cetak/print)',
+        lms: 'Format LMS/Moodle (GIFT format untuk import)',
+        markdown: 'Markdown (untuk Notion/Obsidian)',
+      };
+
+      let quizTypesParsed: { type: string; label: string; count: number; enabled: boolean }[] = [];
+      try {
+        quizTypesParsed = taskConfig.quizTypeConfig ? JSON.parse(taskConfig.quizTypeConfig) : [];
+      } catch { quizTypesParsed = []; }
+
+      const enabledTypes = quizTypesParsed.filter(q => q.enabled);
+      const hasCustomTypes = enabledTypes.length > 0;
+      const totalSoal = enabledTypes.reduce((sum, q) => sum + q.count, 0);
+
+      const typeFormatMap: Record<string, { label: string; format: string }> = {
+        pg: {
+          label: 'PILIHAN GANDA (MCQ)',
+          format: `[Nomor]. [Pertanyaan]\nA) [Pilihan A]\nB) [Pilihan B]\nC) [Pilihan C]\nD) [Pilihan D]\n${taskConfig.quizIncludeKey !== 'tidak' ? '✅ Jawaban: [Huruf]' + (taskConfig.quizIncludeKey === 'ya' ? ' — [Penjelasan singkat]' : '') : ''}`,
+        },
+        bs: {
+          label: 'BENAR / SALAH',
+          format: `[Nomor]. [Pernyataan]\n${taskConfig.quizIncludeKey !== 'tidak' ? 'Jawaban: [BENAR / SALAH]' + (taskConfig.quizIncludeKey === 'ya' ? ' — [Alasan]' : '') : ''}`,
+        },
+        isian: {
+          label: 'ISIAN SINGKAT',
+          format: `[Nomor]. [Kalimat dengan bagian kosong: ___________]\n${taskConfig.quizIncludeKey !== 'tidak' ? 'Jawaban: [Jawaban yang benar]' : ''}`,
+        },
+        es: {
+          label: 'ESAI PENDEK',
+          format: `[Nomor]. [Pertanyaan terbuka yang mendalam]\n${taskConfig.quizIncludeKey === 'ya' ? '💡 Panduan Jawaban: [3-5 poin kunci yang harus ada dalam jawaban]' : taskConfig.quizIncludeKey === 'kunci_only' ? '💡 Poin Jawaban: [Poin utama]' : ''}`,
+        },
+        matching: {
+          label: 'MENJODOHKAN (MATCHING)',
+          format: `Kolom A (Istilah/Konsep):\n[Nomor]. [Item A]\n\nKolom B (Definisi/Pasangan):\n[Huruf]. [Item B]\n${taskConfig.quizIncludeKey !== 'tidak' ? '\nKunci: [Pasangan yang benar]' : ''}`,
+        },
+        sk: {
+          label: 'STUDI KASUS',
+          format: `📌 Skenario:\n[Cerita kasus nyata berkaitan dengan topik, 2-3 paragraf]\n\nPertanyaan:\n[Nomor]. [Pertanyaan analitis]\n${taskConfig.quizIncludeKey === 'ya' ? '💡 Panduan Jawaban: [Poin-poin evaluasi]' : ''}`,
+        },
+        praktik: {
+          label: 'UNJUK KERJA / PRAKTIK',
+          format: `[Nomor]. [Instruksi tugas praktik yang harus dilakukan]\nRubrik Penilaian:\n- [Kriteria 1: X poin]\n- [Kriteria 2: X poin]\n- [Kriteria 3: X poin]`,
+        },
+      };
+
+      const sectionsInstruction = hasCustomTypes
+        ? enabledTypes.map((q, i) => {
+          const info = typeFormatMap[q.type] || { label: q.label, format: '[Soal sesuai jenis]' };
+          return `\n**BAGIAN ${String.fromCharCode(65 + i)} — ${info.label} (${q.count} soal)**\nFormat:\n${info.format}`;
+        }).join('\n')
+        : `\n**BAGIAN A — PILIHAN GANDA (10 soal)**\nFormat:\n${typeFormatMap.pg.format}\n\n**BAGIAN B — ESAI PENDEK (3 soal)**\nFormat:\n${typeFormatMap.es.format}`;
+
+      const summaryLine = hasCustomTypes
+        ? `Total: ${totalSoal} soal (${enabledTypes.map(q => `${q.count} ${q.label}`).join(', ')})`
+        : 'Total: 13 soal (10 Pilihan Ganda + 3 Esai Pendek)';
+
       taskInstruction = `
 MODE TUGAS: QUIZ MAKER — GENERATOR SOAL & ASESMEN
 ${styleReminder}
 
-Buat soal kuis dan asesmen komprehensif untuk menguji pemahaman pembaca tentang ebook bertema "${projectData.topik}".
+Buat paket soal dan asesmen untuk ebook bertema "${projectData.topik}".
 
-=== KONTEKS ===
-Judul Ebook: ${projectData.judul || projectData.topik}
-Target Pembaca: ${projectData.target || 'umum'}
-Level: ${taskConfig.fokusLevel || 'Basic'}
+=== SPESIFIKASI QUIZ ===
+- Judul Ebook: ${projectData.judul || projectData.topik}
+- Target Peserta: ${projectData.target || 'umum'}
+- Jenis Quiz: **${quizScopeMap[taskConfig.quizScope || 'komprehensif'] || taskConfig.quizScope}**
+${taskConfig.quizBabRef ? `- Bab / Sesi: **${taskConfig.quizBabRef}**` : ''}
+- Level Kesulitan: **${taskConfig.fokusLevel || 'Intermediate'}**
+- Fokus Penilaian: **${taskConfig.quizFocus || 'komprehensif'}**
+- Estimasi Durasi: **${taskConfig.quizDuration || '30 menit'}**
+- ${summaryLine}
+- Format Output: **${quizFormatMap[taskConfig.quizFormat || 'plain'] || taskConfig.quizFormat}**
+- Kunci Jawaban: **${taskConfig.quizIncludeKey === 'ya' ? 'Sertakan + pembahasan' : taskConfig.quizIncludeKey === 'kunci_only' ? 'Kunci saja' : 'Tidak disertakan'}**
+${taskConfig.quizContext ? `- Konteks Khusus: ${taskConfig.quizContext}` : ''}
 
 === INSTRUKSI PEMBUATAN SOAL ===
+${taskConfig.quizFormat === 'google_form' ? 'Format output: tulis dalam format Google Form — setiap soal diawali dengan "Q:" dan pilihan diawali dengan huruf. Tambahkan instruksi di awal cara mengisi form.\n' : ''}
+${taskConfig.quizFormat === 'lms' ? 'Format output: gunakan format GIFT (Moodle) yang valid. Setiap soal diawali dengan :: dan diakhiri dengan {}.\n' : ''}
+${taskConfig.quizFormat === 'cetak' ? 'Format output: layout formal lembar ujian. Tambahkan header: Nama:, Kelas:, Tanggal:, Nilai:. Kelompokkan soal dengan sub-judul jelas.\n' : ''}
+${taskConfig.quizFormat === 'markdown' ? 'Format output: gunakan Markdown lengkap dengan heading, bold, dan checkboxes.\n' : ''}
+${sectionsInstruction}
 
-**BAGIAN A — PILIHAN GANDA (10 soal)**
-Format:
-[Nomor]. [Pertanyaan]
-A) [Pilihan A]
-B) [Pilihan B]
-C) [Pilihan C]
-D) [Pilihan D]
-✅ Jawaban: [Huruf] — [Penjelasan singkat kenapa jawaban ini benar]
+=== PANDUAN KUALITAS SOAL ===
+- Distribusi kognitif: ingatan/hafalan (${taskConfig.quizFocus === 'hafalan' ? '60%' : '20%'}), pemahaman (${taskConfig.quizFocus === 'teori' ? '50%' : '25%'}), aplikasi praktis (${taskConfig.quizFocus === 'praktik' ? '60%' : '30%'}), analisis/evaluasi (${taskConfig.quizFocus === 'analisis' ? '50%' : '25%'})
+- Level kesulitan soal: mudah (${taskConfig.fokusLevel === 'Beginner' ? '60%' : '25%'}), sedang (${taskConfig.fokusLevel === 'Mixed' ? '50%' : '45%'}), sulit (${taskConfig.fokusLevel === 'Expert' ? '50%' : '30%'})
+- Setiap soal harus relevan langsung dengan materi ebook${taskConfig.quizBabRef ? ` khususnya "${taskConfig.quizBabRef}"` : ''}
+- Pilihan jawaban salah (distractors) harus masuk akal, bukan jebakan
+${taskConfig.quizScope === 'pre_test' ? '- Soal pre-test: ukur pengetahuan awal, bukan menguji detail teknis\n- Fungsi: identifikasi gap pengetahuan peserta sebelum belajar' : ''}
+${taskConfig.quizScope === 'sertifikasi' ? '- Soal ujian sertifikasi: standar tinggi, berbobot, valid secara profesional\n- Tambahkan: Passing Score (misal: minimal 70% untuk lulus), panduan remedial' : ''}
+${taskConfig.quizScope === 'remedial' ? '- Soal remedial: fokus pada materi yang sering salah, penjelasan lebih detail\n- Tambahkan panduan belajar ulang di awal' : ''}
 
-**BAGIAN B — BENAR / SALAH (5 soal)**
-Format:
-[Nomor]. [Pernyataan]
-Jawaban: [BENAR / SALAH] — [Alasan]
-
-**BAGIAN C — ESAI PENDEK (3 soal)**
-Format:
-[Nomor]. [Pertanyaan terbuka yang mendalam]
-💡 Panduan Jawaban: [Poin-poin yang harus ada dalam jawaban yang baik]
-
-**BAGIAN D — STUDI KASUS (1 kasus)**
-[Skenario nyata berkaitan dengan topik]
-Pertanyaan studi kasus: [3 pertanyaan]
-
-=== CATATAN ===
-Soal harus mencakup: fakta/konsep (30%), aplikasi praktis (40%), analisis/sintesis (30%).
-Tingkat kesulitan: mudah (3), sedang (5), sulit (2) untuk pilihan ganda.
+Buat ${totalSoal || 'semua'} soal secara LENGKAP dan SIAP PAKAI. Jangan hanya template — tulis isi soalnya.
 `;
       break;
+    }
 
     case 'PODCAST_GENERATOR': {
       const podcastStyle = taskConfig.podcastStyle || 'interview';

@@ -1150,45 +1150,255 @@ export function TaskConfigPanel({
         );
       }
 
-      case 'QUIZ_MAKER':
+      case 'QUIZ_MAKER': {
+        const QUIZ_TYPE_OPTIONS = [
+          { type: 'pg',       label: 'Pilihan Ganda (MCQ)',        defaultCount: 10 },
+          { type: 'bs',       label: 'Benar / Salah',              defaultCount: 5  },
+          { type: 'isian',    label: 'Isian Singkat',               defaultCount: 5  },
+          { type: 'es',       label: 'Esai Pendek',                defaultCount: 3  },
+          { type: 'matching', label: 'Menjodohkan (Matching)',      defaultCount: 5  },
+          { type: 'sk',       label: 'Studi Kasus',                defaultCount: 1  },
+          { type: 'praktik',  label: 'Unjuk Kerja / Praktik',      defaultCount: 1  },
+        ];
+
+        type QuizTypeEntry = { type: string; label: string; count: number; enabled: boolean };
+        let quizTypes: QuizTypeEntry[] = [];
+        try {
+          quizTypes = taskConfig.quizTypeConfig ? JSON.parse(taskConfig.quizTypeConfig) : [];
+        } catch { quizTypes = []; }
+
+        // Ensure all options are represented
+        const mergedTypes: QuizTypeEntry[] = QUIZ_TYPE_OPTIONS.map(opt => {
+          const existing = quizTypes.find(q => q.type === opt.type);
+          return existing ?? { type: opt.type, label: opt.label, count: opt.defaultCount, enabled: false };
+        });
+        // Default: enable pg and es if nothing selected
+        const hasAnyEnabled = mergedTypes.some(q => q.enabled);
+        if (!hasAnyEnabled && !taskConfig.quizTypeConfig) {
+          mergedTypes[0].enabled = true; // pg
+          mergedTypes[3].enabled = true; // es
+        }
+
+        const toggleQuizType = (type: string) => {
+          const updated = mergedTypes.map(q => q.type === type ? { ...q, enabled: !q.enabled } : q);
+          onTaskConfigChange('quizTypeConfig', JSON.stringify(updated));
+        };
+        const setQuizCount = (type: string, count: number) => {
+          const updated = mergedTypes.map(q => q.type === type ? { ...q, count: Math.max(1, count) } : q);
+          onTaskConfigChange('quizTypeConfig', JSON.stringify(updated));
+        };
+
+        const totalSoal = mergedTypes.filter(q => q.enabled).reduce((sum, q) => sum + q.count, 0);
+        const scopeNeedsBab = ['per_bab', 'per_sesi'].includes(taskConfig.quizScope || 'komprehensif');
+
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Level Kesulitan</Label>
-              <Select
-                value={taskConfig.fokusLevel || 'Intermediate'}
-                onValueChange={(value) => onTaskConfigChange('fokusLevel', value)}
-              >
-                <SelectTrigger data-testid="select-quiz-level">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Beginner">Beginner (dasar)</SelectItem>
-                  <SelectItem value="Intermediate">Intermediate (menengah)</SelectItem>
-                  <SelectItem value="Advanced">Advanced (lanjut)</SelectItem>
-                  <SelectItem value="Expert">Expert (profesional)</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-5">
+
+            {/* LINGKUP QUIZ */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lingkup & Cakupan</p>
+              <div className="space-y-2">
+                <Label>Jenis Quiz</Label>
+                <Select
+                  value={taskConfig.quizScope || 'komprehensif'}
+                  onValueChange={(value) => onTaskConfigChange('quizScope', value)}
+                >
+                  <SelectTrigger data-testid="select-quiz-scope">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pre_test">📋 Pre-Test (sebelum materi)</SelectItem>
+                    <SelectItem value="per_bab">📖 Quiz Per Bab</SelectItem>
+                    <SelectItem value="per_sesi">🎯 Quiz Per Sesi/Modul</SelectItem>
+                    <SelectItem value="akhir_modul">✅ Quiz Akhir Modul</SelectItem>
+                    <SelectItem value="post_test">🎓 Post-Test (setelah semua materi)</SelectItem>
+                    <SelectItem value="komprehensif">📚 Komprehensif (semua bab)</SelectItem>
+                    <SelectItem value="remedial">🔁 Remedial / Pengulangan</SelectItem>
+                    <SelectItem value="sertifikasi">🏆 Ujian Sertifikasi</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              {scopeNeedsBab && (
+                <div className="space-y-2">
+                  <Label>Referensi Bab / Sesi <span className="text-muted-foreground text-xs">(soal dibuat dari bab/sesi ini)</span></Label>
+                  <Input
+                    placeholder="Contoh: Bab 3 – Strategi Pemasaran Digital, atau Sesi 2: Analisis Keuangan"
+                    value={taskConfig.quizBabRef || ''}
+                    onChange={(e) => onTaskConfigChange('quizBabRef', e.target.value)}
+                    data-testid="input-quiz-bab-ref"
+                  />
+                </div>
+              )}
             </div>
-            <div className="space-y-2">
-              <Label>Fokus Penilaian</Label>
-              <Select
-                value={taskConfig.quizFocus || 'komprehensif'}
-                onValueChange={(value) => onTaskConfigChange('quizFocus', value)}
-              >
-                <SelectTrigger data-testid="select-quiz-focus">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="komprehensif">Komprehensif (semua aspek)</SelectItem>
-                  <SelectItem value="teori">Teori & Konsep</SelectItem>
-                  <SelectItem value="praktik">Praktik & Aplikasi</SelectItem>
-                  <SelectItem value="analisis">Analisis & Evaluasi</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* JENIS SOAL */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Jenis Soal & Jumlah</p>
+                {totalSoal > 0 && (
+                  <span className="text-xs text-muted-foreground bg-muted px-2 py-0.5 rounded-full">
+                    Total: {totalSoal} soal
+                  </span>
+                )}
+              </div>
+              <div className="border rounded-md divide-y" data-testid="quiz-type-list">
+                {mergedTypes.map((qt) => (
+                  <div
+                    key={qt.type}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2 transition-colors",
+                      qt.enabled ? "bg-primary/5" : "hover:bg-muted/40"
+                    )}
+                  >
+                    <Checkbox
+                      checked={qt.enabled}
+                      onCheckedChange={() => toggleQuizType(qt.type)}
+                      data-testid={`checkbox-quiz-type-${qt.type}`}
+                    />
+                    <span className={cn("flex-1 text-sm", qt.enabled ? "text-foreground font-medium" : "text-muted-foreground")}>
+                      {qt.label}
+                    </span>
+                    {qt.enabled && (
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <button
+                          className="w-6 h-6 rounded border text-xs hover:bg-muted flex items-center justify-center"
+                          onClick={() => setQuizCount(qt.type, qt.count - 1)}
+                          data-testid={`btn-quiz-dec-${qt.type}`}
+                        >−</button>
+                        <span className="w-8 text-center text-sm font-mono font-semibold">{qt.count}</span>
+                        <button
+                          className="w-6 h-6 rounded border text-xs hover:bg-muted flex items-center justify-center"
+                          onClick={() => setQuizCount(qt.type, qt.count + 1)}
+                          data-testid={`btn-quiz-inc-${qt.type}`}
+                        >+</button>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">Centang jenis soal yang diinginkan, lalu atur jumlahnya.</p>
             </div>
+
+            {/* TINGKAT & FOKUS */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Tingkat Kesulitan & Fokus</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Level Kesulitan</Label>
+                  <Select
+                    value={taskConfig.fokusLevel || 'Intermediate'}
+                    onValueChange={(value) => onTaskConfigChange('fokusLevel', value)}
+                  >
+                    <SelectTrigger data-testid="select-quiz-level">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Beginner">🟢 Beginner (dasar)</SelectItem>
+                      <SelectItem value="Intermediate">🟡 Intermediate (menengah)</SelectItem>
+                      <SelectItem value="Advanced">🟠 Advanced (lanjut)</SelectItem>
+                      <SelectItem value="Expert">🔴 Expert (profesional)</SelectItem>
+                      <SelectItem value="Mixed">🎯 Mixed (campuran semua level)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fokus Penilaian</Label>
+                  <Select
+                    value={taskConfig.quizFocus || 'komprehensif'}
+                    onValueChange={(value) => onTaskConfigChange('quizFocus', value)}
+                  >
+                    <SelectTrigger data-testid="select-quiz-focus">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="komprehensif">Komprehensif (semua aspek)</SelectItem>
+                      <SelectItem value="teori">Teori & Konsep</SelectItem>
+                      <SelectItem value="praktik">Praktik & Aplikasi</SelectItem>
+                      <SelectItem value="analisis">Analisis & Evaluasi</SelectItem>
+                      <SelectItem value="hafalan">Hafalan & Definisi</SelectItem>
+                      <SelectItem value="pemecahan">Pemecahan Masalah</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* FORMAT & OUTPUT */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Format Output & Lainnya</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Format Output</Label>
+                  <Select
+                    value={taskConfig.quizFormat || 'plain'}
+                    onValueChange={(value) => onTaskConfigChange('quizFormat', value)}
+                  >
+                    <SelectTrigger data-testid="select-quiz-format">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="plain">📄 Plain Text (siap copy-paste)</SelectItem>
+                      <SelectItem value="google_form">📊 Google Form (template siap isi)</SelectItem>
+                      <SelectItem value="cetak">🖨️ Siap Cetak (format lembar ujian)</SelectItem>
+                      <SelectItem value="lms">💻 LMS / Moodle (format GIFT/XML)</SelectItem>
+                      <SelectItem value="markdown">✍️ Markdown (untuk Notion/Obsidian)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Estimasi Durasi Pengerjaan</Label>
+                  <Select
+                    value={taskConfig.quizDuration || '30 menit'}
+                    onValueChange={(value) => onTaskConfigChange('quizDuration', value)}
+                  >
+                    <SelectTrigger data-testid="select-quiz-duration">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10 menit">⚡ 10 menit (quick check)</SelectItem>
+                      <SelectItem value="15 menit">15 menit</SelectItem>
+                      <SelectItem value="30 menit">30 menit</SelectItem>
+                      <SelectItem value="45 menit">45 menit</SelectItem>
+                      <SelectItem value="60 menit">60 menit (1 jam)</SelectItem>
+                      <SelectItem value="90 menit">90 menit (1,5 jam)</SelectItem>
+                      <SelectItem value="120 menit">🎓 120 menit (ujian penuh)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Sertakan Kunci Jawaban</Label>
+                  <Select
+                    value={taskConfig.quizIncludeKey || 'ya'}
+                    onValueChange={(value) => onTaskConfigChange('quizIncludeKey', value)}
+                  >
+                    <SelectTrigger data-testid="select-quiz-include-key">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ya">✅ Ya — sertakan kunci + pembahasan</SelectItem>
+                      <SelectItem value="kunci_only">🔑 Kunci saja (tanpa pembahasan)</SelectItem>
+                      <SelectItem value="tidak">❌ Tidak — soal saja</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Konteks / Topik Fokus Tambahan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Textarea
+                  placeholder="Contoh: Fokuskan soal pada subtopik Manajemen Keuangan dan Perencanaan Anggaran saja. Hindari pertanyaan tentang bab 1."
+                  rows={2}
+                  value={taskConfig.quizContext || ''}
+                  onChange={(e) => onTaskConfigChange('quizContext', e.target.value)}
+                  data-testid="textarea-quiz-context"
+                />
+              </div>
+            </div>
+
           </div>
         );
+      }
 
       case 'PODCAST_GENERATOR':
         return (
