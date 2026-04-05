@@ -856,41 +856,151 @@ export function TaskConfigPanel({
 
       case 'MINI_APP_BUILDER':
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Jenis Mini App</Label>
-              <Select
-                value={taskConfig.appType || 'web'}
-                onValueChange={(value) => onTaskConfigChange('appType', value)}
-              >
-                <SelectTrigger data-testid="select-app-type">
-                  <SelectValue placeholder="Pilih jenis app" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="web">Web App (React/Next.js)</SelectItem>
-                  <SelectItem value="mobile">Mobile App (React Native)</SelectItem>
-                  <SelectItem value="chrome">Chrome Extension</SelectItem>
-                  <SelectItem value="telegram">Telegram Bot</SelectItem>
-                  <SelectItem value="notion">Notion Template + API</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="space-y-5">
+
+            {/* IDENTITAS APLIKASI */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identitas Aplikasi</p>
+              <div className="space-y-2">
+                <Label>Nama Aplikasi <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Input
+                  placeholder="Contoh: SBU Tracker Pro, Jurnal Bisnis AI, LKUTGen"
+                  value={taskConfig.appName || ''}
+                  onChange={(e) => onTaskConfigChange('appName', e.target.value)}
+                  data-testid="input-app-name"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Platform / Format App</Label>
+                  <Select
+                    value={taskConfig.appType || 'web'}
+                    onValueChange={(value) => onTaskConfigChange('appType', value)}
+                  >
+                    <SelectTrigger data-testid="select-app-type">
+                      <SelectValue placeholder="Pilih platform" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="web">🌐 Web App (React/Next.js)</SelectItem>
+                      <SelectItem value="mobile">📱 Mobile App (React Native)</SelectItem>
+                      <SelectItem value="pwa">📲 PWA (Progressive Web App)</SelectItem>
+                      <SelectItem value="chrome">🧩 Chrome Extension</SelectItem>
+                      <SelectItem value="telegram">✈️ Telegram Bot</SelectItem>
+                      <SelectItem value="whatsapp">💬 WhatsApp Bot</SelectItem>
+                      <SelectItem value="notion">📄 Notion Template + API</SelectItem>
+                      <SelectItem value="dashboard">📊 Admin Dashboard</SelectItem>
+                      <SelectItem value="api">⚙️ API / Backend Service</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Kompleksitas App</Label>
+                  <Select
+                    value={taskConfig.appComplexity || 'simple'}
+                    onValueChange={(value) => onTaskConfigChange('appComplexity', value)}
+                  >
+                    <SelectTrigger data-testid="select-app-complexity">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="simple">🟢 Simple (1-2 fitur utama)</SelectItem>
+                      <SelectItem value="medium">🟡 Medium (3-5 fitur)</SelectItem>
+                      <SelectItem value="complex">🔴 Complex (6+ fitur + dashboard)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label>Kompleksitas App</Label>
-              <Select
-                value={taskConfig.appComplexity || 'simple'}
-                onValueChange={(value) => onTaskConfigChange('appComplexity', value)}
-              >
-                <SelectTrigger data-testid="select-app-complexity">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="simple">Simple (1-2 fitur utama)</SelectItem>
-                  <SelectItem value="medium">Medium (3-5 fitur)</SelectItem>
-                  <SelectItem value="complex">Complex (6+ fitur + dashboard)</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* DESKRIPSI & KONTEKS */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Deskripsi & Konteks</p>
+              <div className="space-y-2">
+                <Label>Uraian Aplikasi</Label>
+                <Textarea
+                  placeholder={`Jelaskan fungsi utama dan tujuan aplikasi ini.\nContoh: Aplikasi web untuk membantu kontraktor mengelola dokumen LKUT dan perpanjangan SBU secara otomatis — termasuk checklist, tracking status, dan pengingat deadline.`}
+                  rows={3}
+                  value={taskConfig.appDescription || ''}
+                  onChange={(e) => onTaskConfigChange('appDescription', e.target.value)}
+                  data-testid="textarea-app-description"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Problem yang Diselesaikan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Textarea
+                  placeholder={`Contoh: Kontraktor kesulitan tracking status dokumen SBU yang tersebar di banyak folder. Sering terlambat perpanjang karena tidak ada sistem pengingat otomatis.`}
+                  rows={2}
+                  value={taskConfig.appProblem || ''}
+                  onChange={(e) => onTaskConfigChange('appProblem', e.target.value)}
+                  data-testid="textarea-app-problem"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Fitur-Fitur yang Diinginkan <span className="text-muted-foreground text-xs">(opsional — satu baris per fitur)</span></Label>
+                <Textarea
+                  placeholder={`Contoh:\n- Upload & parsing dokumen LKUT otomatis\n- Dashboard status perpanjangan SBU per proyek\n- Notifikasi H-30 deadline ke WhatsApp/email\n- Export laporan ke PDF\n- Multi-user dengan role admin & operator`}
+                  rows={4}
+                  value={taskConfig.appKeyFeatures || ''}
+                  onChange={(e) => onTaskConfigChange('appKeyFeatures', e.target.value)}
+                  data-testid="textarea-app-key-features"
+                />
+              </div>
             </div>
+
+            {/* TEKNOLOGI & MONETISASI */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Teknologi & Monetisasi</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Preferensi Teknologi</Label>
+                  <Select
+                    value={taskConfig.appTechPreference || 'auto'}
+                    onValueChange={(value) => onTaskConfigChange('appTechPreference', value)}
+                  >
+                    <SelectTrigger data-testid="select-app-tech">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="auto">🤖 Auto (AI pilihkan terbaik)</SelectItem>
+                      <SelectItem value="nocode">🎨 No-Code (Lovable / Bolt.new)</SelectItem>
+                      <SelectItem value="lowcode">⚡ Low-Code (Bubble / Webflow)</SelectItem>
+                      <SelectItem value="react">⚛️ React + Node.js</SelectItem>
+                      <SelectItem value="nextjs">▲ Next.js + Supabase</SelectItem>
+                      <SelectItem value="python">🐍 Python (FastAPI / Django)</SelectItem>
+                      <SelectItem value="flutter">🦋 Flutter (Cross-platform)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Model Monetisasi</Label>
+                  <Select
+                    value={taskConfig.appMonetization || 'gratis'}
+                    onValueChange={(value) => onTaskConfigChange('appMonetization', value)}
+                  >
+                    <SelectTrigger data-testid="select-app-monetization">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gratis">🎁 Gratis / Open Source</SelectItem>
+                      <SelectItem value="freemium">✨ Freemium (fitur dasar gratis)</SelectItem>
+                      <SelectItem value="berbayar">💳 Berbayar (one-time)</SelectItem>
+                      <SelectItem value="subscription">🔄 Subscription / SaaS</SelectItem>
+                      <SelectItem value="internal">🏢 Internal Tool (perusahaan)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Target Deploy / Hosting <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Input
+                  placeholder="Contoh: Vercel, Railway, Supabase, Google Play Store, internal server perusahaan"
+                  value={taskConfig.appDeployTarget || ''}
+                  onChange={(e) => onTaskConfigChange('appDeployTarget', e.target.value)}
+                  data-testid="input-app-deploy-target"
+                />
+              </div>
+            </div>
+
           </div>
         );
 
