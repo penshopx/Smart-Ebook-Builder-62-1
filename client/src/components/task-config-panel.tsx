@@ -4,6 +4,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 import { 
   EBOOK_SERIES_DATA, CHAPTER_TEMPLATES, DOCUMENT_TYPES, PACK_TYPES, MARKETING_ASSETS,
   TONES, WRITING_STYLES, AI_CHARACTERS
@@ -563,24 +564,67 @@ export function TaskConfigPanel({
           </div>
         );
 
-      case 'DOC_GENERATOR':
+      case 'DOC_GENERATOR': {
+        const selectedDocs = taskConfig.docType
+          ? taskConfig.docType.split('|||').map(s => s.trim()).filter(Boolean)
+          : [];
+        const toggleDoc = (doc: string) => {
+          const updated = selectedDocs.includes(doc)
+            ? selectedDocs.filter(d => d !== doc)
+            : [...selectedDocs, doc];
+          onTaskConfigChange('docType', updated.join('|||'));
+        };
         return (
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label>Jenis Dokumen</Label>
-              <Select
-                value={taskConfig.docType}
-                onValueChange={(value) => onTaskConfigChange('docType', value)}
-              >
-                <SelectTrigger data-testid="select-doc-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {DOCUMENT_TYPES.map((doc) => (
-                    <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+              <div className="flex items-center justify-between">
+                <Label>Jenis Dokumen</Label>
+                {selectedDocs.length > 0 && (
+                  <span className="text-xs text-muted-foreground">{selectedDocs.length} dipilih</span>
+                )}
+              </div>
+              {selectedDocs.length > 0 && (
+                <div className="flex flex-wrap gap-1 p-2 bg-muted/50 rounded-md border">
+                  {selectedDocs.map(doc => (
+                    <Badge
+                      key={doc}
+                      variant="secondary"
+                      className="text-xs cursor-pointer hover:bg-destructive/20 hover:text-destructive"
+                      onClick={() => toggleDoc(doc)}
+                      data-testid={`badge-doc-${doc}`}
+                    >
+                      {doc} ×
+                    </Badge>
                   ))}
-                </SelectContent>
-              </Select>
+                </div>
+              )}
+              <div className="border rounded-md p-2 max-h-56 overflow-y-auto space-y-1" data-testid="checklist-doc-types">
+                {DOCUMENT_TYPES.map((doc) => {
+                  const checked = selectedDocs.includes(doc);
+                  return (
+                    <label
+                      key={doc}
+                      className={cn(
+                        "flex items-start gap-2.5 px-2 py-1.5 rounded cursor-pointer text-sm transition-colors",
+                        checked
+                          ? "bg-primary/10 text-primary font-medium"
+                          : "hover:bg-muted/60 text-foreground"
+                      )}
+                      data-testid={`checkbox-doc-${doc}`}
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => toggleDoc(doc)}
+                        className="mt-0.5 shrink-0"
+                      />
+                      <span className="leading-snug">{doc}</span>
+                    </label>
+                  );
+                })}
+              </div>
+              {selectedDocs.length === 0 && (
+                <p className="text-xs text-muted-foreground">Pilih satu atau lebih jenis dokumen yang ingin dibuat.</p>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Konteks Spesifik Dokumen</Label>
@@ -594,6 +638,7 @@ export function TaskConfigPanel({
             </div>
           </div>
         );
+      }
 
       case 'PROMPT_PACK':
         return (

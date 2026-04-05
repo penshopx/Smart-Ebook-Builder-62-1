@@ -218,7 +218,11 @@ Struktur Output yang Diminta:
 `;
       break;
 
-    case 'DOC_GENERATOR':
+    case 'DOC_GENERATOR': {
+      const docList = taskConfig.docType
+        ? taskConfig.docType.split('|||').map(s => s.trim()).filter(Boolean)
+        : ['Standard Operating Procedure (SOP)'];
+      const isMultiDoc = docList.length > 1;
       taskInstruction = `
 MODE TUGAS: DOCUMENT GENERATOR (DOKUMEN KERJA)
 ${styleReminder}
@@ -227,24 +231,28 @@ Saya membutuhkan dokumen kerja profesional yang berkaitan dengan topik ebook ini
 Anda bertindak sebagai **Technical Writer / Legal Drafter Profesional**.
 
 === SPESIFIKASI DOKUMEN ===
-1. **Jenis Dokumen:** ${taskConfig.docType}
+1. **Jenis Dokumen${isMultiDoc ? ' (Paket ' + docList.length + ' Dokumen)' : ''}:**
+${docList.map((d, i) => `   ${i + 1}. ${d}`).join('\n')}
 2. **Konteks Spesifik:** ${taskConfig.docContext || `Terkait dengan penerapan materi dari ebook "${projectData.judul || projectData.topik}"`}
 3. **Target Pengguna Dokumen:** ${projectData.target || 'Karyawan/Tim Internal'}
 
 === INSTRUKSI PENULISAN ===
-Buat dokumen ini secara LENGKAP, FORMAL, dan SIAP PAKAI (Ready to use).
-Jangan hanya memberikan outline, tapi berikan ISI SEBENARNYA.
+${isMultiDoc
+  ? `Buat SEMUA ${docList.length} dokumen di atas secara LENGKAP, FORMAL, dan SIAP PAKAI.\nTampilkan setiap dokumen dalam blok terpisah dengan judul dokumen yang jelas (misalnya: "## DOKUMEN 1: ${docList[0]}").\nJangan hanya memberikan outline, tapi berikan ISI SEBENARNYA untuk setiap dokumen.`
+  : 'Buat dokumen ini secara LENGKAP, FORMAL, dan SIAP PAKAI (Ready to use).\nJangan hanya memberikan outline, tapi berikan ISI SEBENARNYA.'
+}
 
-Struktur Wajib (Sesuaikan dengan jenis dokumen):
+Struktur Wajib untuk setiap dokumen (Sesuaikan dengan jenis dokumen):
 - **Header:** (Nama Dokumen, No. Dokumen [Placeholder], Tanggal).
 - **Tujuan/Purpose:** Mengapa dokumen ini dibuat.
 - **Ruang Lingkup/Scope:** Siapa yang terlibat.
 - **Isi Utama:** (Pasal-pasal untuk Kebijakan, Langkah-langkah detail untuk SOP, Butir kesepakatan untuk SPK, dll).
 - **Kolom Tanda Tangan:** (Dibuat, Diperiksa, Disetujui).
 
-Pastikan bahasa yang digunakan baku dan sesuai standar industri untuk ${taskConfig.docType}.
+Pastikan bahasa yang digunakan baku dan sesuai standar industri.
 `;
       break;
+    }
 
     case 'MARKETING_KIT':
       const isVisualPrompt = taskConfig.marketingAsset.includes('Prompt Gambar') || taskConfig.marketingAsset.includes('Prompt Video');
