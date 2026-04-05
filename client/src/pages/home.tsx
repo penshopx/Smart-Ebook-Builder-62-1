@@ -109,6 +109,8 @@ const defaultTaskConfig: TaskConfig = {
   appMonetization: 'gratis',
   appTechPreference: 'auto',
   appDeployTarget: '',
+  appCount: '1',
+  appMultiConfig: '',
   quizFocus: 'komprehensif',
   jumlahIde: '5',
   brainstormAngle: 'Problem-Solution',

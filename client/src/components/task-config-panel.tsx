@@ -854,102 +854,247 @@ export function TaskConfigPanel({
           </div>
         );
 
-      case 'MINI_APP_BUILDER':
+      case 'MINI_APP_BUILDER': {
+        const appCount = parseInt(taskConfig.appCount || '1', 10);
+        const isMultiApp = appCount > 1;
+
+        type AppEntry = { name: string; type: string; complexity: string; description: string; features: string };
+        let multiApps: AppEntry[] = [];
+        try {
+          multiApps = taskConfig.appMultiConfig ? JSON.parse(taskConfig.appMultiConfig) : [];
+        } catch { multiApps = []; }
+
+        const ensureAppEntries = (count: number): AppEntry[] => {
+          const existing = multiApps.slice(0, count);
+          while (existing.length < count) {
+            existing.push({ name: '', type: 'web', complexity: 'simple', description: '', features: '' });
+          }
+          return existing;
+        };
+
+        const updateAppEntry = (idx: number, field: keyof AppEntry, value: string) => {
+          const updated = ensureAppEntries(appCount);
+          updated[idx] = { ...updated[idx], [field]: value };
+          onTaskConfigChange('appMultiConfig', JSON.stringify(updated));
+        };
+
+        const APP_PLATFORMS = [
+          { value: 'web', label: '🌐 Web App (React/Next.js)' },
+          { value: 'mobile', label: '📱 Mobile App (React Native)' },
+          { value: 'pwa', label: '📲 PWA (Progressive Web App)' },
+          { value: 'chrome', label: '🧩 Chrome Extension' },
+          { value: 'telegram', label: '✈️ Telegram Bot' },
+          { value: 'whatsapp', label: '💬 WhatsApp Bot' },
+          { value: 'notion', label: '📄 Notion Template + API' },
+          { value: 'dashboard', label: '📊 Admin Dashboard' },
+          { value: 'api', label: '⚙️ API / Backend Service' },
+        ];
+
+        const currentApps = ensureAppEntries(appCount);
+
         return (
           <div className="space-y-5">
 
-            {/* IDENTITAS APLIKASI */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identitas Aplikasi</p>
-              <div className="space-y-2">
-                <Label>Nama Aplikasi <span className="text-muted-foreground text-xs">(opsional)</span></Label>
-                <Input
-                  placeholder="Contoh: SBU Tracker Pro, Jurnal Bisnis AI, LKUTGen"
-                  value={taskConfig.appName || ''}
-                  onChange={(e) => onTaskConfigChange('appName', e.target.value)}
-                  data-testid="input-app-name"
-                />
+            {/* JUMLAH APLIKASI */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Jumlah Aplikasi yang Dibuat</Label>
+                {isMultiApp && (
+                  <Badge variant="secondary" className="text-xs">{appCount} App</Badge>
+                )}
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>Platform / Format App</Label>
-                  <Select
-                    value={taskConfig.appType || 'web'}
-                    onValueChange={(value) => onTaskConfigChange('appType', value)}
-                  >
-                    <SelectTrigger data-testid="select-app-type">
-                      <SelectValue placeholder="Pilih platform" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="web">🌐 Web App (React/Next.js)</SelectItem>
-                      <SelectItem value="mobile">📱 Mobile App (React Native)</SelectItem>
-                      <SelectItem value="pwa">📲 PWA (Progressive Web App)</SelectItem>
-                      <SelectItem value="chrome">🧩 Chrome Extension</SelectItem>
-                      <SelectItem value="telegram">✈️ Telegram Bot</SelectItem>
-                      <SelectItem value="whatsapp">💬 WhatsApp Bot</SelectItem>
-                      <SelectItem value="notion">📄 Notion Template + API</SelectItem>
-                      <SelectItem value="dashboard">📊 Admin Dashboard</SelectItem>
-                      <SelectItem value="api">⚙️ API / Backend Service</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Kompleksitas App</Label>
-                  <Select
-                    value={taskConfig.appComplexity || 'simple'}
-                    onValueChange={(value) => onTaskConfigChange('appComplexity', value)}
-                  >
-                    <SelectTrigger data-testid="select-app-complexity">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="simple">🟢 Simple (1-2 fitur utama)</SelectItem>
-                      <SelectItem value="medium">🟡 Medium (3-5 fitur)</SelectItem>
-                      <SelectItem value="complex">🔴 Complex (6+ fitur + dashboard)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              <Select
+                value={taskConfig.appCount || '1'}
+                onValueChange={(value) => {
+                  onTaskConfigChange('appCount', value);
+                  const newCount = parseInt(value, 10);
+                  const updated = ensureAppEntries(newCount).slice(0, newCount);
+                  onTaskConfigChange('appMultiConfig', JSON.stringify(updated));
+                }}
+              >
+                <SelectTrigger data-testid="select-app-count">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1">1 Aplikasi</SelectItem>
+                  <SelectItem value="2">2 Aplikasi (Paket Duo)</SelectItem>
+                  <SelectItem value="3">3 Aplikasi (Paket Trio)</SelectItem>
+                  <SelectItem value="4">4 Aplikasi (Paket Ekosistem)</SelectItem>
+                  <SelectItem value="5">5 Aplikasi (Paket Enterprise)</SelectItem>
+                </SelectContent>
+              </Select>
+              {isMultiApp && (
+                <p className="text-xs text-muted-foreground">
+                  AI akan membuat blueprint terpisah untuk setiap aplikasi. Isi detail masing-masing di bawah.
+                </p>
+              )}
             </div>
 
-            {/* DESKRIPSI & KONTEKS */}
-            <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Deskripsi & Konteks</p>
-              <div className="space-y-2">
-                <Label>Uraian Aplikasi</Label>
-                <Textarea
-                  placeholder={`Jelaskan fungsi utama dan tujuan aplikasi ini.\nContoh: Aplikasi web untuk membantu kontraktor mengelola dokumen LKUT dan perpanjangan SBU secara otomatis — termasuk checklist, tracking status, dan pengingat deadline.`}
-                  rows={3}
-                  value={taskConfig.appDescription || ''}
-                  onChange={(e) => onTaskConfigChange('appDescription', e.target.value)}
-                  data-testid="textarea-app-description"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Problem yang Diselesaikan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
-                <Textarea
-                  placeholder={`Contoh: Kontraktor kesulitan tracking status dokumen SBU yang tersebar di banyak folder. Sering terlambat perpanjang karena tidak ada sistem pengingat otomatis.`}
-                  rows={2}
-                  value={taskConfig.appProblem || ''}
-                  onChange={(e) => onTaskConfigChange('appProblem', e.target.value)}
-                  data-testid="textarea-app-problem"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Fitur-Fitur yang Diinginkan <span className="text-muted-foreground text-xs">(opsional — satu baris per fitur)</span></Label>
-                <Textarea
-                  placeholder={`Contoh:\n- Upload & parsing dokumen LKUT otomatis\n- Dashboard status perpanjangan SBU per proyek\n- Notifikasi H-30 deadline ke WhatsApp/email\n- Export laporan ke PDF\n- Multi-user dengan role admin & operator`}
-                  rows={4}
-                  value={taskConfig.appKeyFeatures || ''}
-                  onChange={(e) => onTaskConfigChange('appKeyFeatures', e.target.value)}
-                  data-testid="textarea-app-key-features"
-                />
-              </div>
-            </div>
+            {/* SINGLE APP MODE */}
+            {!isMultiApp && (
+              <>
+                {/* IDENTITAS APLIKASI */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identitas Aplikasi</p>
+                  <div className="space-y-2">
+                    <Label>Nama Aplikasi <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                    <Input
+                      placeholder="Contoh: SBU Tracker Pro, Jurnal Bisnis AI, LKUTGen"
+                      value={taskConfig.appName || ''}
+                      onChange={(e) => onTaskConfigChange('appName', e.target.value)}
+                      data-testid="input-app-name"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Platform / Format App</Label>
+                      <Select
+                        value={taskConfig.appType || 'web'}
+                        onValueChange={(value) => onTaskConfigChange('appType', value)}
+                      >
+                        <SelectTrigger data-testid="select-app-type">
+                          <SelectValue placeholder="Pilih platform" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {APP_PLATFORMS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Kompleksitas App</Label>
+                      <Select
+                        value={taskConfig.appComplexity || 'simple'}
+                        onValueChange={(value) => onTaskConfigChange('appComplexity', value)}
+                      >
+                        <SelectTrigger data-testid="select-app-complexity">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="simple">🟢 Simple (1-2 fitur utama)</SelectItem>
+                          <SelectItem value="medium">🟡 Medium (3-5 fitur)</SelectItem>
+                          <SelectItem value="complex">🔴 Complex (6+ fitur + dashboard)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
 
-            {/* TEKNOLOGI & MONETISASI */}
+                {/* DESKRIPSI */}
+                <div className="space-y-3">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Deskripsi & Konteks</p>
+                  <div className="space-y-2">
+                    <Label>Uraian Aplikasi</Label>
+                    <Textarea
+                      placeholder={`Jelaskan fungsi utama dan tujuan aplikasi ini.\nContoh: Aplikasi web untuk membantu kontraktor mengelola dokumen LKUT dan perpanjangan SBU secara otomatis.`}
+                      rows={3}
+                      value={taskConfig.appDescription || ''}
+                      onChange={(e) => onTaskConfigChange('appDescription', e.target.value)}
+                      data-testid="textarea-app-description"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Problem yang Diselesaikan <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                    <Textarea
+                      placeholder="Contoh: Kontraktor kesulitan tracking status dokumen SBU yang tersebar di banyak folder."
+                      rows={2}
+                      value={taskConfig.appProblem || ''}
+                      onChange={(e) => onTaskConfigChange('appProblem', e.target.value)}
+                      data-testid="textarea-app-problem"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Fitur-Fitur yang Diinginkan <span className="text-muted-foreground text-xs">(satu baris per fitur)</span></Label>
+                    <Textarea
+                      placeholder={`- Upload & parsing dokumen LKUT otomatis\n- Dashboard status perpanjangan SBU\n- Notifikasi H-30 deadline ke WhatsApp\n- Export laporan ke PDF`}
+                      rows={4}
+                      value={taskConfig.appKeyFeatures || ''}
+                      onChange={(e) => onTaskConfigChange('appKeyFeatures', e.target.value)}
+                      data-testid="textarea-app-key-features"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* MULTI APP MODE */}
+            {isMultiApp && (
+              <div className="space-y-3">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Konfigurasi Per-Aplikasi</p>
+                <div className="space-y-3">
+                  {currentApps.map((app, idx) => (
+                    <div key={idx} className="border rounded-lg p-3 space-y-3 bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-primary/15 text-primary flex items-center justify-center text-xs font-bold shrink-0">
+                          {idx + 1}
+                        </div>
+                        <p className="text-sm font-semibold text-foreground">
+                          {app.name || `Aplikasi ${idx + 1}`}
+                        </p>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Nama Aplikasi</Label>
+                          <Input
+                            placeholder={`Contoh: App ${idx + 1} Name`}
+                            value={app.name}
+                            onChange={(e) => updateAppEntry(idx, 'name', e.target.value)}
+                            className="h-8 text-sm"
+                            data-testid={`input-multi-app-name-${idx}`}
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Platform</Label>
+                          <Select
+                            value={app.type || 'web'}
+                            onValueChange={(value) => updateAppEntry(idx, 'type', value)}
+                          >
+                            <SelectTrigger className="h-8 text-sm" data-testid={`select-multi-app-type-${idx}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {APP_PLATFORMS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Kompleksitas</Label>
+                        <Select
+                          value={app.complexity || 'simple'}
+                          onValueChange={(value) => updateAppEntry(idx, 'complexity', value)}
+                        >
+                          <SelectTrigger className="h-8 text-sm" data-testid={`select-multi-app-complexity-${idx}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="simple">🟢 Simple</SelectItem>
+                            <SelectItem value="medium">🟡 Medium</SelectItem>
+                            <SelectItem value="complex">🔴 Complex</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Uraian & Fitur Utama</Label>
+                        <Textarea
+                          placeholder={`Contoh:\nAplikasi untuk tracking deadline SBU.\nFitur: upload dokumen, notifikasi H-30, export PDF.`}
+                          rows={3}
+                          value={app.description}
+                          onChange={(e) => updateAppEntry(idx, 'description', e.target.value)}
+                          className="text-sm resize-none"
+                          data-testid={`textarea-multi-app-desc-${idx}`}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* TEKNOLOGI & MONETISASI (berlaku untuk semua app) */}
             <div className="space-y-3">
-              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Teknologi & Monetisasi</p>
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Teknologi & Monetisasi {isMultiApp ? '(berlaku untuk semua app)' : ''}
+              </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Preferensi Teknologi</Label>
@@ -993,7 +1138,7 @@ export function TaskConfigPanel({
               <div className="space-y-2">
                 <Label>Target Deploy / Hosting <span className="text-muted-foreground text-xs">(opsional)</span></Label>
                 <Input
-                  placeholder="Contoh: Vercel, Railway, Supabase, Google Play Store, internal server perusahaan"
+                  placeholder="Contoh: Vercel, Railway, Google Play Store, internal server"
                   value={taskConfig.appDeployTarget || ''}
                   onChange={(e) => onTaskConfigChange('appDeployTarget', e.target.value)}
                   data-testid="input-app-deploy-target"
@@ -1003,6 +1148,7 @@ export function TaskConfigPanel({
 
           </div>
         );
+      }
 
       case 'QUIZ_MAKER':
         return (

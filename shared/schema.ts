@@ -856,6 +856,8 @@ export const taskConfigSchema = z.object({
   appMonetization: z.string().default('gratis'),
   appTechPreference: z.string().default('auto'),
   appDeployTarget: z.string().default(''),
+  appCount: z.string().default('1'),
+  appMultiConfig: z.string().default(''),
   quizFocus: z.string().default('komprehensif'),
   jumlahIde: z.string().default('5'),
   brainstormAngle: z.string().default('Problem-Solution'),

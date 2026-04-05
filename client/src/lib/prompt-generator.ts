@@ -694,7 +694,75 @@ Gunakan paragraph breaks yang jelas dan sub-heading jika diperlukan.
         medium: 'Medium (3-5 fitur)',
         complex: 'Complex (6+ fitur + dashboard lengkap)',
       };
-      taskInstruction = `
+      const appCount = parseInt(taskConfig.appCount || '1', 10);
+      const isMultiApp = appCount > 1;
+
+      let multiApps: { name: string; type: string; complexity: string; description: string }[] = [];
+      try {
+        multiApps = taskConfig.appMultiConfig ? JSON.parse(taskConfig.appMultiConfig) : [];
+      } catch { multiApps = []; }
+
+      const globalTech = appTechMap[taskConfig.appTechPreference || 'auto'] || taskConfig.appTechPreference;
+      const globalMonet = appMonetMap[taskConfig.appMonetization || 'gratis'] || taskConfig.appMonetization;
+
+      if (isMultiApp) {
+        const appsSection = multiApps.slice(0, appCount).map((app, i) => {
+          const platform = appPlatformMap[app.type || 'web'] || app.type;
+          const complexity = appComplexMap[app.complexity || 'simple'] || app.complexity;
+          return `
+--- APLIKASI ${i + 1} ---
+- Nama: ${app.name || `[AI sarankan nama App ${i + 1}]`}
+- Platform: ${platform}
+- Kompleksitas: ${complexity}
+${app.description ? `- Deskripsi & Fitur:\n${app.description}` : ''}`;
+        }).join('\n');
+
+        taskInstruction = `
+MODE TUGAS: MINI APP BUILDER — PAKET ${appCount} APLIKASI
+${styleReminder}
+
+Berdasarkan ebook bertema "${projectData.topik}", rancang blueprint untuk ${appCount} aplikasi berbeda yang saling melengkapi sebagai ekosistem digital.
+
+=== KONTEKS EBOOK ===
+- Judul: ${projectData.judul || projectData.topik}
+- Topik Utama: ${projectData.topik}
+- Target Pengguna: ${projectData.target || 'pembaca ebook'}
+
+=== PREFERENSI GLOBAL (berlaku untuk semua app) ===
+- Teknologi: ${globalTech}
+- Monetisasi: ${globalMonet}
+${taskConfig.appDeployTarget ? `- Target Deploy: ${taskConfig.appDeployTarget}` : ''}
+
+=== DAFTAR APLIKASI YANG AKAN DIBUAT ===
+${appsSection}
+
+=== INSTRUKSI BLUEPRINT ===
+Buat blueprint TERPISAH dan LENGKAP untuk SETIAP aplikasi di atas.
+
+Format output untuk setiap app:
+
+## ═══ BLUEPRINT APLIKASI [N]: [NAMA APP] ═══
+
+1. **Konsep & Tagline** — deskripsi singkat + tagline
+2. **Problem Solved** — masalah yang diselesaikan (konteks spesifik ebook "${projectData.topik}")
+3. **Fitur-Fitur Utama** — detail setiap fitur
+4. **Halaman / Screen Utama** — wireframe deskriptif
+5. **User Flow** — step-by-step penggunaan
+6. **Tech Stack** — menggunakan ${globalTech}
+7. **Prompt AI Build** — prompt siap pakai untuk Cursor / Lovable / Bolt.new
+8. **Monetisasi** — strategi ${globalMonet}
+9. **Launch Checklist** — 5 langkah kritis sebelum rilis
+
+Setelah semua blueprint, tambahkan:
+
+## ═══ ROADMAP INTEGRASI EKOSISTEM ═══
+- Bagaimana ${appCount} aplikasi ini saling terhubung dan mendukung satu sama lain
+- Urutan prioritas build yang disarankan
+
+Buat sedetail dan sekonkret mungkin untuk semua ${appCount} aplikasi.
+`;
+      } else {
+        taskInstruction = `
 MODE TUGAS: MINI APP BUILDER — BLUEPRINT APLIKASI INTERAKTIF
 ${styleReminder}
 
@@ -704,8 +772,8 @@ Berdasarkan ebook bertema "${projectData.topik}", rancang blueprint aplikasi yan
 - **Nama Aplikasi:** ${taskConfig.appName || '[AI sarankan nama yang relevan]'}
 - **Platform / Format:** ${appPlatformMap[taskConfig.appType || 'web'] || taskConfig.appType}
 - **Kompleksitas:** ${appComplexMap[taskConfig.appComplexity || 'simple'] || taskConfig.appComplexity}
-- **Preferensi Teknologi:** ${appTechMap[taskConfig.appTechPreference || 'auto'] || taskConfig.appTechPreference}
-- **Model Monetisasi:** ${appMonetMap[taskConfig.appMonetization || 'gratis'] || taskConfig.appMonetization}
+- **Preferensi Teknologi:** ${globalTech}
+- **Model Monetisasi:** ${globalMonet}
 ${taskConfig.appDeployTarget ? `- **Target Deploy/Hosting:** ${taskConfig.appDeployTarget}` : ''}
 
 === KONTEKS EBOOK ===
@@ -714,24 +782,25 @@ ${taskConfig.appDeployTarget ? `- **Target Deploy/Hosting:** ${taskConfig.appDep
 - Target Pengguna Ebook: ${projectData.target || 'pembaca ebook'}
 - Tujuan: ${projectData.tujuan || 'membantu pengguna mempraktikkan konten ebook'}
 
-${taskConfig.appDescription ? `=== URAIAN APLIKASI (dari pengguna) ===\n${taskConfig.appDescription}\n` : ''}
+${taskConfig.appDescription ? `=== URAIAN APLIKASI ===\n${taskConfig.appDescription}\n` : ''}
 ${taskConfig.appProblem ? `=== PROBLEM YANG INGIN DISELESAIKAN ===\n${taskConfig.appProblem}\n` : ''}
 ${taskConfig.appKeyFeatures ? `=== FITUR YANG DIINGINKAN ===\n${taskConfig.appKeyFeatures}\n` : ''}
 === INSTRUKSI BLUEPRINT ===
-Buat blueprint aplikasi yang LENGKAP, SPESIFIK, dan LANGSUNG BISA DIEKSEKUSI. Sesuaikan semua detail dengan platform "${appPlatformMap[taskConfig.appType || 'web'] || taskConfig.appType}" dan preferensi teknologi "${appTechMap[taskConfig.appTechPreference || 'auto'] || taskConfig.appTechPreference}":
+Buat blueprint aplikasi yang LENGKAP, SPESIFIK, dan LANGSUNG BISA DIEKSEKUSI:
 
 1. **Nama & Konsep App** — nama final + tagline + deskripsi 1 paragraf yang menarik
 2. **Problem Solved** — masalah nyata yang diselesaikan (spesifik untuk target: ${projectData.target || 'pengguna ebook'})
 3. **Fitur-Fitur Utama** — ${taskConfig.appComplexity === 'complex' ? '7-10' : taskConfig.appComplexity === 'medium' ? '4-6' : '2-3'} fitur dengan deskripsi detail cara kerja tiap fitur
 4. **Halaman / Screen Utama** — wireframe deskriptif (apa yang tampil, tombol apa, data apa di tiap halaman)
 5. **User Flow** — langkah step-by-step dari pertama buka app sampai goal tercapai
-6. **Tech Stack Detail** — framework frontend, backend, database, API pihak ketiga, hosting yang direkomendasikan${taskConfig.appTechPreference === 'nocode' ? '. FOKUS: No-Code tools (Lovable, Bolt.new, Make.com, Airtable, dll)' : taskConfig.appTechPreference === 'auto' ? '' : ''}
-7. **Prompt AI Siap Pakai** — prompt lengkap yang bisa langsung di-paste ke ${taskConfig.appTechPreference === 'nocode' ? 'Lovable / Bolt.new' : 'Cursor / Lovable / Bolt.new / Replit'} untuk mulai build
-8. **Strategi Monetisasi** — detail rencana ${appMonetMap[taskConfig.appMonetization || 'gratis'] || taskConfig.appMonetization} (termasuk fitur apa yang gratis vs berbayar jika freemium)${taskConfig.appDeployTarget ? `\n9. **Panduan Deploy ke ${taskConfig.appDeployTarget}** — langkah teknis deploy ke platform tersebut` : '\n9. **Opsi Deploy & Hosting** — rekomendasi platform hosting terbaik + estimasi biaya'}
-10. **Launch Checklist** — 10 langkah konkret sebelum app siap diluncurkan ke publik
+6. **Tech Stack Detail** — framework frontend, backend, database, API pihak ketiga, hosting${taskConfig.appTechPreference === 'nocode' ? ' — FOKUS: No-Code tools (Lovable, Bolt.new, Make.com, Airtable)' : ''}
+7. **Prompt AI Siap Pakai** — prompt lengkap untuk ${taskConfig.appTechPreference === 'nocode' ? 'Lovable / Bolt.new' : 'Cursor / Lovable / Bolt.new / Replit'}
+8. **Strategi Monetisasi** — detail rencana ${globalMonet}${taskConfig.appDeployTarget ? `\n9. **Panduan Deploy ke ${taskConfig.appDeployTarget}**` : '\n9. **Opsi Deploy & Hosting** — rekomendasi + estimasi biaya'}
+10. **Launch Checklist** — 10 langkah konkret sebelum app siap diluncurkan
 
 Buat sedetail dan sekonkret mungkin. Gunakan format yang rapi dan mudah dibaca.
 `;
+      }
       break;
     }
 
