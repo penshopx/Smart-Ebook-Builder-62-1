@@ -586,46 +586,191 @@ e) **Kesimpulan & Transisi** - Rangkuman poin penting + preview bab berikutnya.
 `;
       break;
 
-    case 'VIDEO_SCRIPT':
+    case 'VIDEO_SCRIPT': {
+      const videoTypeMap: Record<string, string> = {
+        talking_head: 'Talking Head — presenter berbicara langsung ke kamera',
+        tutorial: 'Tutorial / How-To — panduan step by step dengan demonstrasi',
+        screen_recording: 'Screen Recording — narasi di atas rekaman layar',
+        vlog: 'Vlog — gaya dokumenter perjalanan atau behind-the-scenes',
+        animation: 'Animation / Motion Graphic — narasi untuk video animasi',
+        short_reels: 'Short / Reels / TikTok — format vertikal super cepat',
+        presentation: 'Presentasi / Slideshow — narasi di atas slide',
+        documentary: 'Mini Dokumenter — gaya storytelling sinematik',
+        webinar: 'Webinar / Online Class — sesi kelas interaktif panjang',
+      };
+      const videoPlatformMap: Record<string, string> = {
+        youtube: 'YouTube (video panjang horizontal)',
+        youtube_short: 'YouTube Shorts (vertikal, <60 detik)',
+        instagram: 'Instagram Reels (vertikal, 15-90 detik)',
+        tiktok: 'TikTok (vertikal, 15 detik - 3 menit)',
+        linkedin: 'LinkedIn Video (profesional, tone bisnis)',
+        facebook: 'Facebook Video',
+        webinar: 'Webinar Zoom/Google Meet',
+        corporate: 'Internal Corporate / Training Video',
+        lms: 'LMS / E-Learning Platform',
+      };
+      const videoStyleMap: Record<string, string> = {
+        educational: 'Edukasi — informasi disampaikan secara terstruktur dan mudah dipahami',
+        entertainment: 'Entertainment-first — menghibur sambil menginformasi, ringan dan engaging',
+        inspirational: 'Inspirational — memotivasi, membangkitkan semangat, dan menggerakkan penonton',
+        storytelling: 'Storytelling — kisah nyata sebagai kendaraan pesan utama',
+        how_to: 'How-To / Tutorial — panduan praktis yang langsung bisa diikuti',
+        listicle: 'Listicle — format "N poin/tips/cara" yang clear dan mudah dicerna',
+        review: 'Review & Analisis — evaluasi mendalam dengan pro/cons',
+        debate: 'Debat / Dua Sisi — eksplorasi dua sudut pandang yang berbeda',
+        challenge: 'Challenge / Eksperimen — uji sesuatu dan tunjukkan hasilnya',
+      };
+      const videoToneMap: Record<string, string> = {
+        casual: 'Kasual & Friendly — hangat, relatable, seperti ngobrol dengan teman',
+        professional: 'Profesional — kredibel, berbobot, menginspirasi kepercayaan',
+        energetic: 'Energik & Antusias — high energy, cepat, penuh semangat',
+        calm: 'Tenang & Reflektif — perlahan, kontemplatif, thoughtful',
+        inspirational: 'Inspirasional — membakar semangat dan mendorong action',
+        humorous: 'Humoris — ringan, banyak jokes, membuat penonton tertawa',
+        authoritative: 'Authoritative — tegas seperti pakar di bidangnya',
+      };
+      const videoHookMap: Record<string, string> = {
+        question: 'Pertanyaan Provokatif — buka dengan pertanyaan yang langsung menohok dan relevan ke masalah penonton',
+        shocking_fact: 'Fakta Mengejutkan — buka dengan statistik atau data yang tidak terduga dan bikin penonton berpikir ulang',
+        bold_statement: 'Bold Statement — pernyataan berani, bahkan kontroversial, yang memancing penasaran',
+        story: 'Mini Cerita — buka dengan kisah nyata 2-3 kalimat yang langsung memancing empati',
+        humor: 'Hook Humor — buka dengan situasi lucu atau jokes yang relevan dengan topik',
+        challenge: 'Challenge / Tantangan — ajak penonton ikut melakukan sesuatu dari detik pertama',
+        contrast: 'Kontras / Before-After — tunjukkan perbedaan ekstrem antara kondisi sebelum dan sesudah',
+        promise: 'Janji Nilai — langsung sebut manfaat konkret yang akan didapat penonton jika menonton sampai akhir',
+      };
+      const videoCTAMap: Record<string, string> = {
+        subscribe: 'Subscribe & Like channel untuk konten serupa',
+        download: 'Download ebook/freebie gratis (link di deskripsi/bio)',
+        buy: 'Beli produk/ebook sekarang sebelum harga naik',
+        share: 'Share video ini ke teman yang butuh informasi ini',
+        comment: 'Comment di bawah: [pertanyaan diskusi yang relevan]',
+        visit: 'Kunjungi website/link bio untuk informasi lengkap',
+        whatsapp: 'Chat WhatsApp atau DM untuk konsultasi langsung',
+        join_course: 'Daftar kursus/webinar gratis (link di bawah)',
+        join_community: 'Gabung komunitas/grup WhatsApp/Telegram gratis',
+      };
+      const videoLangMap: Record<string, string> = {
+        formal: 'Bahasa Indonesia baku formal',
+        semiformal: 'Semi-formal: baku tapi natural',
+        casual: 'Kasual: santai, sehari-hari',
+        gaul: 'Gaul/Kekinian: milenial & gen-Z friendly',
+        bilingual: 'Bilingual: campuran Indo-Inggris',
+      };
+
+      const presenter = taskConfig.videoPresenterName || 'Creator';
+      const platform = taskConfig.videoPlatform || 'youtube';
+      const isShortFormat = ['youtube_short', 'instagram', 'tiktok'].includes(platform) || taskConfig.durasiScript === '15-60 detik' || taskConfig.durasiScript === '1-3 menit';
+      const isLongFormat = ['30-45 menit', '60+ menit'].includes(taskConfig.durasiScript || '');
+      const wordEstimate = taskConfig.durasiScript === '15-60 detik' ? '100-200' : taskConfig.durasiScript === '1-3 menit' ? '200-500' : taskConfig.durasiScript === '5-10 menit' ? '800-1.500' : taskConfig.durasiScript === '15-20 menit' ? '2.000-3.000' : taskConfig.durasiScript === '30-45 menit' ? '4.000-6.000' : '8.000+';
+
+      const selectedElements = (taskConfig.videoSpecialElements || '').split('|||').filter(Boolean);
+      const elementInstructions: Record<string, string> = {
+        b_roll: `• **B-Roll & Visual Notes**: Sertakan petunjuk visual dalam kurung siku setelah setiap poin narasi: [B-ROLL: deskripsi footage/gambar/grafis yang ditampilkan]`,
+        lower_third: `• **Lower Third / Grafis Teks**: Tandai dengan [LOWER THIRD: teks yang muncul] untuk nama presenter, statistik, atau poin kunci yang muncul di layar`,
+        bumper: `• **Bumper Intro & Outro**: Tuliskan segmen branded pendek (3-5 detik) di awal video sebelum hook, dan segmen penutup branded setelah CTA. Format: [BUMPER INTRO: ...] dan [BUMPER OUTRO: ...]`,
+        captions: `• **Caption / Subtitle Poin**: Tandai dengan *kata atau frasa* yang harus di-highlight sebagai caption besar di layar saat diucapkan`,
+        chapter_mark: `• **YouTube Chapter Markers**: Di awal setiap segmen utama, sertakan [CHAPTER: 0:00 – Nama Seksi] untuk memudahkan navigasi video`,
+        thumbnail: `• **Saran Thumbnail**: Di akhir script, tambahkan seksi "REKOMENDASI THUMBNAIL" berisi: teks hook (max 6 kata), deskripsi visual, dan warna/mood yang disarankan`,
+        transitions: `• **Instruksi Transisi**: Antara setiap segmen, sertakan [TRANSISI: jenis cut/efek — misal: jump cut, fade, wipe, zoom in] untuk memandu editor`,
+        sponsor: `• **Slot Sponsor/Endorsement**: Sertakan satu segmen sponsor yang natural dan terintegrasi dalam konten (bukan terasa sebagai iklan terpisah), ditandai dengan [SPONSOR SLOT: ...]`,
+      };
+
+      const presenterPersonaNote = taskConfig.videoPresenterPersona
+        ? `\nKarakter Presenter: ${taskConfig.videoPresenterPersona}`
+        : '';
+
       taskInstruction = `
-MODE TUGAS: VIDEO/PODCAST SCRIPT GENERATOR
+MODE TUGAS: VIDEO SCRIPT GENERATOR
 ${styleReminder}
 
-Saya ingin membuat script video/podcast berdasarkan materi ebook ini.
+Buatkan script video LENGKAP, SIAP REKAM, dan OPTIMAL untuk platform ${videoPlatformMap[platform] || platform}.
 
-=== SPESIFIKASI SCRIPT ===
-1. **Judul Video/Episode:** ${taskConfig.judulScript || `Penjelasan tentang ${projectData.topik}`}
-2. **Durasi Target:** ${taskConfig.durasiScript}
-3. **Sumber Materi:** Ebook "${projectData.judul}" - Bab: ${finalJudulBab || 'Umum'}
-4. **Format:** Video Edukasi / Podcast Informatif
+=== SPESIFIKASI VIDEO ===
+- Judul: **${taskConfig.judulScript || `${projectData.topik} — Panduan Lengkap`}**
+- Topik Ebook: ${projectData.topik}
+- Sumber Materi: ${taskConfig.judulBab || 'Seluruh materi ebook'}
+- Platform: **${videoPlatformMap[platform]}**
+- Tipe Video: **${videoTypeMap[taskConfig.videoType || 'talking_head']}**
+- Gaya Konten: **${videoStyleMap[taskConfig.videoStyle || 'educational']}**
+- Tone / Nuansa: **${videoToneMap[taskConfig.videoTone || 'casual']}**
+- Gaya Bahasa: **${videoLangMap[taskConfig.videoLanguageStyle || 'casual']}**
+- Durasi Target: **${taskConfig.durasiScript || '5-10 menit'}** (~${wordEstimate} kata)
+- Presenter: **${presenter}**${presenterPersonaNote}
+- Target Penonton: ${projectData.target || 'Umum'}
 
-=== TUGAS ANDA ===
-Buatkan Script Lengkap dengan struktur:
+=== HOOK / PEMBUKA ===
+Buka dengan teknik: **${videoHookMap[taskConfig.videoHookStyle || 'question']}**
+${isShortFormat ? 'PENTING: Format short/reels — hook HARUS terjadi dalam 3 detik pertama. Tidak ada basa-basi sama sekali.' : ''}
+${platform === 'tiktok' || platform === 'instagram' ? 'Format vertikal: script harus diperlakukan seperti video vertikal — energi tinggi, pacing cepat, setiap 3-5 detik ada perubahan visual/angle.' : ''}
+${platform === 'linkedin' ? 'Format LinkedIn: lebih profesional, data-driven, langsung to the point. Hindari terlalu casual.' : ''}
 
-**[OPENING - 30 detik]**
-- Hook yang menarik perhatian
-- Preview apa yang akan dipelajari
+=== ELEMEN PRODUKSI YANG HARUS DISERTAKAN ===
+${selectedElements.length > 0 ? selectedElements.map(id => elementInstructions[id] || '').filter(Boolean).join('\n') : '• Gunakan [VISUAL: ...] untuk instruksi visual pendukung yang relevan\n• Gunakan (Beat) atau (Jeda) untuk penanda ritme berbicara'}
 
-**[INTRO DIRI - 15 detik]**
-- Perkenalan singkat host/creator
+=== FORMAT SCRIPT ===
+Gunakan format yang LANGSUNG SIAP DIBACA saat rekaman:
 
-**[KONTEN UTAMA - 70% durasi]**
-- Poin 1: [Judul] + Penjelasan + Contoh
-- Poin 2: [Judul] + Penjelasan + Contoh
-- Poin 3: [Judul] + Penjelasan + Contoh
-(Sesuaikan jumlah poin dengan durasi)
+${isShortFormat ? `**[FORMAT SHORT/REELS — ${taskConfig.durasiScript}]**
 
-**[RECAP & CTA - 30 detik]**
-- Rangkuman 3 takeaway utama
-- Call to Action (Subscribe, Download ebook, dll)
+**[HOOK — detik 0-3]**
+[${videoHookMap[taskConfig.videoHookStyle || 'question']}]
 
-=== FORMAT OUTPUT ===
-Tulis dalam format script yang mudah dibaca:
-- Gunakan [VISUAL: ...] untuk instruksi visual/B-roll
-- Gunakan (Beat) atau (Pause) untuk jeda
-- Highlight kata-kata yang perlu DITEKANKAN
+**[KONTEN UTAMA — ${taskConfig.durasiScript === '15-60 detik' ? '10-40 detik' : '45-120 detik'}]**
+[2-3 poin utama, setiap poin 1-2 kalimat max]
+
+**[CTA — 3-5 detik terakhir]**
+"${videoCTAMap[taskConfig.videoCTA || 'subscribe']}"
+
+CATATAN: Setiap kalimat max 10-12 kata. Tidak ada kalimat bertele-tele.` : `
+**[BUMPER / PRE-HOOK]** ${selectedElements.includes('bumper') ? '← [BUMPER INTRO: branded ident 3-5 detik]' : '(opsional — skip langsung ke hook)'}
+
+**[HOOK — 5-15 detik]**
+${videoHookMap[taskConfig.videoHookStyle || 'question']}
+${taskConfig.judulScript ? `Pertanyaan/pernyataan hook yang langsung relevan dengan judul: "${taskConfig.judulScript}"` : ''}
+
+**[INTRO PRESENTER — 10-20 detik]** ${isLongFormat ? '' : '(singkat, jangan lebih dari 15 detik)'}
+${presenter !== 'Creator' ? `"Halo, saya ${presenter}..." — perkenalan singkat dan kredensial relevan` : '— perkenalan singkat dan preview apa yang akan dipelajari'}
+
+**[PREVIEW / VALUE PROPOSITION — 10-15 detik]**
+"Di video ini, kamu akan [manfaat konkret 1], [manfaat 2], dan [manfaat 3]..."
+${selectedElements.includes('chapter_mark') ? '[CHAPTER: 0:00 – Intro]' : ''}
+
+**[KONTEN UTAMA — ${isLongFormat ? '80-85%' : '65-70%'} durasi]**
+${isLongFormat ? 'Bagi ke dalam bab/modul yang jelas dengan transisi antar-bagian' : 'Bagi menjadi 3-5 poin utama, masing-masing dengan:'}
+${isLongFormat ? '' : `- Poin [N]: [Judul poin yang catchy]
+  - Penjelasan (2-3 kalimat)
+  - Contoh nyata atau data dari ebook
+  - Takeaway praktis`}
+${selectedElements.includes('chapter_mark') ? '← Tambahkan [CHAPTER: timestamp – Nama Bagian] di setiap seksi utama' : ''}
+
+${selectedElements.includes('sponsor') ? `**[SPONSOR SLOT — natural dan terintegrasi]**
+[SPONSOR SLOT: transisi natural ke endorsement, kira-kira di tengah video]` : ''}
+
+**[RECAP — 20-30 detik]**
+"Jadi, hari ini kita sudah belajar: [3 poin terpenting]..."
+
+**[CTA — 15-30 detik]**
+"${videoCTAMap[taskConfig.videoCTA || 'subscribe']}"
+${taskConfig.videoCTA === 'subscribe' ? '— Minta subscribe, like, dan aktifkan notifikasi\n— Sebut video/playlist terkait' : ''}
+${taskConfig.videoCTA === 'download' ? '— Sebutkan cara mendapatkannya (link di deskripsi/bio)\n— Beri tahu apa yang akan mereka dapatkan' : ''}
+
+**[OUTRO]** ${selectedElements.includes('bumper') ? '[BUMPER OUTRO: branded ident + music fade]' : '— Penutup singkat, ucapkan terima kasih'}
+`}
+
+=== INSTRUKSI KUALITAS SCRIPT ===
+- Script ditulis untuk DIUCAPKAN — hindari kalimat yang terasa seperti teks tertulis
+- Kalimat pendek mendominasi (max 15-20 kata per kalimat)${isShortFormat ? ', maksimal 10 kata' : ''}
+- Variasikan tempo: kalimat pendek untuk penekanan, panjang untuk elaborasi
+- Gunakan sapaan langsung ke penonton: "kamu", "kalian", atau sesuai gaya bahasa
+- ${taskConfig.videoTone === 'energetic' ? 'Energi TINGGI dari awal — tidak ada momen lambat, setiap kalimat harus dinamis' : ''}
+- ${taskConfig.videoTone === 'humorous' ? 'Sisipkan humor natural (tidak dipaksakan) yang relevan dengan topik' : ''}
+- ${taskConfig.videoStyle === 'listicle' ? `Format listicle: gunakan penanda "Nomor [N]:" yang jelas dan energik setiap kali pindah poin` : ''}
+- Tulis LENGKAP dan SIAP REKAM — bukan outline atau template kosong
+${selectedElements.includes('thumbnail') ? '\n=== REKOMENDASI THUMBNAIL ===\n[Tambahkan di akhir script: teks hook max 6 kata, deskripsi visual, dan mood/warna]' : ''}
 `;
       break;
+    }
 
     case 'EXTEND_TEXT':
       taskInstruction = `

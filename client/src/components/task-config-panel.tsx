@@ -460,55 +460,287 @@ export function TaskConfigPanel({
           </div>
         );
 
-      case 'VIDEO_SCRIPT':
+      case 'VIDEO_SCRIPT': {
+        const VIDEO_SPECIAL_ELEMENTS = [
+          { id: 'b_roll',       label: '🎬 Catatan B-Roll & Visual',   desc: 'Instruksi visual pendukung: footage, gambar, atau grafis yang ditampilkan saat narasi' },
+          { id: 'lower_third',  label: '📝 Lower Third / Grafis Teks', desc: 'Teks overlay yang muncul di layar: nama, fakta, poin kunci, caption' },
+          { id: 'bumper',       label: '🎵 Bumper Intro & Outro',      desc: 'Segmen branded pendek di awal (3-5 dtk) dan akhir video' },
+          { id: 'captions',     label: '💬 Caption / Subtitle Poin',   desc: 'Instruksi kata/frasa yang harus di-highlight sebagai subtitle' },
+          { id: 'chapter_mark', label: '📍 Chapter Markers',           desc: 'Penanda waktu setiap seksi: cocok untuk YouTube chapters' },
+          { id: 'thumbnail',    label: '🖼️ Saran Thumbnail Hook',      desc: 'Rekomendasi teks dan visual untuk thumbnail yang click-worthy' },
+          { id: 'transitions',  label: '✂️ Instruksi Transisi',        desc: 'Petunjuk cut, fade, wipe, atau efek transisi antar segmen' },
+          { id: 'sponsor',      label: '💰 Slot Sponsor/Endorsement',  desc: 'Segmen natural untuk promosi produk/jasa yang terintegrasi' },
+        ];
+
+        const selectedVideoElements = (taskConfig.videoSpecialElements || '').split('|||').filter(Boolean);
+        const toggleVideoElement = (id: string) => {
+          const parts = (taskConfig.videoSpecialElements || '').split('|||').filter(Boolean);
+          const updated = parts.includes(id) ? parts.filter(p => p !== id) : [...parts, id];
+          onTaskConfigChange('videoSpecialElements', updated.join('|||'));
+        };
+
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-5">
+
+            {/* IDENTITAS VIDEO */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Identitas Video</p>
               <div className="space-y-2">
-                <Label>Judul Video/Episode</Label>
+                <Label>Judul Video / Episode</Label>
                 <Input
-                  placeholder="Contoh: 5 Kesalahan Fatal dalam Digital Marketing"
+                  placeholder="Contoh: 5 Strategi Ampuh Menulis Ebook Laris dalam 7 Hari"
                   value={taskConfig.judulScript}
                   onChange={(e) => onTaskConfigChange('judulScript', e.target.value)}
                   data-testid="input-judul-script"
                 />
               </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tipe Video</Label>
+                  <Select
+                    value={taskConfig.videoType || 'talking_head'}
+                    onValueChange={(value) => onTaskConfigChange('videoType', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="talking_head">🎤 Talking Head — presenter berbicara ke kamera</SelectItem>
+                      <SelectItem value="tutorial">🖥️ Tutorial / How-To — langkah demi langkah</SelectItem>
+                      <SelectItem value="screen_recording">📱 Screen Recording — rekam layar + narasi</SelectItem>
+                      <SelectItem value="vlog">🎒 Vlog — perjalanan atau behind-the-scenes</SelectItem>
+                      <SelectItem value="animation">🎨 Animation / Motion Graphic</SelectItem>
+                      <SelectItem value="short_reels">⚡ Short / Reels / TikTok — vertical pendek</SelectItem>
+                      <SelectItem value="presentation">📊 Presentasi / Slideshow</SelectItem>
+                      <SelectItem value="documentary">🎬 Mini Dokumenter / Storytelling</SelectItem>
+                      <SelectItem value="webinar">💻 Webinar / Online Class</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Platform Target</Label>
+                  <Select
+                    value={taskConfig.videoPlatform || 'youtube'}
+                    onValueChange={(value) => onTaskConfigChange('videoPlatform', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-platform">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="youtube">▶️ YouTube (video panjang)</SelectItem>
+                      <SelectItem value="youtube_short">🩳 YouTube Shorts</SelectItem>
+                      <SelectItem value="instagram">📸 Instagram Reels</SelectItem>
+                      <SelectItem value="tiktok">🎵 TikTok</SelectItem>
+                      <SelectItem value="linkedin">💼 LinkedIn Video</SelectItem>
+                      <SelectItem value="facebook">📘 Facebook Video</SelectItem>
+                      <SelectItem value="webinar">🌐 Webinar (Zoom/GMeet)</SelectItem>
+                      <SelectItem value="corporate">🏢 Internal Corporate / Training</SelectItem>
+                      <SelectItem value="lms">🎓 LMS / E-Learning Platform</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label>Durasi Target</Label>
+                <Label>Sumber Materi / Bab <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Input
+                  placeholder="Contoh: Bab 3 – Strategi Konten, atau 'seluruh buku', atau 'Bagian 2: Monetisasi'"
+                  value={taskConfig.judulBab || ''}
+                  onChange={(e) => onTaskConfigChange('judulBab', e.target.value)}
+                  data-testid="input-bab-sumber-video"
+                />
+              </div>
+            </div>
+
+            {/* PRESENTER & GAYA */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Presenter & Gaya Konten</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nama Presenter / Host <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                  <Input
+                    placeholder="Contoh: Andi Wijaya, Kak Sarah, Pak Budi..."
+                    value={taskConfig.videoPresenterName || ''}
+                    onChange={(e) => onTaskConfigChange('videoPresenterName', e.target.value)}
+                    data-testid="input-video-presenter"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Konten / Format</Label>
+                  <Select
+                    value={taskConfig.videoStyle || 'educational'}
+                    onValueChange={(value) => onTaskConfigChange('videoStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-style">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="educational">🎓 Educational — edukasi step-by-step</SelectItem>
+                      <SelectItem value="entertainment">🎉 Entertainment — menghibur sambil menginformasi</SelectItem>
+                      <SelectItem value="inspirational">💡 Inspirational — memotivasi & menggerakkan</SelectItem>
+                      <SelectItem value="storytelling">📖 Storytelling — narasi kisah nyata</SelectItem>
+                      <SelectItem value="how_to">🛠️ How-To / Tutorial — panduan praktis</SelectItem>
+                      <SelectItem value="listicle">📋 Listicle — "N Cara/Tips/Rahasia..."</SelectItem>
+                      <SelectItem value="review">⭐ Review & Analisis</SelectItem>
+                      <SelectItem value="debate">⚔️ Debat / Dua Sisi</SelectItem>
+                      <SelectItem value="challenge">🏆 Challenge / Eksperimen</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Persona & Karakter Presenter <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Textarea
+                  placeholder={`Contoh: Presenter energik berusia 30-an, suka pakai analogi lucu, berbicara cepat dan penuh semangat. Sering menyapa penonton dengan "Hei guys!" Gaya Peter McKinnon meets creator lokal.`}
+                  rows={2}
+                  value={taskConfig.videoPresenterPersona || ''}
+                  onChange={(e) => onTaskConfigChange('videoPresenterPersona', e.target.value)}
+                  className="text-sm resize-none"
+                  data-testid="textarea-video-presenter-persona"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tone / Nuansa</Label>
+                  <Select
+                    value={taskConfig.videoTone || 'casual'}
+                    onValueChange={(value) => onTaskConfigChange('videoTone', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-tone">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="casual">😊 Kasual & Friendly — relatable, hangat</SelectItem>
+                      <SelectItem value="professional">👔 Profesional — kredibel, berbobot</SelectItem>
+                      <SelectItem value="energetic">⚡ Energik & Antusias — high energy, semangat</SelectItem>
+                      <SelectItem value="calm">🧘 Tenang & Reflektif — perlahan, kontemplatif</SelectItem>
+                      <SelectItem value="inspirational">🌟 Inspirasional — membakar semangat</SelectItem>
+                      <SelectItem value="humorous">😂 Humoris — ringan, banyak humor</SelectItem>
+                      <SelectItem value="authoritative">🎓 Authoritative — tegas seperti pakar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Bahasa</Label>
+                  <Select
+                    value={taskConfig.videoLanguageStyle || 'casual'}
+                    onValueChange={(value) => onTaskConfigChange('videoLanguageStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="formal">🎩 Formal — Bahasa Indonesia baku</SelectItem>
+                      <SelectItem value="semiformal">👔 Semi-Formal — baku tapi mengalir</SelectItem>
+                      <SelectItem value="casual">👕 Kasual — santai, sehari-hari</SelectItem>
+                      <SelectItem value="gaul">🤙 Gaul/Kekinian — milenial & gen-Z friendly</SelectItem>
+                      <SelectItem value="bilingual">🌐 Bilingual — campuran Indo-Inggris</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* STRUKTUR & DURASI */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Struktur & Durasi</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Durasi Target</Label>
+                  <Select
+                    value={taskConfig.durasiScript}
+                    onValueChange={(value) => onTaskConfigChange('durasiScript', value)}
+                  >
+                    <SelectTrigger data-testid="select-durasi">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15-60 detik">⚡ 15-60 detik (TikTok / Reels super pendek)</SelectItem>
+                      <SelectItem value="1-3 menit">🩳 1-3 menit (Short / Reels)</SelectItem>
+                      <SelectItem value="5-10 menit">▶️ 5-10 menit (Standard YouTube)</SelectItem>
+                      <SelectItem value="15-20 menit">📚 15-20 menit (Deep Dive)</SelectItem>
+                      <SelectItem value="30-45 menit">🎓 30-45 menit (Webinar / Long-form)</SelectItem>
+                      <SelectItem value="60+ menit">🏛️ 60+ menit (Masterclass / Full Course)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Hook / Pembuka</Label>
+                  <Select
+                    value={taskConfig.videoHookStyle || 'question'}
+                    onValueChange={(value) => onTaskConfigChange('videoHookStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-video-hook">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="question">❓ Pertanyaan Provokatif — langsung tanya ke penonton</SelectItem>
+                      <SelectItem value="shocking_fact">😱 Fakta Mengejutkan — data atau statistik mengagetkan</SelectItem>
+                      <SelectItem value="bold_statement">🔥 Bold Statement — pernyataan berani & kontroversial</SelectItem>
+                      <SelectItem value="story">📖 Mini Cerita — buka dengan kisah nyata 2-3 kalimat</SelectItem>
+                      <SelectItem value="humor">😂 Hook Humor — buka dengan jokes atau situasi lucu</SelectItem>
+                      <SelectItem value="challenge">🏆 Challenge / Tantangan — ajak penonton ikut</SelectItem>
+                      <SelectItem value="contrast">⚡ Kontras / Before-After — tunjukkan perbedaan ekstrem</SelectItem>
+                      <SelectItem value="promise">🎁 Janji Nilai — langsung sebut manfaat yang didapat</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Call to Action (CTA) Utama</Label>
                 <Select
-                  value={taskConfig.durasiScript}
-                  onValueChange={(value) => onTaskConfigChange('durasiScript', value)}
+                  value={taskConfig.videoCTA || 'subscribe'}
+                  onValueChange={(value) => onTaskConfigChange('videoCTA', value)}
                 >
-                  <SelectTrigger data-testid="select-durasi">
+                  <SelectTrigger data-testid="select-video-cta">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="1-3 menit">1-3 menit (Short/Reels)</SelectItem>
-                    <SelectItem value="5-10 menit">5-10 menit (Standard)</SelectItem>
-                    <SelectItem value="15-20 menit">15-20 menit (Deep Dive)</SelectItem>
-                    <SelectItem value="30+ menit">30+ menit (Podcast/Webinar)</SelectItem>
+                    <SelectItem value="subscribe">🔔 Subscribe & Like — growth channel</SelectItem>
+                    <SelectItem value="download">📥 Download Ebook / Freebie</SelectItem>
+                    <SelectItem value="buy">💳 Beli Produk / Ebook Sekarang</SelectItem>
+                    <SelectItem value="share">📢 Share ke teman / viral goal</SelectItem>
+                    <SelectItem value="comment">💬 Comment & Diskusi — engagement</SelectItem>
+                    <SelectItem value="visit">🔗 Kunjungi Website / Link Bio</SelectItem>
+                    <SelectItem value="whatsapp">💬 Chat WhatsApp / DM</SelectItem>
+                    <SelectItem value="join_course">🎓 Daftar Kursus / Webinar</SelectItem>
+                    <SelectItem value="join_community">👥 Gabung Komunitas / Grup</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Bab Sumber (Opsional)</Label>
-              <Select
-                value={taskConfig.judulBab}
-                onValueChange={(value) => onTaskConfigChange('judulBab', value)}
-              >
-                <SelectTrigger data-testid="select-bab-sumber">
-                  <SelectValue placeholder="Pilih bab sebagai sumber materi..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CHAPTER_TEMPLATES.slice(0, -1).map((chapter) => (
-                    <SelectItem key={chapter} value={chapter}>{chapter}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+            {/* ELEMEN PRODUKSI KHUSUS */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Elemen Produksi Khusus</p>
+                {selectedVideoElements.length > 0 && (
+                  <span className="text-xs text-primary">({selectedVideoElements.length} aktif)</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="video-special-elements">
+                {VIDEO_SPECIAL_ELEMENTS.map((el) => {
+                  const isSelected = selectedVideoElements.includes(el.id);
+                  return (
+                    <div
+                      key={el.id}
+                      className={cn("flex items-start gap-2.5 px-3 py-2.5 rounded-md border cursor-pointer transition-colors", isSelected ? "bg-primary/5 border-primary/30" : "hover:bg-muted/40 border-transparent")}
+                      onClick={() => toggleVideoElement(el.id)}
+                      data-testid={`checkbox-video-el-${el.id}`}
+                    >
+                      <Checkbox checked={isSelected} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className={cn("text-sm leading-tight", isSelected ? "font-medium text-foreground" : "text-muted-foreground")}>{el.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{el.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+
           </div>
         );
+      }
 
       case 'ECOURSE_BUILDER':
         return (
@@ -2102,7 +2334,11 @@ export function TaskConfigPanel({
       case 'BIG_IDEA': return `Pertajam positioning dengan angle "${taskConfig.bigIdeaAngle}"`;
       case 'OUTLINE': return `Susun daftar isi ${taskConfig.jumlahBab} bab dengan kedalaman ${taskConfig.outlineDepth}`;
       case 'DRAFT_BAB': return 'Tulis konten bab secara lengkap dan terstruktur';
-      case 'VIDEO_SCRIPT': return 'Buat script video/podcast dari materi ebook';
+      case 'VIDEO_SCRIPT': {
+        const elVidCount = (taskConfig.videoSpecialElements || '').split('|||').filter(Boolean).length;
+        const platformShort: Record<string,string> = { youtube:'YouTube', youtube_short:'YT Shorts', instagram:'Reels', tiktok:'TikTok', linkedin:'LinkedIn', facebook:'Facebook', webinar:'Webinar', corporate:'Corporate', lms:'LMS' };
+        return `${taskConfig.videoType || 'talking_head'} | ${platformShort[taskConfig.videoPlatform || 'youtube'] || taskConfig.videoPlatform} | ${taskConfig.durasiScript || '5-10 menit'}${elVidCount > 0 ? ` | ${elVidCount} elemen produksi` : ''}`;
+      }
       case 'ECOURSE_BUILDER': return 'Ubah ebook menjadi kurikulum kursus online';
       case 'DOC_GENERATOR': return 'Buat dokumen kerja profesional (SOP, Policy, dll)';
       case 'PROMPT_PACK': return 'Generate rangkaian prompt workflow untuk berbagai kebutuhan';
