@@ -1086,86 +1086,160 @@ ${specialSegmentsScript}
     case 'AUDIOBOOK_SCRIPT': {
       const abTone = taskConfig.audiobookTone || 'conversational';
       const abToneDesc: Record<string, string> = {
-        conversational: 'santai dan hangat, seperti berbicara langsung kepada pendengar',
-        authoritative: 'tegas dan meyakinkan, seperti seorang pakar di bidangnya',
-        warm: 'penuh kehangatan dan empati, suportif dan menginspirasi',
-        dramatic: 'dramatis dan penuh penghayatan emosional',
-        academic: 'formal dan ilmiah, dengan terminologi yang tepat',
-        motivational: 'penuh semangat dan energi, mendorong pendengar untuk bertindak',
+        conversational: 'santai dan hangat, seperti berbicara langsung kepada pendengar — tidak ada jarak antara narator dan pendengar',
+        authoritative: 'tegas dan meyakinkan, seperti seorang pakar di bidangnya — setiap kata diucapkan dengan keyakinan penuh',
+        warm: 'penuh kehangatan dan empati — suara yang menyejukkan, membuat pendengar merasa diperhatikan dan didukung',
+        dramatic: 'dramatis dan penuh penghayatan emosional — variasi intonasi lebar, memberi bobot pada setiap momen penting',
+        academic: 'formal dan ilmiah — terminologi tepat, penyampaian sistematis dan terstruktur',
+        motivational: 'penuh semangat dan energi — mendorong pendengar untuk percaya diri dan segera bertindak',
+        storyteller: 'seperti mendongeng — imajinatif, penuh warna, membawa pendengar seolah hadir dalam cerita',
+        mentor: 'bijak dan sabar — membimbing step by step seperti mentor yang berpengalaman, tidak menghakimi',
       };
       const abPaceDesc: Record<string, string> = {
-        slow: 'lambat dan tenang — banyak jeda, beri ruang untuk pendengar meresapi',
-        medium: 'sedang — standar audiobook profesional',
-        fast: 'cepat dan ringkas — langsung ke poin utama tanpa banyak elaborasi',
+        very_slow: 'sangat lambat — banyak jeda panjang, cocok untuk meditasi atau menjelang tidur, beri ruang pendengar meresapi setiap kata',
+        slow: 'lambat dan tenang — jeda lebih sering, kontemplatif, beri ruang untuk pendengar merefleksikan isi',
+        medium: 'sedang — standar audiobook profesional, natural dan mengalir',
+        fast: 'cepat dan ringkas — langsung ke poin utama, minim elaborasi, cocok untuk summary atau commute',
       };
       const abFocusDesc: Record<string, string> = {
         full: 'narasi lengkap seluruh buku dari bab pertama hingga terakhir',
-        intro: 'hanya pendahuluan dan bab pertama — cocok untuk preview/promosi',
-        summary: 'ringkasan setiap bab: poin-poin utama saja',
-        highlights: 'highlight terbaik: kutipan, insight, dan momen paling impactful',
+        intro: 'hanya pendahuluan dan bab pertama — preview menarik untuk promosi produk',
+        per_bab: `narasi khusus untuk ${taskConfig.audiobookChapterRef || 'bab yang ditentukan'}`,
+        single_bab: `deep dive satu bab penuh: ${taskConfig.audiobookChapterRef || 'bab yang ditentukan'}`,
+        summary: 'ringkasan setiap bab — poin-poin utama saja, padat dan langsung ke inti',
+        highlights: 'highlight terbaik dari seluruh buku — kutipan, insight, dan momen paling impactful',
       };
       const abEmphasisDesc: Record<string, string> = {
-        minimal: 'netral dan informatif, tanpa banyak penekanan emosional',
-        moderate: 'seimbang antara fakta dan emosi',
-        strong: 'penuh penghayatan, ekspresi kuat pada poin-poin penting',
+        minimal: 'netral dan informatif, tanpa penekanan emosional berlebihan',
+        moderate: 'seimbang antara fakta dan nuansa emosi yang natural',
+        strong: 'penuh penghayatan — ekspresi kuat, intonasi bervariasi lebar pada setiap poin penting',
+      };
+      const abLangDesc: Record<string, string> = {
+        formal: 'Bahasa Indonesia baku formal. Gunakan "Anda". Tidak ada ekspresi informal atau slang.',
+        semiformal: 'Bahasa Indonesia semi-formal. Mengalir natural, boleh ada ekspresi sehari-hari yang baku. Gunakan "Anda".',
+        casual: 'Bahasa kasual dan ramah. Gunakan "kamu". Boleh ada ekspresi sehari-hari yang hangat.',
+        bilingual: 'Campuran Bahasa Indonesia dan Inggris — untuk terminologi teknis boleh pakai Bahasa Inggris.',
+      };
+      const abContextDesc: Record<string, string> = {
+        general: 'konteks umum — fleksibel dan cocok untuk berbagai situasi',
+        commute: 'konteks perjalanan — pendengar mungkin tidak bisa mencatat, pastikan poin penting diulang dan mudah diingat',
+        study: 'konteks belajar serius — pendengar siap fokus penuh, boleh ada detail kompleks dan terminologi khusus',
+        workout: 'konteks olahraga — energik, memompa semangat, pacing sedikit lebih cepat dan dinamis',
+        relax: 'konteks santai — nyaman, tidak terburu-buru, hangat dan mengalir',
+        sleep: 'konteks menjelang tidur — perlahan, menenangkan, hindari pernyataan yang terlalu stimulatif',
+      };
+      const abOpeningDesc: Record<string, string> = {
+        hook: 'HOOK KUAT: buka dengan pernyataan mengejutkan, fakta kontra-intuitif, atau pertanyaan yang memancing rasa ingin tahu',
+        anekdot: 'ANEKDOT / MINI-CERITA: buka dengan kisah nyata singkat (2-3 kalimat) yang relevan dengan isi bab',
+        fakta: 'FAKTA MENGEJUTKAN: buka dengan statistik atau data yang tidak terduga dan langsung relevan',
+        pertanyaan: 'PERTANYAAN REFLEKTIF: ajak pendengar berpikir sebelum masuk ke materi',
+        kutipan: 'KUTIPAN INSPIRATIF: buka dengan kutipan kuat dari tokoh relevan yang memperkuat tema bab',
+        langsung: 'LANGSUNG KE INTI: tanpa basa-basi, langsung paparkan apa yang akan dipelajari',
+      };
+      const abClosingDesc: Record<string, string> = {
+        summary: 'RINGKASAN 3 POIN: recap singkat tiga hal terpenting dari bab ini',
+        teaser: 'TEASER CLIFFHANGER: akhiri dengan preview menarik tentang apa yang akan dibahas di bab berikutnya',
+        challenge: 'TANTANGAN PRAKTIS: berikan 1 aksi konkret yang bisa pendengar lakukan dalam 24 jam setelah mendengarkan bab ini',
+        refleksi: 'PERTANYAAN REFLEKSI: ajak pendengar merenung dengan 1-2 pertanyaan introspektif',
+        motivasi: 'PESAN MOTIVASI: tutup dengan kata-kata penguatan dan dorongan untuk terus melanjutkan perjalanan belajar',
+        kombinasi: 'KOMBINASI LENGKAP: ringkasan 3 poin + teaser bab berikutnya + 1 aksi nyata',
+      };
+      const abMusicDesc: Record<string, string> = {
+        none: 'Tanpa musik latar. Narasi murni.',
+        instrumental: 'Musik instrumental ringan — standar audiobook profesional. Notasikan [MUSIK LATAR: Instrumental ringan].',
+        ambient: 'Suara alam / ambient — air mengalir, angin, burung. Notasikan [MUSIK LATAR: Ambient/Nature].',
+        cinematic: 'Musik sinematik / dramatis — untuk momen-momen emosional penting. Notasikan [MUSIK LATAR: Cinematic].',
+        motivational: 'Musik upbeat motivational — energik. Notasikan [MUSIK LATAR: Motivational Upbeat].',
+        meditation: 'Musik meditasi / lo-fi — tenang dan menenangkan. Notasikan [MUSIK LATAR: Meditasi Tenang].',
       };
 
-      const narratorLine = taskConfig.audiobookNarrator
-        ? `\nNarator: **${taskConfig.audiobookNarrator}**`
+      const selectedSpecials = (taskConfig.audiobookSpecialElements || '').split('|||').filter(Boolean);
+      const specialElementMap: Record<string, string> = {
+        metafora: `• **Metafora & Analogi Kreatif**: Setiap kali ada konsep abstrak atau teknis, narator WAJIB menawarkan analogi atau perumpamaan nyata yang mudah divisualisasi pendengar. Contoh: "Bayangkan ini seperti... [analogi]"`,
+        anekdot: `• **Anekdot Pembuka Bab**: Setiap bab dibuka dengan mini-cerita nyata (3-5 kalimat) yang relevan dengan isi bab, sebelum narator menyebutkan judul bab secara eksplisit.`,
+        cta_bab: `• **Call-to-Action Per Bab**: Di akhir setiap bab, narator memberikan satu CTA spesifik yang bisa langsung dilakukan. Contoh: "Sebelum melanjutkan ke bab berikutnya, ambil selembar kertas dan tuliskan..."`,
+        quiz_mini: `• **Kuis Refleksi Mini**: Di akhir setiap bab, sertakan 1-2 pertanyaan reflektif. Contoh narasi: "Sebelum kita lanjutkan, coba jawab dalam hati: [pertanyaan]. Pikirkan sejenak... [JEDA PANJANG]. Baik, mari kita lanjutkan."`,
+        motivasi: `• **Kutipan Motivasional**: Sisipkan kutipan kuat dari tokoh relevan di momen-momen tepat untuk memperkuat poin kunci. Format: "[NADA TURUN] Seperti yang pernah dikatakan [Nama Tokoh]: '...[kutipan]'"`,
+        recap: `• **Recap Visual Verbal**: Saat buku memiliki tabel, diagram, atau grafik, narator mendeskripsikannya secara verbal agar pendengar bisa membayangkan. Contoh: "Di sini, buku menyajikan sebuah diagram yang menunjukkan... Bayangkan sebuah garis vertikal yang..."`,
+        challenge: `• **Daily Challenge**: Di akhir setiap bab, berikan "tantangan 24 jam" yang konkret dan spesifik. Format: "[JEDA PENDEK] Tantangan bab ini: dalam 24 jam ke depan, lakukan [aksi spesifik]. Siap?"`,
+        afirmasi: `• **Afirmasi & Reinforcement**: Setelah menyampaikan poin penting, narator memperkuat dengan kalimat afirmatif. Contoh: "Kamu sudah tahu sekarang bahwa...", "Kamu lebih siap dari yang kamu kira untuk..."`,
+      };
+
+      const narratorLine = taskConfig.audiobookNarrator ? `**${taskConfig.audiobookNarrator}**` : '(narator tidak disebutkan namanya)';
+      const personaNote = taskConfig.audiobookNarratorPersona
+        ? `\nKarakter Suara Narator: ${taskConfig.audiobookNarratorPersona}`
         : '';
+      const langStyle = taskConfig.audiobookLanguageStyle || 'semiformal';
+      const sapaanPronoun = langStyle === 'casual' ? '"kamu"' : '"Anda"';
 
       taskInstruction = `
-MODE TUGAS: AUDIOBOOK SCRIPT GENERATOR — NARASI SOLO
+MODE TUGAS: AUDIOBOOK SCRIPT GENERATOR — NARASI PROFESIONAL
 ${styleReminder}
 
-Buatkan script audiobook profesional dan siap rekam untuk buku bertema "${projectData.topik}".
-${narratorLine}
+Buatkan script audiobook yang LENGKAP, SIAP REKAM, dan BERKUALITAS TINGGI untuk buku bertema "${projectData.topik}".
 
-=== DETAIL PRODUKSI ===
-- Judul Buku: ${projectData.judul || projectData.topik}
+=== SPESIFIKASI PRODUKSI ===
+- Judul Buku: **${projectData.judul || projectData.topik}**
 - Target Pendengar: ${projectData.target || 'Umum'}
-- Gaya Narasi: **${abTone}** — ${abToneDesc[abTone]}
-- Pacing: **${taskConfig.audiobookPace || 'medium'}** — ${abPaceDesc[taskConfig.audiobookPace || 'medium']}
-- Fokus: **${abFocusDesc[taskConfig.audiobookChapterFocus || 'full']}**
+- Narator: ${narratorLine}${personaNote}
+- Gaya Narasi / Tone: **${abTone}** — ${abToneDesc[abTone]}
+- Kecepatan Pacing: **${taskConfig.audiobookPace || 'medium'}** — ${abPaceDesc[taskConfig.audiobookPace || 'medium']}
+- Gaya Bahasa: **${abLangDesc[langStyle]}**
 - Penekanan Emosi: **${abEmphasisDesc[taskConfig.audiobookEmphasis || 'moderate']}**
+- Konteks Mendengarkan: **${abContextDesc[taskConfig.audiobookListeningContext || 'general']}**
+- Fokus Output: **${abFocusDesc[taskConfig.audiobookChapterFocus || 'full']}**
+- Musik Latar: **${abMusicDesc[taskConfig.audiobookMusicStyle || 'instrumental']}**
+- Gaya Pembuka Bab: **${abOpeningDesc[taskConfig.audiobookOpeningStyle || 'hook']}**
+- Gaya Penutup Bab: **${abClosingDesc[taskConfig.audiobookClosingStyle || 'summary']}**
+- Sapaan Pendengar: Gunakan ${sapaanPronoun} secara konsisten sepanjang narasi
 
 === NOTASI PRODUKSI ===
-Gunakan notasi berikut dalam skrip untuk memandu perekaman:
-- [JEDA PENDEK] → jeda 1-2 detik
-- [JEDA PANJANG] → jeda 3-5 detik (antar bab/seksi)
-- [PENEKANAN] → kata/frasa berikutnya dibaca lebih pelan dan berat
-- [NADA NAIK] / [NADA TURUN] → variasi intonasi
-- [MUSIK INTRO] / [MUSIK OUTRO] → untuk transisi bab
-- [NAPAS] → saat narator butuh jeda natural
-- *kata* → huruf miring = bacaan ditebalkan/diperlambat
-- **frasa** → bold = poin paling penting, baca dengan penekanan penuh
+Gunakan notasi berikut secara konsisten dan tepat:
+- [JEDA PENDEK] → jeda 1-2 detik (antar kalimat penting)
+- [JEDA PANJANG] → jeda 3-5 detik (antar seksi/transisi besar)
+- [PENEKANAN] → kata/frasa berikutnya dibaca lebih pelan, berat, dan jelas
+- [NADA NAIK] → intonasi naik — untuk pertanyaan atau antisipasi
+- [NADA TURUN] → intonasi turun — untuk konklusi atau pernyataan tegas
+- [MUSIK INTRO — FADE IN] / [MUSIK OUTRO — FADE OUT] → transisi bab
+${taskConfig.audiobookMusicStyle !== 'none' ? `- [MUSIK LATAR: ${taskConfig.audiobookMusicStyle}] → musik latar dimulai / disesuaikan` : ''}
+- [NAPAS] → jeda natural setelah kalimat panjang
+- *kata* → dibaca lebih lambat dan ditekankan
+- **frasa penting** → poin paling krusial, penekanan penuh
+
+=== ELEMEN KHUSUS YANG HARUS DISERTAKAN ===
+${selectedSpecials.length > 0 ? selectedSpecials.map(id => specialElementMap[id] || '').filter(Boolean).join('\n') : '• Gunakan gaya narasi standar dengan hook di awal dan ringkasan di akhir setiap bab.'}
 
 === FORMAT SETIAP BAB ===
 
 **[MUSIK INTRO — FADE IN 5 DETIK]**
+*(Estimasi durasi bab ini: ± X menit)*
 
-**PEMBUKAAN BAB [nomor]: [judul bab]**
-[Kalimat pembuka yang menarik dan langsung masuk ke inti]
+**PEMBUKAAN BAB [NOMOR]: [JUDUL BAB]**
+[${abOpeningDesc[taskConfig.audiobookOpeningStyle || 'hook']}]
 [JEDA PANJANG]
 
-**ISI UTAMA:**
-[Narasi bab dengan pacing ${taskConfig.audiobookPace || 'medium'}]
-[Gunakan notasi produksi sesuai konteks]
+**ISI UTAMA BAB [NOMOR]:**
+[Narasi mendalam dengan pacing ${taskConfig.audiobookPace || 'medium'}]
+[Gunakan notasi produksi di tempat yang tepat]
+[Kalimat maksimal 20-25 kata agar nyaman diucapkan dan didengarkan]
 
-**PENUTUP BAB [nomor]:**
-"Di bab ini kita telah belajar: [3 poin ringkasan]"
+**PENUTUP BAB [NOMOR]:**
+[${abClosingDesc[taskConfig.audiobookClosingStyle || 'summary']}]
 [JEDA PANJANG]
-"Selanjutnya, di bab berikutnya, kita akan membahas..."
-[JEDA PENDEK]
 
 **[MUSIK OUTRO — FADE OUT]**
 
-=== INSTRUKSI KHUSUS ===
-- Tulis dalam bahasa Indonesia yang mengalir natural untuk didengarkan, bukan dibaca
-- Hindari kalimat terlalu panjang — maks 20-25 kata per kalimat
-- Gunakan "Anda" (bukan "kamu") untuk tone profesional
-- Setiap bab dimulai dengan hook yang menarik perhatian pendengar
-- Sertakan estimasi durasi baca di awal setiap bab: "(Bab ini ± X menit)"
+=== INSTRUKSI KUALITAS NARASI ===
+- Script ditulis untuk DIDENGARKAN, bukan dibaca — hindari struktur kalimat yang terasa seperti teks tertulis
+- Kalimat pendek mendominasi (15-20 kata) — sesekali ada kalimat panjang untuk elaborasi
+- Variasikan panjang paragraf: pendek untuk drama, panjang untuk penjelasan
+- Sertakan "breathing room" — kalimat pendek tunggal setelah penjelasan panjang
+- Gunakan kata ganti orang kedua (${sapaanPronoun}) secara aktif untuk membangun koneksi
+- ${taskConfig.audiobookListeningContext === 'sleep' ? 'KHUSUS konteks tidur: tidak ada pertanyaan yang terlalu menstimulasi, pacing sangat lambat, hindari data & angka berlebihan' : ''}
+- ${taskConfig.audiobookListeningContext === 'workout' ? 'KHUSUS konteks olahraga: energik, kalimat lebih pendek, banyak ekspresi penguatan dan motivasi' : ''}
+- ${taskConfig.audiobookListeningContext === 'commute' ? 'KHUSUS konteks commute: ulangi poin penting 2x dengan cara berbeda, hindari instruksi yang butuh mencatat' : ''}
+- ${taskConfig.audiobookTone === 'storyteller' ? 'Tone storyteller: gunakan kosakata yang kaya imajinasi, deskripsi visual, dan ritme narasi yang seperti dongeng' : ''}
+- Tulis script LENGKAP dan SIAP REKAM — bukan template atau outline
 `;
       break;
     }

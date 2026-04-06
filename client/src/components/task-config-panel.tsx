@@ -1699,57 +1699,179 @@ export function TaskConfigPanel({
         );
       }
 
-      case 'AUDIOBOOK_SCRIPT':
+      case 'AUDIOBOOK_SCRIPT': {
+        const AB_SPECIAL_ELEMENTS = [
+          { id: 'metafora',    label: '🔗 Metafora & Analogi Kreatif', desc: 'Terjemahkan konsep abstrak dengan perumpamaan nyata yang mudah divisualisasi' },
+          { id: 'anekdot',     label: '📖 Anekdot Pembuka Bab',        desc: 'Setiap bab dibuka dengan mini-cerita nyata yang relevan sebelum masuk materi' },
+          { id: 'cta_bab',     label: '🎯 Call-to-Action Per Bab',     desc: 'Ajakan bertindak spesifik di akhir setiap bab yang bisa langsung dilakukan' },
+          { id: 'quiz_mini',   label: '🧠 Kuis Refleksi Mini',         desc: 'Pertanyaan reflektif di akhir bab: "Sebelum lanjut, coba jawab dalam hati..."' },
+          { id: 'motivasi',    label: '💫 Kutipan Motivasional',       desc: 'Sisipkan kutipan kuat dari tokoh relevan untuk memperkuat poin kunci' },
+          { id: 'recap',       label: '📋 Recap Visual Verbal',        desc: 'Deskripsi verbal dari tabel/diagram dalam buku agar pendengar bisa membayangkan' },
+          { id: 'challenge',   label: '🏆 Daily Challenge',            desc: 'Tantangan konkret 24 jam yang bisa langsung dipraktikkan setelah bab selesai' },
+          { id: 'afirmasi',    label: '✨ Afirmasi & Reinforcement',   desc: 'Pernyataan positif dan penguatan di akhir bab untuk internalisasi materi' },
+        ];
+
+        const selectedSpecials = (taskConfig.audiobookSpecialElements || '').split('|||').filter(Boolean);
+        const toggleAbElement = (id: string) => {
+          const parts = (taskConfig.audiobookSpecialElements || '').split('|||').filter(Boolean);
+          const updated = parts.includes(id) ? parts.filter(p => p !== id) : [...parts, id];
+          onTaskConfigChange('audiobookSpecialElements', updated.join('|||'));
+        };
+        const needsChapterRef = ['per_bab', 'single_bab', 'intro'].includes(taskConfig.audiobookChapterFocus || 'full');
+
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Nama Narator (opsional)</Label>
-              <Input
-                placeholder="Contoh: Budi Santoso, Sarah Wijaya... (kosongkan jika tidak perlu)"
-                value={taskConfig.audiobookNarrator || ''}
-                onChange={(e) => onTaskConfigChange('audiobookNarrator', e.target.value)}
-                data-testid="input-audiobook-narrator"
-              />
-              <p className="text-xs text-muted-foreground">Nama narator digunakan dalam pembukaan/penutup setiap bab</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Gaya Narasi</Label>
-                <Select
-                  value={taskConfig.audiobookTone || 'conversational'}
-                  onValueChange={(value) => onTaskConfigChange('audiobookTone', value)}
-                >
-                  <SelectTrigger data-testid="select-audiobook-tone">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="conversational">Conversational — Santai, seperti ngobrol</SelectItem>
-                    <SelectItem value="authoritative">Authoritative — Tegas, seperti ahli</SelectItem>
-                    <SelectItem value="warm">Warm & Friendly — Hangat, suportif</SelectItem>
-                    <SelectItem value="dramatic">Dramatic — Dramatis, penuh penghayatan</SelectItem>
-                    <SelectItem value="academic">Academic — Formal, ilmiah</SelectItem>
-                    <SelectItem value="motivational">Motivational — Semangat, inspiratif</SelectItem>
-                  </SelectContent>
-                </Select>
+          <div className="space-y-5">
+
+            {/* PERSONA NARATOR */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Persona Narator</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nama Narator <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                  <Input
+                    placeholder="Contoh: Budi Santoso, Sarah Wijaya..."
+                    value={taskConfig.audiobookNarrator || ''}
+                    onChange={(e) => onTaskConfigChange('audiobookNarrator', e.target.value)}
+                    data-testid="input-audiobook-narrator"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Narasi / Tone Suara</Label>
+                  <Select
+                    value={taskConfig.audiobookTone || 'conversational'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookTone', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-tone">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="conversational">☕ Conversational — Santai, seperti ngobrol langsung</SelectItem>
+                      <SelectItem value="authoritative">🎓 Authoritative — Tegas & meyakinkan seperti pakar</SelectItem>
+                      <SelectItem value="warm">🌸 Warm & Friendly — Hangat, empatik, suportif</SelectItem>
+                      <SelectItem value="dramatic">🎭 Dramatic — Dramatis, penuh penghayatan emosi</SelectItem>
+                      <SelectItem value="academic">📐 Academic — Formal, ilmiah, terminologi tepat</SelectItem>
+                      <SelectItem value="motivational">🔥 Motivational — Penuh semangat & energi tinggi</SelectItem>
+                      <SelectItem value="storyteller">📚 Storyteller — Seperti mendongeng, penuh imajinasi</SelectItem>
+                      <SelectItem value="mentor">🤝 Mentor — Bijak, sabar, membimbing step by step</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Kecepatan Pacing</Label>
-                <Select
-                  value={taskConfig.audiobookPace || 'medium'}
-                  onValueChange={(value) => onTaskConfigChange('audiobookPace', value)}
-                >
-                  <SelectTrigger data-testid="select-audiobook-pace">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="slow">Lambat — Pendengar santai, banyak jeda</SelectItem>
-                    <SelectItem value="medium">Sedang — Standar audiobook profesional</SelectItem>
-                    <SelectItem value="fast">Cepat — Ringkas, langsung ke inti</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Karakter & Persona Narator <span className="text-muted-foreground text-xs">(opsional — deskripsikan karakter suara)</span></Label>
+                <Textarea
+                  placeholder={`Contoh: Narator perempuan berusia 35 tahun dengan suara hangat dan berwibawa. Bicara dengan ritme yang tenang namun penuh keyakinan. Sesekali menyapa pendengar langsung dengan "kamu" atau "Anda". Tidak terlalu formal, tapi selalu profesional.`}
+                  rows={3}
+                  value={taskConfig.audiobookNarratorPersona || ''}
+                  onChange={(e) => onTaskConfigChange('audiobookNarratorPersona', e.target.value)}
+                  className="text-sm resize-none"
+                  data-testid="textarea-audiobook-narrator-persona"
+                />
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* GAYA & PRODUKSI */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Gaya & Produksi Narasi</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Kecepatan Pacing</Label>
+                  <Select
+                    value={taskConfig.audiobookPace || 'medium'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookPace', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-pace">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="very_slow">🐢 Sangat Lambat — meditasi, tidur, deep focus</SelectItem>
+                      <SelectItem value="slow">🚶 Lambat — penuh jeda, kontemplatif</SelectItem>
+                      <SelectItem value="medium">🚴 Sedang — standar audiobook profesional</SelectItem>
+                      <SelectItem value="fast">🏃 Cepat — ringkas, langsung ke inti</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Bahasa</Label>
+                  <Select
+                    value={taskConfig.audiobookLanguageStyle || 'semiformal'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookLanguageStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="formal">🎩 Formal — Baku, "Anda", tanpa ekspresi informal</SelectItem>
+                      <SelectItem value="semiformal">👔 Semi-Formal — Baku tapi mengalir natural</SelectItem>
+                      <SelectItem value="casual">👕 Kasual — Santai, "kamu", sehari-hari</SelectItem>
+                      <SelectItem value="bilingual">🌐 Bilingual — Campuran Indonesia-Inggris</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Penekanan Emosi</Label>
+                  <Select
+                    value={taskConfig.audiobookEmphasis || 'moderate'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookEmphasis', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-emphasis">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="minimal">📊 Minimal — Netral, informatif, tanpa drama</SelectItem>
+                      <SelectItem value="moderate">⚖️ Moderate — Seimbang fakta & nuansa emosi</SelectItem>
+                      <SelectItem value="strong">🎭 Kuat — Penuh penghayatan & ekspresi mendalam</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Konteks Mendengarkan</Label>
+                  <Select
+                    value={taskConfig.audiobookListeningContext || 'general'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookListeningContext', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-context">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">📻 Umum / Fleksibel</SelectItem>
+                      <SelectItem value="commute">🚗 Perjalanan (commute) — fokus tetap di jalan</SelectItem>
+                      <SelectItem value="study">📖 Belajar Serius — konsentrasi penuh</SelectItem>
+                      <SelectItem value="workout">🏋️ Olahraga — energik, memompa semangat</SelectItem>
+                      <SelectItem value="relax">🛋️ Santai di Rumah — nyaman, tidak terburu</SelectItem>
+                      <SelectItem value="sleep">🌙 Menjelang Tidur — pelan, menenangkan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Musik Latar / Suasana Audio</Label>
+                  <Select
+                    value={taskConfig.audiobookMusicStyle || 'instrumental'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookMusicStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-music">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">🔇 Tanpa Musik — narasi saja</SelectItem>
+                      <SelectItem value="instrumental">🎵 Instrumental Ringan — standar audiobook</SelectItem>
+                      <SelectItem value="ambient">🌊 Ambient / Nature Sound</SelectItem>
+                      <SelectItem value="cinematic">🎬 Cinematic / Dramatis</SelectItem>
+                      <SelectItem value="motivational">⚡ Upbeat Motivational</SelectItem>
+                      <SelectItem value="meditation">🧘 Meditasi / Lo-fi Tenang</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+
+            {/* CAKUPAN & STRUKTUR */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Cakupan & Struktur Bab</p>
               <div className="space-y-2">
                 <Label>Fokus Output</Label>
                 <Select
@@ -1760,40 +1882,112 @@ export function TaskConfigPanel({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="full">Seluruh Buku — Narasi lengkap semua bab</SelectItem>
-                    <SelectItem value="intro">Intro + Bab 1 — Preview menarik untuk promosi</SelectItem>
-                    <SelectItem value="summary">Ringkasan Per Bab — Poin utama saja</SelectItem>
-                    <SelectItem value="highlights">Highlight — Kutipan & insight terbaik</SelectItem>
+                    <SelectItem value="full">📚 Seluruh Buku — narasi lengkap semua bab</SelectItem>
+                    <SelectItem value="intro">🎬 Intro + Bab 1 — preview menarik untuk promosi</SelectItem>
+                    <SelectItem value="per_bab">📖 Per Bab Tertentu — pilih bab spesifik</SelectItem>
+                    <SelectItem value="summary">📝 Ringkasan Per Bab — poin utama saja</SelectItem>
+                    <SelectItem value="highlights">✨ Highlight Terbaik — kutipan & insight paling impactful</SelectItem>
+                    <SelectItem value="single_bab">🎯 Satu Bab Saja — deep dive satu bab</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>Penekanan Emosi</Label>
-                <Select
-                  value={taskConfig.audiobookEmphasis || 'moderate'}
-                  onValueChange={(value) => onTaskConfigChange('audiobookEmphasis', value)}
-                >
-                  <SelectTrigger data-testid="select-audiobook-emphasis">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="minimal">Minimal — Netral, informatif</SelectItem>
-                    <SelectItem value="moderate">Moderate — Seimbang antara fakta & emosi</SelectItem>
-                    <SelectItem value="strong">Kuat — Penuh penghayatan & ekspresi</SelectItem>
-                  </SelectContent>
-                </Select>
+              {needsChapterRef && (
+                <div className="space-y-2">
+                  <Label>Referensi Bab / Bagian Spesifik</Label>
+                  <Input
+                    placeholder="Contoh: Bab 3 – Strategi Pemasaran Digital, atau Bab 5 & 6, atau Pendahuluan"
+                    value={taskConfig.audiobookChapterRef || ''}
+                    onChange={(e) => onTaskConfigChange('audiobookChapterRef', e.target.value)}
+                    data-testid="input-audiobook-chapter-ref"
+                  />
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Gaya Pembuka Setiap Bab</Label>
+                  <Select
+                    value={taskConfig.audiobookOpeningStyle || 'hook'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookOpeningStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-opening">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hook">🪝 Hook Kuat — pernyataan mengejutkan atau pertanyaan provokatif</SelectItem>
+                      <SelectItem value="anekdot">📖 Anekdot / Mini-Cerita — kisah nyata sebelum masuk materi</SelectItem>
+                      <SelectItem value="fakta">📊 Fakta Mengejutkan — statistik atau data yang tidak terduga</SelectItem>
+                      <SelectItem value="pertanyaan">❓ Pertanyaan Reflektif — ajak pendengar berpikir</SelectItem>
+                      <SelectItem value="kutipan">💬 Kutipan Inspiratif — dari tokoh relevan</SelectItem>
+                      <SelectItem value="langsung">⚡ Langsung ke Inti — tanpa basa-basi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Penutup Setiap Bab</Label>
+                  <Select
+                    value={taskConfig.audiobookClosingStyle || 'summary'}
+                    onValueChange={(value) => onTaskConfigChange('audiobookClosingStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-audiobook-closing">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="summary">📋 Ringkasan 3 Poin — recap singkat</SelectItem>
+                      <SelectItem value="teaser">🔮 Teaser Bab Berikutnya — cliffhanger menarik</SelectItem>
+                      <SelectItem value="challenge">🏆 Tantangan Praktis — 1 aksi nyata untuk dilakukan</SelectItem>
+                      <SelectItem value="refleksi">🪞 Pertanyaan Refleksi — ajak introspeksi</SelectItem>
+                      <SelectItem value="motivasi">💪 Pesan Motivasi — kata-kata penguatan</SelectItem>
+                      <SelectItem value="kombinasi">⚡ Kombinasi — ringkasan + teaser + aksi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
+
+            {/* ELEMEN KHUSUS */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Elemen Khusus dalam Narasi</p>
+                {selectedSpecials.length > 0 && (
+                  <span className="text-xs text-primary">({selectedSpecials.length} aktif)</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="audiobook-special-elements">
+                {AB_SPECIAL_ELEMENTS.map((el) => {
+                  const isSelected = selectedSpecials.includes(el.id);
+                  return (
+                    <div
+                      key={el.id}
+                      className={cn("flex items-start gap-2.5 px-3 py-2.5 rounded-md border cursor-pointer transition-colors", isSelected ? "bg-primary/5 border-primary/30" : "hover:bg-muted/40 border-transparent")}
+                      onClick={() => toggleAbElement(el.id)}
+                      data-testid={`checkbox-ab-element-${el.id}`}
+                    >
+                      <Checkbox checked={isSelected} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className={cn("text-sm leading-tight", isSelected ? "font-medium text-foreground" : "text-muted-foreground")}>{el.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{el.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* TIP */}
             <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
               <p className="text-xs text-muted-foreground">
-                💡 <strong>Tip:</strong> Script yang dihasilkan menyertakan cue narasi seperti{' '}
-                <code className="bg-muted px-1 rounded text-xs">[JEDA PANJANG]</code>,{' '}
-                <code className="bg-muted px-1 rounded text-xs">[PENEKANAN]</code>, dan{' '}
-                <code className="bg-muted px-1 rounded text-xs">[MUSIK LATAR]</code> untuk membantu narasi.
+                💡 <strong>Notasi Produksi:</strong> Script dilengkapi cue{' '}
+                <code className="bg-muted px-1 rounded text-xs">[JEDA PENDEK]</code>{' '}
+                <code className="bg-muted px-1 rounded text-xs">[PENEKANAN]</code>{' '}
+                <code className="bg-muted px-1 rounded text-xs">[NADA NAIK]</code>{' '}
+                <code className="bg-muted px-1 rounded text-xs">[MUSIK INTRO]</code>{' '}
+                untuk memandu rekaman secara profesional.
               </p>
             </div>
+
           </div>
         );
+      }
 
       case 'LANDING_PAGE':
         return (
@@ -1923,7 +2117,11 @@ export function TaskConfigPanel({
         const extras = [interCount > 0 ? `${interCount} teknik interaksi` : '', specCount > 0 ? `${specCount} segmen khusus` : ''].filter(Boolean).join(', ');
         return `Script ${taskConfig.podcastStyle || 'interview'} | ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} | ${taskConfig.podcastEpisodeLength || '15-20 menit'}${extras ? ` | ${extras}` : ''}`;
       }
-      case 'AUDIOBOOK_SCRIPT': return `Narasi ${taskConfig.audiobookTone || 'conversational'}, pace ${taskConfig.audiobookPace || 'medium'} — ${taskConfig.audiobookChapterFocus === 'full' ? 'seluruh bab' : 'per bab'}`;
+      case 'AUDIOBOOK_SCRIPT': {
+        const elCount = (taskConfig.audiobookSpecialElements || '').split('|||').filter(Boolean).length;
+        const focusLabel: Record<string, string> = { full: 'Seluruh buku', intro: 'Intro+Bab1', per_bab: 'Per Bab', single_bab: 'Deep Dive', summary: 'Ringkasan', highlights: 'Highlight' };
+        return `${taskConfig.audiobookTone || 'conversational'} | ${taskConfig.audiobookPace || 'medium'} pace | ${focusLabel[taskConfig.audiobookChapterFocus || 'full']}${elCount > 0 ? ` | ${elCount} elemen khusus` : ''}`;
+      }
       case 'LANDING_PAGE': return `${taskConfig.landingPageStyle === 'long-form' ? 'Long-form' : taskConfig.landingPageStyle === 'short' ? 'Short copy' : 'VSL'} landing page${taskConfig.landingPagePrice ? ` · Harga: ${taskConfig.landingPagePrice}` : ''}`;
       default: return 'Konfigurasi mode';
     }
