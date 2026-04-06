@@ -378,28 +378,145 @@ REKOMENDASI HARGA (dalam Rupiah, berdasarkan segmen target):
 `;
       break;
 
-    case 'PROMPT_PACK':
+    case 'PROMPT_PACK': {
+      const packWorkflowDetails: Record<string, { label: string; flow: string; steps: string[] }> = {
+        ebook_author:      { label: '📚 Ebook Author Kit', flow: 'Ide → Riset → Outline → Draft Bab → Editing → Blurb & Promo', steps: ['Brainstorm & Validasi Ide', 'Riset Mendalam & Kompetitor Analisis', 'Outline Daftar Isi Lengkap', 'Draft Bab Utama', 'Editing & Polish Konten', 'Blurb, Judul Alternatif & Promo Copy'] },
+        social_media:      { label: '📱 Social Media 30-Day Calendar', flow: 'Strategi → Pilar → Kalender → Caption → Hashtag', steps: ['Strategi & Positioning Brand', 'Tentukan Content Pillars', 'Susun Kalender Konten 30 Hari', 'Generate Caption Engaging', 'Riset & Cluster Hashtag Optimal'] },
+        product_launch:    { label: '🚀 Product Launch Sequence', flow: 'Riset → Hook → Email Sequence → Sales Page → Follow-Up', steps: ['Riset Pasar & Positioning', 'Hook & Value Proposition', 'Email Pre-Launch (3 email)', 'Sales Page / Landing Page Copy', 'Email Follow-Up & Objection Handler'] },
+        online_course:     { label: '🎓 Online Course Creator', flow: 'Kurikulum → Modul → Skrip → Slide → Kuis', steps: ['Desain Kurikulum & Learning Outcomes', 'Breakdown Modul & Lesson', 'Skrip Video per Lesson', 'Slide Deck & Visual Outline', 'Assessment & Quiz per Modul'] },
+        seo_blog:          { label: '🔍 SEO Blog Post Workflow', flow: 'Keyword → Outline → Artikel → Meta → Optimasi', steps: ['Riset Keyword & Kompetitor', 'Outline Artikel Berbasis SEO', 'Tulis Artikel Lengkap', 'Meta Title & Meta Description', 'Internal Link & CTA Optimization'] },
+        business_starter:  { label: '💼 Business Starter Pack', flow: 'Nama → Tagline → Value Prop → Model Bisnis → Pitch Deck', steps: ['Nama Brand & Identitas Bisnis', 'Tagline & Positioning Statement', 'Value Proposition & Target Pasar', 'Business Model Canvas', 'Elevator Pitch & Pitch Deck Outline'] },
+        personal_brand:    { label: '🌟 Personal Branding Kit', flow: 'Niche → Bio → Pilar → Story → Portfolio', steps: ['Temukan Niche & Unique Authority', 'Bio Multi-Platform (LinkedIn, IG, Twitter)', 'Content Pillars & Editorial Voice', 'Brand Story & Origin Story', 'Showcase Portfolio & Social Proof'] },
+        ecourse_marketing: { label: '💰 E-Course Launch Marketing', flow: 'Landing Page → Webinar → Email Funnel → Iklan → Closing', steps: ['Landing Page Copy Long-Form', 'Skrip Webinar / Live Selling', 'Email Funnel 5-7 Email', 'Ad Copy (Facebook/Instagram/TikTok)', 'Closing Script & Bonus Offer'] },
+        umkm_digital:      { label: '🏪 UMKM Digital Starter', flow: 'Profil → Katalog → Caption → DM Script → Closing', steps: ['Profil Bisnis & Brand Story', 'Deskripsi Produk Katalog', 'Caption Jualan Media Sosial', 'Script DM & WhatsApp', 'Teknik Closing & Follow-Up'] },
+        youtube_channel:   { label: '▶️ YouTube Channel Builder', flow: 'Niche → Strategi → Script → Thumbnail → SEO → Community', steps: ['Niche, Positioning & Channel Strategy', 'Skrip Video Pertama (Hook s/d Outro)', 'Judul & Thumbnail Hook Copy', 'Deskripsi & Tag SEO YouTube', 'Community Post & Engagement Strategy'] },
+        newsletter_series: { label: '📧 Email Newsletter Series', flow: 'Welcome → Value → Nurture → Pitch → Reaktivasi', steps: ['Welcome Email & First Impression', 'Value Series (3 email edukasi)', 'Nurture & Relationship Building', 'Pitch Email (Soft → Hard Sell)', 'Re-engagement & Reaktivasi Subscriber'] },
+        consultant_kit:    { label: '🧠 Consultant Toolkit', flow: 'Proposal → Scope → Deliverable → Laporan → Presentasi', steps: ['Template Proposal Jasa Konsultasi', 'Scoping & Project Plan', 'Deliverable & Working Document', 'Executive Summary & Laporan', 'Deck Presentasi & Follow-Up Email'] },
+        training_module:   { label: '🏫 Training Module Designer', flow: 'TNA → Modul → Materi → Role-Play → Evaluasi', steps: ['Training Needs Analysis (TNA)', 'Desain Modul & Silabus', 'Materi & Handout Peserta', 'Skenario Role-Play & Studi Kasus', 'Lembar Evaluasi & Post-Test'] },
+        research_writer:   { label: '🔬 Research & Academic Writer', flow: 'Topik → Literatur → Kerangka → Draf → Abstrak → Sitasi', steps: ['Definisi Topik & Pertanyaan Penelitian', 'Ulasan Literatur & Framework Teoritis', 'Kerangka Penulisan & Metodologi', 'Draf Konten per Bab/Seksi', 'Abstrak, Kesimpulan & Rekomendasi'] },
+        startup_mvp:       { label: '⚡ Startup MVP Builder', flow: 'Problem → Solution → MVP → Roadmap → Pitch Deck → GTM', steps: ['Problem-Solution Fit Analysis', 'MVP Feature Scoping & Prioritas', 'Product Roadmap & Timeline', 'Investor Pitch Deck Outline', 'Go-to-Market Strategy'] },
+        custom:            { label: '✏️ Workflow Kustom', flow: 'Sesuai tujuan Anda', steps: ['Tahap 1', 'Tahap 2', 'Tahap 3', 'Tahap 4', 'Tahap 5'] },
+      };
+
+      const aiToolNames: Record<string, string> = {
+        chatgpt: 'ChatGPT (GPT-4o)',
+        claude: 'Claude (Anthropic)',
+        gemini: 'Gemini (Google)',
+        perplexity: 'Perplexity AI',
+        copilot: 'Microsoft Copilot',
+        grok: 'Grok (xAI)',
+        chaesa: 'Chaesa AI',
+        universal: 'Platform AI Universal',
+      };
+
+      const depthInstructions: Record<string, string> = {
+        beginner: `TINGKAT PEMULA: Setiap prompt harus:
+- Dimulai dengan kalimat "Mulai percakapan baru dengan AI, lalu paste prompt berikut:"
+- Sertakan penjelasan SEBELUM dan SESUDAH prompt tentang apa yang harus dilakukan user
+- Instruksi di dalam prompt sangat detail, tidak ada asumsi
+- Tambahkan catatan troubleshooting jika AI tidak memberikan hasil yang diharapkan`,
+        intermediate: `TINGKAT MENENGAH: Setiap prompt:
+- Langsung ke isi prompt tanpa terlalu banyak panduan awal
+- Sisipkan teknik prompting yang sudah umum dikenal
+- Berikan brief note (1 kalimat) tentang cara optimal menggunakannya`,
+        advanced: `TINGKAT MAHIR: Setiap prompt:
+- Padat, presisi, dan menggunakan teknik prompt engineering lanjutan
+- Tidak perlu panduan dasar — asumsi user sudah mahir
+- Fokus pada efisiensi dan hasil berkualitas tinggi`,
+        expert: `TINGKAT EXPERT: Setiap prompt:
+- Gunakan teknik meta-prompting, system-level framing, dan constraint engineering
+- Prompt ditulis seperti gaya system prompt GPT
+- Tidak ada panduan — murni teks prompt yang sudah siap dipaste`,
+      };
+
+      const outputStyleNotes: Record<string, string> = {
+        structured: 'Output setiap prompt harus dalam format terstruktur: gunakan header ##, sub-header ###, dan bullet points. Wajib ada struktur yang jelas dan mudah di-scan.',
+        narrative: 'Output setiap prompt dalam bentuk narasi mengalir — paragraf penuh, seperti artikel atau laporan. Hindari terlalu banyak poin-poin.',
+        table: 'Output setiap prompt sebisa mungkin menggunakan tabel atau matrix untuk mempermudah perbandingan dan perencanaan.',
+        template: 'Output setiap prompt berupa TEMPLATE dengan placeholder dalam format [NAMA_PLACEHOLDER] yang bisa langsung diisi oleh user.',
+        mixed: 'Output setiap prompt kombinasi: penjelasan singkat + poin-poin key takeaway + minimal 1 contoh konkret / studi kasus.',
+        code_script: 'Output setiap prompt berupa kode, formula Excel/Sheets, script automasi, atau template terstruktur yang siap dieksekusi.',
+      };
+
+      const selectedTechs = (taskConfig.packTechniques || '').split('|||').filter(Boolean);
+      const techDesc: Record<string, string> = {
+        chain_of_thought: 'TEKNIK CHAIN OF THOUGHT: Tambahkan instruksi "Pikirkan langkah demi langkah sebelum memberikan jawaban" di setiap prompt.',
+        persona_acting: 'TEKNIK PERSONA ACTING: Setiap prompt dimulai dengan "Kamu adalah [expert/role spesifik]..." yang relevan dengan tahapan tersebut.',
+        few_shot: 'TEKNIK FEW-SHOT: Sertakan 1-2 contoh konkret output ideal di dalam prompt sebagai referensi AI.',
+        role_play: 'TEKNIK ROLE-PLAY: Frame prompt sebagai situasi nyata atau dialog antara user dan expert.',
+        output_structure: 'TEKNIK OUTPUT STRUCTURING: Sertakan template format output yang harus diikuti AI secara persis.',
+        self_critique: 'TEKNIK SELF-CRITIQUE: Di akhir setiap prompt, tambahkan "Sebelum menjawab, evaluasi draft-mu sendiri dan revisi jika perlu."',
+        iterative_refine: 'TEKNIK ITERATIVE REFINEMENT: Setiap prompt secara eksplisit merujuk dan membangun dari output prompt sebelumnya.',
+        constraint_based: 'TEKNIK CONSTRAINT-BASED: Tambahkan batasan ketat (panjang maksimum, format wajib, kata/frasa yang harus ada/dilarang).',
+      };
+
+      const appliedTechs = selectedTechs.map(t => techDesc[t]).filter(Boolean);
+      const packInfo = packWorkflowDetails[taskConfig.packType] || packWorkflowDetails['custom'];
+      const numPrompts = parseInt(taskConfig.packNumPrompts || '5', 10);
+      const langNote = taskConfig.packLanguage === 'english' ? 'PENTING: Tulis semua prompt dalam Bahasa INGGRIS.' : taskConfig.packLanguage === 'bilingual' ? 'PENTING: Tulis judul & penjelasan dalam Bahasa Indonesia, tapi isi prompt dalam Bahasa Inggris.' : 'Tulis semua prompt dalam Bahasa Indonesia.';
+
       taskInstruction = `
-MODE TUGAS: PROMPT PACK GENERATOR (WORKFLOW CREATOR)
+MODE TUGAS: PROMPT PACK GENERATOR — WORKFLOW CREATOR
 ${styleReminder}
 
-Saya ingin Anda bertindak sebagai **Senior Prompt Engineer**.
-Tugas Anda BUKAN membuat konten ebook, melainkan membuat **RANGKAIAN PROMPT (PACK)** yang bisa saya gunakan di ChatGPT/Claude untuk menyelesaikan pekerjaan besar langkah demi langkah.
+Bertindaklah sebagai **Senior Prompt Engineer & AI Workflow Specialist** yang berpengalaman merancang sistem prompting untuk klien profesional Indonesia.
+
+Tugas Anda BUKAN membuat konten ebook — melainkan merancang **PACK berisi ${numPrompts} PROMPT BERURUTAN** yang membentuk sebuah workflow kerja end-to-end yang bisa dijalankan di **${aiToolNames[taskConfig.packAiTool || 'chatgpt']}**.
+
+=== IDENTITAS PROJECT ===
+- Topik / Bidang: **${projectData.topik}**
+- Industri: ${projectData.industri || 'Umum'}
+- Target Pengguna Pack: ${projectData.target || 'Profesional Indonesia'}
+- Judul Ebook (konteks): ${projectData.judul || '[Belum ditentukan]'}
+${taskConfig.packCustomContext ? `- Konteks Tambahan dari User: ${taskConfig.packCustomContext}` : ''}
 
 === SPESIFIKASI PACK ===
-1. **Jenis Workflow:** ${taskConfig.packType}
-2. **Topik Utama:** ${projectData.topik}
-3. **Tujuan Akhir:** Membantu user menyelesaikan seluruh proses dari A sampai Z secara mandiri menggunakan AI.
+- **Jenis Workflow:** ${packInfo.label}
+- **Alur:** ${packInfo.flow}
+- **Platform AI:** ${aiToolNames[taskConfig.packAiTool || 'chatgpt']}
+- **Jumlah Prompt:** ${numPrompts} prompt berurutan
+- **Format Output:** ${outputStyleNotes[taskConfig.packOutputStyle || 'structured']}
+- **Bahasa:** ${langNote}
+${taskConfig.packType === 'custom' && taskConfig.packGoal ? `- **Tujuan Kustom:** ${taskConfig.packGoal}` : ''}
 
-=== OUTPUT YANG DIMINTA ===
-Buatkan 5-7 Prompt Berurutan (Sequential Prompts). Untuk setiap prompt, berikan:
-1. **Judul Tahapan** (Misal: Tahap 1 - Riset Ide).
-2. **Isi Prompt** (Teks prompt yang siap di-copy paste oleh user, gunakan teknik *persona acting* dan *chain of thought*).
-3. **Penjelasan Singkat** (Apa tujuan prompt ini).
+=== INSTRUKSI KEDALAMAN ===
+${depthInstructions[taskConfig.packDepth || 'intermediate']}
 
-Pastikan prompt tersebut saling berkesinambungan (Prompt 2 menggunakan hasil dari Prompt 1).
+=== TEKNIK PROMPTING YANG HARUS DITERAPKAN ===
+${appliedTechs.length > 0 ? appliedTechs.join('\n') : '• Gunakan teknik prompt engineering terbaik yang sesuai dengan setiap tahapan workflow.'}
+
+=== FORMAT OUTPUT PACK ===
+Untuk setiap dari ${numPrompts} prompt, gunakan format ini PERSIS:
+
+---
+## 🔷 PROMPT [N] — [Nama Tahapan]
+**Fungsi:** [Apa yang akan dihasilkan dari prompt ini — 1 kalimat]
+**Input Dibutuhkan:** [Apa yang user perlu siapkan sebelum menjalankan prompt ini]
+**Platform:** ${aiToolNames[taskConfig.packAiTool || 'chatgpt']}
+
+### 📋 TEKS PROMPT (Copy-Paste Langsung):
+\`\`\`
+[Isi prompt lengkap yang SIAP di-copy-paste — ditulis dalam ${taskConfig.packLanguage === 'english' ? 'English' : 'Bahasa Indonesia'}]
+[Terapkan teknik: ${appliedTechs.length > 0 ? selectedTechs.join(', ') : 'best practices'}]
+[Prompt harus spesifik untuk topik: ${projectData.topik}]
+\`\`\`
+
+**💡 Tips Penggunaan:** [1-2 kalimat cara optimal menggunakan prompt ini]
+**🔗 Koneksi ke Prompt Berikutnya:** [Bagaimana output prompt ini digunakan di prompt selanjutnya]
+
+---
+
+=== CATATAN KUALITAS ===
+- Setiap prompt HARUS standalone (bisa dijalankan sendiri) SEKALIGUS connected (terintegrasi dengan workflow)
+- Prompt harus menghasilkan output yang ACTIONABLE dan spesifik — bukan generik
+- Hindari prompt yang terlalu umum — selalu sisipkan konteks topik: **${projectData.topik}**
+- Sertakan variabel yang bisa diganti user dengan tanda [KURUNG SIKU] untuk personalisasi
+- Di akhir pack, tambahkan seksi **"⚡ TIPS PRO MENGGUNAKAN PACK INI"** berisi 3-5 tips memaksimalkan workflow ini
+
+Mulai dari Prompt 1 dan lanjutkan sampai Prompt ${numPrompts} secara berurutan.
 `;
       break;
+    }
 
     case 'GPT_BUILDER':
       taskInstruction = `

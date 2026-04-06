@@ -872,30 +872,267 @@ export function TaskConfigPanel({
         );
       }
 
-      case 'PROMPT_PACK':
+      case 'PROMPT_PACK': {
+        const PACK_WORKFLOW_MAP: Record<string, { label: string; desc: string; steps: string; category: string }> = {
+          ebook_author:       { label: '📚 Ebook Author Kit',             desc: 'Ide → Research → Outline → Draft Bab → Editing → Blurb', steps: 'Ide, Riset, Outline, Draf, Edit, Finalisasi', category: 'content' },
+          social_media:       { label: '📱 Social Media 30-Day Calendar', desc: 'Topik → Content Pillars → Caption → Hashtag → Schedule', steps: 'Strategi, Pilar, Kalender, Caption, Hashtag', category: 'marketing' },
+          product_launch:     { label: '🚀 Product Launch Sequence',       desc: 'Hook → Email 1-3 → Sales Page → Objection Handler', steps: 'Riset Pasar, Hook, Email Series, Sales Page, Follow-Up', category: 'marketing' },
+          online_course:      { label: '🎓 Online Course Creator',         desc: 'Kurikulum → Modul → Skrip → Slide → Assessment', steps: 'Kurikulum, Modul, Skrip Video, Slide, Kuis', category: 'education' },
+          seo_blog:           { label: '🔍 SEO Blog Post Workflow',        desc: 'Keyword → Outline → Artikel → Meta → Internal Link', steps: 'Keyword Research, Outline, Artikel, Meta SEO, Optimasi', category: 'content' },
+          business_starter:   { label: '💼 Business Starter Pack',        desc: 'Nama → Tagline → Value Prop → Business Model → Pitch', steps: 'Nama & Brand, Tagline, Proposi Nilai, Model Bisnis, Pitch Deck', category: 'business' },
+          personal_brand:     { label: '🌟 Personal Branding Kit',        desc: 'Bio → Content Pillars → Story → Niche → Portfolio Hook', steps: 'Bio, Niche, Pilar Konten, Storytelling, Portfolio', category: 'marketing' },
+          ecourse_marketing:  { label: '💰 E-Course Launch Marketing',    desc: 'Landing Page → Webinar Script → Email Funnel → Ads Copy', steps: 'Landing Page, Webinar, Email Funnel, Iklan, CTA', category: 'marketing' },
+          umkm_digital:       { label: '🏪 UMKM Digital Starter',         desc: 'Profil Bisnis → Katalog → Caption Jualan → DM Script → Closing', steps: 'Profil, Katalog, Caption, Script DM, Teknik Closing', category: 'business' },
+          youtube_channel:    { label: '▶️ YouTube Channel Builder',      desc: 'Niche → Channel Strategy → Video Script → Thumbnail → SEO', steps: 'Niche & Strategi, Script, Thumbnail, SEO, Community', category: 'content' },
+          newsletter_series:  { label: '📧 Email Newsletter Series',      desc: 'Welcome → Value Series → Nurture → Pitch → Reactivation', steps: 'Welcome Email, Value Series, Nurture, Pitch, Reaktivasi', category: 'marketing' },
+          consultant_kit:     { label: '🧠 Consultant Toolkit',           desc: 'Proposal → Deliverable → Report → Presentation → Follow-Up', steps: 'Proposal, Scoping, Deliverable, Laporan, Presentasi', category: 'business' },
+          training_module:    { label: '🏫 Training Module Designer',     desc: 'TNA → Modul → Materi → Evaluasi → Sertifikat', steps: 'Analisis Kebutuhan, Modul, Materi, Role-Play, Evaluasi', category: 'education' },
+          research_writer:    { label: '🔬 Research & Academic Writer',   desc: 'Topik → Literatur → Kerangka → Draf → Sitasi → Abstract', steps: 'Topik, Literatur, Kerangka, Draf, Abstrak, Sitasi', category: 'education' },
+          startup_mvp:        { label: '⚡ Startup MVP Builder',           desc: 'Problem → Solution → MVP Spec → Pitch Deck → Fundraising', steps: 'Problem-Solution, MVP, Roadmap, Pitch Deck, Go-to-Market', category: 'business' },
+          custom:             { label: '✏️ Workflow Kustom',              desc: 'Rancang workflow prompt Anda sendiri dari nol', steps: 'Sesuai tujuan & kebutuhan Anda', category: 'custom' },
+        };
+
+        const PACK_TECHNIQUES = [
+          { id: 'chain_of_thought',  label: '🧠 Chain of Thought',       desc: 'AI diminta berpikir langkah demi langkah sebelum menjawab' },
+          { id: 'persona_acting',    label: '🎭 Persona Acting',          desc: 'AI berperan sebagai expert spesifik (misal: "Kamu adalah copywriter berpengalaman 15 tahun...")' },
+          { id: 'few_shot',          label: '📋 Few-Shot Examples',       desc: 'Sertakan 1-3 contoh output ideal di dalam prompt' },
+          { id: 'role_play',         label: '🎬 Role-Play Scenario',      desc: 'Prompt disajikan dalam bentuk situasi/dialog nyata' },
+          { id: 'output_structure',  label: '📐 Output Structuring',      desc: 'AI diberi template/format output yang harus diikuti persis' },
+          { id: 'self_critique',     label: '🔍 Self-Critique & Revise',  desc: 'AI diminta mengevaluasi dan merevisi outputnya sendiri sebelum disajikan' },
+          { id: 'iterative_refine',  label: '🔄 Iterative Refinement',    desc: 'Setiap prompt membangun dan menyempurnakan hasil prompt sebelumnya' },
+          { id: 'constraint_based',  label: '⛓️ Constraint-Based',        desc: 'Berikan batasan ketat (panjang, format, kata yang dilarang, dll)' },
+        ];
+
+        const selectedTechniques = (taskConfig.packTechniques || '').split('|||').filter(Boolean);
+        const toggleTechnique = (id: string) => {
+          const parts = (taskConfig.packTechniques || '').split('|||').filter(Boolean);
+          const updated = parts.includes(id) ? parts.filter(p => p !== id) : [...parts, id];
+          onTaskConfigChange('packTechniques', updated.join('|||'));
+        };
+
+        const currentPack = PACK_WORKFLOW_MAP[taskConfig.packType] || PACK_WORKFLOW_MAP['ebook_author'];
+
         return (
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Jenis Workflow Pack</Label>
-              <Select
-                value={taskConfig.packType}
-                onValueChange={(value) => onTaskConfigChange('packType', value)}
-              >
-                <SelectTrigger data-testid="select-pack-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PACK_TYPES.map((pack) => (
-                    <SelectItem key={pack} value={pack}>{pack}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+          <div className="space-y-5">
+
+            {/* PILIH WORKFLOW PACK */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pilih Workflow Pack</p>
+
+              {/* Category filter */}
+              <div className="flex flex-wrap gap-1.5">
+                {(['Semua', 'content', 'marketing', 'business', 'education', 'custom'] as const).map(cat => {
+                  const catLabel: Record<string, string> = { Semua: 'Semua', content: '✍️ Konten', marketing: '📢 Marketing', business: '💼 Bisnis', education: '🎓 Edukasi', custom: '✏️ Kustom' };
+                  const activeCat = taskConfig.packCategory || 'content';
+                  const isActive = cat === 'Semua' ? false : activeCat === cat;
+                  return (
+                    <button
+                      key={cat}
+                      className={cn("text-xs px-2.5 py-1 rounded-full border transition-colors", cat === 'Semua' ? "border-border hover:bg-muted" : isActive ? "bg-primary text-primary-foreground border-primary" : "border-border hover:bg-muted")}
+                      onClick={() => cat !== 'Semua' && onTaskConfigChange('packCategory', cat)}
+                      data-testid={`filter-pack-cat-${cat}`}
+                    >
+                      {catLabel[cat]}
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-1" data-testid="pack-workflow-list">
+                {Object.entries(PACK_WORKFLOW_MAP)
+                  .filter(([, v]) => !taskConfig.packCategory || taskConfig.packCategory === 'content' || v.category === taskConfig.packCategory || taskConfig.packCategory === 'Semua')
+                  .map(([key, val]) => {
+                    const isSelected = taskConfig.packType === key;
+                    return (
+                      <div
+                        key={key}
+                        className={cn("px-3 py-2.5 rounded-md border cursor-pointer transition-colors", isSelected ? "bg-primary/5 border-primary/40" : "hover:bg-muted/40 border-transparent hover:border-border")}
+                        onClick={() => { onTaskConfigChange('packType', key); onTaskConfigChange('packCategory', val.category); }}
+                        data-testid={`pack-option-${key}`}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className={cn("w-3.5 h-3.5 rounded-full border-2 mt-0.5 shrink-0 flex items-center justify-center", isSelected ? "border-primary bg-primary" : "border-muted-foreground/40")}>
+                            {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                          </div>
+                          <div className="min-w-0">
+                            <p className={cn("text-sm font-medium leading-tight", isSelected ? "text-foreground" : "text-muted-foreground")}>{val.label}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">{val.desc}</p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+
+              {taskConfig.packType === 'custom' && (
+                <div className="space-y-2">
+                  <Label>Tujuan Workflow Kustom Anda</Label>
+                  <Textarea
+                    placeholder="Contoh: Saya ingin membuat rangkaian prompt untuk membantu saya menulis buku motivasi, mulai dari menemukan tema kuat, membuat quote-quote viral, hingga menyusun bab per bab secara sistematis."
+                    rows={3}
+                    value={taskConfig.packGoal || ''}
+                    onChange={(e) => onTaskConfigChange('packGoal', e.target.value)}
+                    className="text-sm resize-none"
+                    data-testid="textarea-pack-goal"
+                  />
+                </div>
+              )}
+
+              {taskConfig.packType !== 'custom' && (
+                <div className="bg-muted/40 rounded-md px-3 py-2 text-xs text-muted-foreground">
+                  <span className="font-medium">Langkah-langkah: </span>{currentPack.steps}
+                </div>
+              )}
             </div>
-            <p className="text-sm text-muted-foreground">
-              Prompt Pack adalah rangkaian prompt berurutan yang memandu Anda menyelesaikan project besar langkah demi langkah.
-            </p>
+
+            {/* TARGET & JUMLAH */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Target & Struktur Pack</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Platform AI Target</Label>
+                  <Select
+                    value={taskConfig.packAiTool || 'chatgpt'}
+                    onValueChange={(value) => onTaskConfigChange('packAiTool', value)}
+                  >
+                    <SelectTrigger data-testid="select-pack-ai-tool">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="chatgpt">🤖 ChatGPT (GPT-4/4o)</SelectItem>
+                      <SelectItem value="claude">🔵 Claude (Anthropic)</SelectItem>
+                      <SelectItem value="gemini">💎 Gemini (Google)</SelectItem>
+                      <SelectItem value="perplexity">🔍 Perplexity AI</SelectItem>
+                      <SelectItem value="copilot">🪟 Microsoft Copilot</SelectItem>
+                      <SelectItem value="grok">⚡ Grok (xAI)</SelectItem>
+                      <SelectItem value="chaesa">🌟 Chaesa AI (aplikasi ini)</SelectItem>
+                      <SelectItem value="universal">🌐 Universal (semua platform)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Jumlah Prompt dalam Pack</Label>
+                  <Select
+                    value={taskConfig.packNumPrompts || '5'}
+                    onValueChange={(value) => onTaskConfigChange('packNumPrompts', value)}
+                  >
+                    <SelectTrigger data-testid="select-pack-num">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="3">3 Prompt — Sprint cepat (1-2 jam)</SelectItem>
+                      <SelectItem value="5">5 Prompt — Standard workflow</SelectItem>
+                      <SelectItem value="7">7 Prompt — Komprehensif</SelectItem>
+                      <SelectItem value="10">10 Prompt — Full project end-to-end</SelectItem>
+                      <SelectItem value="12">12 Prompt — Masterclass workflow</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Tingkat Kedalaman Prompt</Label>
+                  <Select
+                    value={taskConfig.packDepth || 'intermediate'}
+                    onValueChange={(value) => onTaskConfigChange('packDepth', value)}
+                  >
+                    <SelectTrigger data-testid="select-pack-depth">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="beginner">🟢 Pemula — instruksi sangat jelas, step-by-step detail, tidak ada asumsi</SelectItem>
+                      <SelectItem value="intermediate">🟡 Menengah — instruksi jelas, sebagian diasumsikan sudah paham AI</SelectItem>
+                      <SelectItem value="advanced">🔴 Mahir — prompt padat, teknik lanjutan, minim penjelasan</SelectItem>
+                      <SelectItem value="expert">⚫ Expert — prompt-level system engineer, sudah mengenal jailbreak & meta-prompting</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Bahasa Prompt</Label>
+                  <Select
+                    value={taskConfig.packLanguage || 'indonesia'}
+                    onValueChange={(value) => onTaskConfigChange('packLanguage', value)}
+                  >
+                    <SelectTrigger data-testid="select-pack-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="indonesia">🇮🇩 Bahasa Indonesia</SelectItem>
+                      <SelectItem value="english">🇺🇸 English</SelectItem>
+                      <SelectItem value="bilingual">🌐 Bilingual (Indonesia + English)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Gaya / Format Output Tiap Prompt</Label>
+                <Select
+                  value={taskConfig.packOutputStyle || 'structured'}
+                  onValueChange={(value) => onTaskConfigChange('packOutputStyle', value)}
+                >
+                  <SelectTrigger data-testid="select-pack-output">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="structured">📐 Terstruktur — header, sub-header, poin-poin yang rapi</SelectItem>
+                    <SelectItem value="narrative">📖 Naratif — penjelasan panjang mengalir seperti artikel</SelectItem>
+                    <SelectItem value="table">📊 Tabel & Matrix — cocok untuk perbandingan atau planning</SelectItem>
+                    <SelectItem value="template">📄 Template Siap Isi — output berbentuk template dengan placeholder</SelectItem>
+                    <SelectItem value="mixed">🎨 Mix (Terstruktur + Contoh) — kombinasi poin dan contoh konkret</SelectItem>
+                    <SelectItem value="code_script">💻 Kode / Skrip — output berupa kode, formula, atau skrip siap pakai</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* TEKNIK PROMPTING */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Teknik Prompting yang Dipakai</p>
+                {selectedTechniques.length > 0 && (
+                  <span className="text-xs text-primary">({selectedTechniques.length} teknik aktif)</span>
+                )}
+              </div>
+              <div className="grid grid-cols-1 gap-2" data-testid="pack-techniques">
+                {PACK_TECHNIQUES.map((tech) => {
+                  const isSelected = selectedTechniques.includes(tech.id);
+                  return (
+                    <div
+                      key={tech.id}
+                      className={cn("flex items-start gap-2.5 px-3 py-2.5 rounded-md border cursor-pointer transition-colors", isSelected ? "bg-primary/5 border-primary/30" : "hover:bg-muted/40 border-transparent")}
+                      onClick={() => toggleTechnique(tech.id)}
+                      data-testid={`checkbox-pack-tech-${tech.id}`}
+                    >
+                      <Checkbox checked={isSelected} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className={cn("text-sm leading-tight", isSelected ? "font-medium text-foreground" : "text-muted-foreground")}>{tech.label}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{tech.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* KONTEKS TAMBAHAN */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Konteks & Instruksi Kustom</p>
+              <div className="space-y-2">
+                <Label>Konteks Khusus <span className="text-muted-foreground text-xs">(opsional — makin detail makin baik)</span></Label>
+                <Textarea
+                  placeholder={`Contoh:\n- "Saya seorang coach bisnis yang ingin mengotomatisasi pembuatan modul pelatihan"\n- "Target klien saya adalah UMKM F&B di Surabaya"\n- "Setiap prompt harus bisa dijalankan dalam 10 menit"\n- "Saya pakai ChatGPT gratis, jadi hindari instruksi yang butuh plugin"`}
+                  rows={3}
+                  value={taskConfig.packCustomContext || ''}
+                  onChange={(e) => onTaskConfigChange('packCustomContext', e.target.value)}
+                  className="text-sm resize-none"
+                  data-testid="textarea-pack-context"
+                />
+              </div>
+            </div>
+
           </div>
         );
+      }
 
       case 'GPT_BUILDER':
         return (
@@ -2341,7 +2578,12 @@ export function TaskConfigPanel({
       }
       case 'ECOURSE_BUILDER': return 'Ubah ebook menjadi kurikulum kursus online';
       case 'DOC_GENERATOR': return 'Buat dokumen kerja profesional (SOP, Policy, dll)';
-      case 'PROMPT_PACK': return 'Generate rangkaian prompt workflow untuk berbagai kebutuhan';
+      case 'PROMPT_PACK': {
+        const packLabelMap: Record<string,string> = { ebook_author:'📚 Ebook Author Kit', social_media:'📱 Social Media', product_launch:'🚀 Product Launch', online_course:'🎓 Online Course', seo_blog:'🔍 SEO Blog', business_starter:'💼 Business Starter', personal_brand:'🌟 Personal Branding', ecourse_marketing:'💰 E-Course Marketing', umkm_digital:'🏪 UMKM Digital', youtube_channel:'▶️ YouTube Builder', newsletter_series:'📧 Newsletter', consultant_kit:'🧠 Consultant Kit', training_module:'🏫 Training Module', research_writer:'🔬 Research Writer', startup_mvp:'⚡ Startup MVP', custom:'✏️ Kustom' };
+        const techCount = (taskConfig.packTechniques || '').split('|||').filter(Boolean).length;
+        const aiMap: Record<string,string> = { chatgpt:'ChatGPT', claude:'Claude', gemini:'Gemini', perplexity:'Perplexity', copilot:'Copilot', grok:'Grok', chaesa:'Chaesa', universal:'Universal' };
+        return `${packLabelMap[taskConfig.packType] || taskConfig.packType} | ${taskConfig.packNumPrompts || 5} prompt | ${aiMap[taskConfig.packAiTool || 'chatgpt']} | ${techCount} teknik`;
+      }
       case 'GPT_BUILDER': return 'Buat system prompt untuk chatbot berbasis ebook';
       case 'MARKETING_KIT': return 'Buat materi marketing untuk promosi ebook';
       case 'EXTEND_TEXT': return 'Kembangkan teks pendek menjadi konten yang lebih lengkap';
