@@ -1400,85 +1400,304 @@ export function TaskConfigPanel({
         );
       }
 
-      case 'PODCAST_GENERATOR':
+      case 'PODCAST_GENERATOR': {
+        const INTERACTION_OPTIONS = [
+          { id: 'sokrates',      label: '🧠 Pertanyaan Sokratik',    desc: 'Host menggali asumsi & definisi secara mendalam' },
+          { id: 'devil',         label: '😈 Devil\'s Advocate',       desc: 'Host menantang argumen Guest secara kritis' },
+          { id: 'roleplay',      label: '🎭 Role-Play Pemula',        desc: 'Host pura-pura tidak tahu, Guest jelaskan dari dasar' },
+          { id: 'analogi',       label: '🔗 Analogi & Metafora',      desc: 'Terjemahkan konsep kompleks dengan perumpamaan nyata' },
+          { id: 'hot_take',      label: '🔥 Hot Take',                desc: 'Pernyataan kontroversial lalu dibedah bersama' },
+          { id: 'data_driven',   label: '📊 Data-Driven Dialog',      desc: 'Referensi angka, riset, dan data dari materi ebook' },
+          { id: 'reflektif',     label: '🪞 Momen Reflektif',         desc: 'Jeda dan renungkan makna mendalam dari insight buku' },
+          { id: 'storytelling',  label: '📖 Sharing Cerita Nyata',    desc: 'Guest berbagi pengalaman nyata yang relevan' },
+        ];
+        const SPECIAL_SEGMENT_OPTIONS = [
+          { id: 'lightning',   label: '⚡ Lightning Round',         desc: '5 pertanyaan cepat di akhir episode' },
+          { id: 'qa_live',     label: '🙋 Sesi Q&A Simulasi',      desc: 'Host bawakan pertanyaan dari audiens/pembaca' },
+          { id: 'hot_seat',    label: '🪑 Hot Seat',                desc: 'Satu pertanyaan paling krusial dibahas tuntas' },
+          { id: 'mitos_fakta', label: '🔍 Mitos vs Fakta',         desc: 'Debunking miskonsepsi umum seputar topik ebook' },
+          { id: 'top3',        label: '🏆 Top 3 Key Insight',      desc: 'Tiga poin paling berharga dari materi buku' },
+          { id: 'aksi_nyata',  label: '🎯 Satu Aksi Nyata',        desc: '1 langkah konkret yang bisa pendengar lakukan hari ini' },
+        ];
+
+        const selectedInteractions = (taskConfig.podcastInteractionStyle || '').split('|||').filter(Boolean);
+        const selectedSpecials = (taskConfig.podcastSpecialSegments || '').split('|||').filter(Boolean);
+
+        const togglePodcastOption = (field: string, currentVal: string, id: string) => {
+          const parts = currentVal.split('|||').filter(Boolean);
+          const updated = parts.includes(id) ? parts.filter(p => p !== id) : [...parts, id];
+          onTaskConfigChange(field, updated.join('|||'));
+        };
+
         return (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nama Host (Pembawa Acara)</Label>
-                <Input
-                  placeholder="Contoh: Andi, Sarah, Budi..."
-                  value={taskConfig.podcastHost || 'Andi'}
-                  onChange={(e) => onTaskConfigChange('podcastHost', e.target.value)}
-                  data-testid="input-podcast-host"
-                />
+          <div className="space-y-5">
+
+            {/* KARAKTER PODCAST */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Karakter Pembicara</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Nama Host (Pembawa Acara)</Label>
+                  <Input
+                    placeholder="Contoh: Andi, Budi, Reza..."
+                    value={taskConfig.podcastHost || 'Andi'}
+                    onChange={(e) => onTaskConfigChange('podcastHost', e.target.value)}
+                    data-testid="input-podcast-host"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nama Guest / Narasumber</Label>
+                  <Input
+                    placeholder="Contoh: Sari, Michael, Dewi..."
+                    value={taskConfig.podcastGuest || 'Sari'}
+                    onChange={(e) => onTaskConfigChange('podcastGuest', e.target.value)}
+                    data-testid="input-podcast-guest"
+                  />
+                </div>
               </div>
-              <div className="space-y-2">
-                <Label>Nama Guest (Narasumber)</Label>
-                <Input
-                  placeholder="Contoh: Sari, Michael, Dewi..."
-                  value={taskConfig.podcastGuest || 'Sari'}
-                  onChange={(e) => onTaskConfigChange('podcastGuest', e.target.value)}
-                  data-testid="input-podcast-guest"
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Persona Host <span className="text-muted-foreground text-xs">(karakter & gaya bicara)</span></Label>
+                  <Textarea
+                    placeholder={`Contoh: Host yang kritis dan antusias, suka menggali detail. Berpengalaman sebagai jurnalis, bicara lugas namun ramah. Sering minta contoh nyata.`}
+                    rows={3}
+                    value={taskConfig.podcastHostPersona || ''}
+                    onChange={(e) => onTaskConfigChange('podcastHostPersona', e.target.value)}
+                    className="text-sm resize-none"
+                    data-testid="textarea-podcast-host-persona"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Persona Guest <span className="text-muted-foreground text-xs">(latar belakang & keahlian)</span></Label>
+                  <Textarea
+                    placeholder={`Contoh: Praktisi dengan 10 tahun pengalaman di industri. Penulis buku ini. Berbicara berbasis data dan pengalaman nyata, kadang menggunakan analogi sederhana.`}
+                    rows={3}
+                    value={taskConfig.podcastGuestPersona || ''}
+                    onChange={(e) => onTaskConfigChange('podcastGuestPersona', e.target.value)}
+                    className="text-sm resize-none"
+                    data-testid="textarea-podcast-guest-persona"
+                  />
+                </div>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+            {/* FORMAT & GAYA */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Format & Gaya Dialog</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Gaya Utama Podcast</Label>
+                  <Select
+                    value={taskConfig.podcastStyle || 'interview'}
+                    onValueChange={(value) => onTaskConfigChange('podcastStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-style">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="interview">🎤 Interview — Host tanya, Guest paparkan</SelectItem>
+                      <SelectItem value="debate">⚔️ Debate — Dua sudut pandang berbeda</SelectItem>
+                      <SelectItem value="masterclass">🎓 Masterclass — Guest ajar seperti kelas</SelectItem>
+                      <SelectItem value="fireside">🔥 Fireside Chat — Percakapan intim & mendalam</SelectItem>
+                      <SelectItem value="educational">📚 Educational — Step-by-step dengan penjelasan</SelectItem>
+                      <SelectItem value="storytelling">📖 Storytelling — Narasi & pengalaman nyata</SelectItem>
+                      <SelectItem value="panel">👥 Panel Discussion — Beberapa perspektif</SelectItem>
+                      <SelectItem value="casual">☕ Casual Talk — Obrolan santai tapi informatif</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Gaya Bahasa</Label>
+                  <Select
+                    value={taskConfig.podcastLanguageStyle || 'semiformal'}
+                    onValueChange={(value) => onTaskConfigChange('podcastLanguageStyle', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-language">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="formal">🎩 Formal (Bahasa Indonesia baku)</SelectItem>
+                      <SelectItem value="semiformal">👔 Semi-Formal (baku tapi mengalir)</SelectItem>
+                      <SelectItem value="casual">👕 Kasual (santai, campuran sehari-hari)</SelectItem>
+                      <SelectItem value="gaul">🤙 Gaul/Kekinian (milenial & gen-Z friendly)</SelectItem>
+                      <SelectItem value="bilingual">🌐 Bilingual (campur Indonesia-Inggris)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Energi & Tempo Dialog</Label>
+                  <Select
+                    value={taskConfig.podcastEnergyLevel || 'moderate'}
+                    onValueChange={(value) => onTaskConfigChange('podcastEnergyLevel', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-energy">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="calm">🧘 Tenang & Reflektif — tempo lambat, banyak jeda pikir</SelectItem>
+                      <SelectItem value="moderate">⚖️ Seimbang — natural dan mengalir</SelectItem>
+                      <SelectItem value="energetic">⚡ Energik & Dinamis — cepat, banyak back-and-forth</SelectItem>
+                      <SelectItem value="intense">🔥 Intens & Serius — fokus, tidak banyak basa-basi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Durasi Episode</Label>
+                  <Select
+                    value={taskConfig.podcastEpisodeLength || '15-20 menit'}
+                    onValueChange={(value) => onTaskConfigChange('podcastEpisodeLength', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-length">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="5-10 menit">5-10 menit (Mini Episode)</SelectItem>
+                      <SelectItem value="15-20 menit">15-20 menit (Standard)</SelectItem>
+                      <SelectItem value="30-45 menit">30-45 menit (Deep Dive)</SelectItem>
+                      <SelectItem value="60+ menit">60+ menit (Webinar Style)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               <div className="space-y-2">
-                <Label>Gaya Podcast</Label>
+                <Label>Jumlah Segmen / Babak</Label>
                 <Select
-                  value={taskConfig.podcastStyle || 'interview'}
-                  onValueChange={(value) => onTaskConfigChange('podcastStyle', value)}
+                  value={taskConfig.podcastSegments || '5'}
+                  onValueChange={(value) => onTaskConfigChange('podcastSegments', value)}
                 >
-                  <SelectTrigger data-testid="select-podcast-style">
+                  <SelectTrigger data-testid="select-podcast-segments">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="interview">Interview (Host tanya, Guest jawab)</SelectItem>
-                    <SelectItem value="debate">Debate (Dua sudut pandang berbeda)</SelectItem>
-                    <SelectItem value="storytelling">Storytelling (Narasi pengalaman nyata)</SelectItem>
-                    <SelectItem value="educational">Educational (Ajarin step-by-step)</SelectItem>
-                    <SelectItem value="casual">Casual Talk (Obrolan santai tapi informatif)</SelectItem>
+                    <SelectItem value="3">3 Segmen (Opening → Inti → Closing)</SelectItem>
+                    <SelectItem value="5">5 Segmen (Standard)</SelectItem>
+                    <SelectItem value="7">7 Segmen (Detail)</SelectItem>
+                    <SelectItem value="10">10 Segmen (Full Episode)</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+            </div>
+
+            {/* TEKNIK INTERAKSI */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Teknik Interaksi Dialog
+                {selectedInteractions.length > 0 && (
+                  <span className="ml-2 normal-case font-normal text-primary">({selectedInteractions.length} aktif)</span>
+                )}
+              </p>
+              <div className="border rounded-md divide-y" data-testid="podcast-interaction-list">
+                {INTERACTION_OPTIONS.map((opt) => {
+                  const isSelected = selectedInteractions.includes(opt.id);
+                  return (
+                    <div
+                      key={opt.id}
+                      className={cn("flex items-start gap-3 px-3 py-2.5 cursor-pointer transition-colors", isSelected ? "bg-primary/5" : "hover:bg-muted/40")}
+                      onClick={() => togglePodcastOption('podcastInteractionStyle', taskConfig.podcastInteractionStyle || '', opt.id)}
+                      data-testid={`checkbox-interaction-${opt.id}`}
+                    >
+                      <Checkbox checked={isSelected} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className={cn("text-sm", isSelected ? "font-medium text-foreground" : "text-muted-foreground")}>{opt.label}</p>
+                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-muted-foreground">Pilih teknik yang akan mendominasi percakapan. Bisa pilih lebih dari satu.</p>
+            </div>
+
+            {/* KNOWLEDGE MINING */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Penggalian Knowledge Base Ebook</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Kedalaman Eksplorasi Materi</Label>
+                  <Select
+                    value={taskConfig.podcastKnowledgeDepth || 'deep'}
+                    onValueChange={(value) => onTaskConfigChange('podcastKnowledgeDepth', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-knowledge-depth">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="surface">🌊 Permukaan — Poin utama & highlight saja</SelectItem>
+                      <SelectItem value="intermediate">⚓ Menengah — Bahas konsep + beberapa contoh</SelectItem>
+                      <SelectItem value="deep">🤿 Mendalam — Gali detail, nuansa, dan konteks</SelectItem>
+                      <SelectItem value="exhaustive">🔬 Exhaustif — Kupas tuntas termasuk lampiran & referensi</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Fokus Konten dari Ebook</Label>
+                  <Select
+                    value={taskConfig.podcastKnowledgeFocus || 'semua'}
+                    onValueChange={(value) => onTaskConfigChange('podcastKnowledgeFocus', value)}
+                  >
+                    <SelectTrigger data-testid="select-podcast-knowledge-focus">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="semua">📚 Semua Aspek (komprehensif)</SelectItem>
+                      <SelectItem value="teori">🧪 Teori & Konsep Inti</SelectItem>
+                      <SelectItem value="praktik">🛠️ Tips & Langkah Praktis</SelectItem>
+                      <SelectItem value="studi_kasus">🏢 Studi Kasus & Contoh Nyata</SelectItem>
+                      <SelectItem value="data_riset">📊 Data, Angka & Riset</SelectItem>
+                      <SelectItem value="insight">💡 Insight & Perspektif Unik Penulis</SelectItem>
+                      <SelectItem value="lampiran">📎 Lampiran & Referensi Tambahan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="space-y-2">
-                <Label>Durasi Episode</Label>
-                <Select
-                  value={taskConfig.podcastEpisodeLength || '15-20 menit'}
-                  onValueChange={(value) => onTaskConfigChange('podcastEpisodeLength', value)}
-                >
-                  <SelectTrigger data-testid="select-podcast-length">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="5-10 menit">5-10 menit (Mini Episode)</SelectItem>
-                    <SelectItem value="15-20 menit">15-20 menit (Standard)</SelectItem>
-                    <SelectItem value="30-45 menit">30-45 menit (Deep Dive)</SelectItem>
-                    <SelectItem value="60+ menit">60+ menit (Webinar Style)</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label>Pertanyaan / Topik Kunci yang Harus Dibahas <span className="text-muted-foreground text-xs">(opsional)</span></Label>
+                <Textarea
+                  placeholder={`Contoh:\n1. Apa perbedaan antara strategi X dan Y di bab 3?\n2. Bagaimana menerapkan framework Z untuk UMKM?\n3. Kenapa penulis tidak setuju dengan pendapat konvensional soal...`}
+                  rows={4}
+                  value={taskConfig.podcastKeyQuestions || ''}
+                  onChange={(e) => onTaskConfigChange('podcastKeyQuestions', e.target.value)}
+                  className="text-sm resize-none"
+                  data-testid="textarea-podcast-key-questions"
+                />
+                <p className="text-xs text-muted-foreground">Pertanyaan ini akan diprioritaskan Host untuk menggali jawaban Guest.</p>
               </div>
             </div>
-            <div className="space-y-2">
-              <Label>Jumlah Segmen/Babak</Label>
-              <Select
-                value={taskConfig.podcastSegments || '5'}
-                onValueChange={(value) => onTaskConfigChange('podcastSegments', value)}
-              >
-                <SelectTrigger data-testid="select-podcast-segments">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 Segmen (Opening → Inti → Closing)</SelectItem>
-                  <SelectItem value="5">5 Segmen (Standard)</SelectItem>
-                  <SelectItem value="7">7 Segmen (Detail)</SelectItem>
-                  <SelectItem value="10">10 Segmen (Full Episode)</SelectItem>
-                </SelectContent>
-              </Select>
+
+            {/* SEGMEN KHUSUS */}
+            <div className="space-y-3">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Segmen Khusus (Opsional)
+                {selectedSpecials.length > 0 && (
+                  <span className="ml-2 normal-case font-normal text-primary">({selectedSpecials.length} dipilih)</span>
+                )}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2" data-testid="podcast-special-segments">
+                {SPECIAL_SEGMENT_OPTIONS.map((opt) => {
+                  const isSelected = selectedSpecials.includes(opt.id);
+                  return (
+                    <div
+                      key={opt.id}
+                      className={cn("flex items-start gap-2.5 px-3 py-2 rounded-md border cursor-pointer transition-colors", isSelected ? "bg-primary/5 border-primary/30" : "hover:bg-muted/40 border-transparent")}
+                      onClick={() => togglePodcastOption('podcastSpecialSegments', taskConfig.podcastSpecialSegments || '', opt.id)}
+                      data-testid={`checkbox-special-${opt.id}`}
+                    >
+                      <Checkbox checked={isSelected} className="mt-0.5 shrink-0" />
+                      <div>
+                        <p className={cn("text-sm", isSelected ? "font-medium text-foreground" : "text-muted-foreground")}>{opt.label}</p>
+                        <p className="text-xs text-muted-foreground">{opt.desc}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
+
           </div>
         );
+      }
 
       case 'AUDIOBOOK_SCRIPT':
         return (
@@ -1698,7 +1917,12 @@ export function TaskConfigPanel({
       case 'EXTEND_TEXT': return 'Kembangkan teks pendek menjadi konten yang lebih lengkap';
       case 'MINI_APP_BUILDER': return 'Rancang blueprint mini app interaktif dari konten ebook';
       case 'QUIZ_MAKER': return 'Buat soal kuis & asesmen lengkap dari materi ebook';
-      case 'PODCAST_GENERATOR': return `Script podcast ${taskConfig.podcastStyle || 'interview'} antara ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} — ${taskConfig.podcastEpisodeLength || '15-20 menit'}`;
+      case 'PODCAST_GENERATOR': {
+        const interCount = (taskConfig.podcastInteractionStyle || '').split('|||').filter(Boolean).length;
+        const specCount = (taskConfig.podcastSpecialSegments || '').split('|||').filter(Boolean).length;
+        const extras = [interCount > 0 ? `${interCount} teknik interaksi` : '', specCount > 0 ? `${specCount} segmen khusus` : ''].filter(Boolean).join(', ');
+        return `Script ${taskConfig.podcastStyle || 'interview'} | ${taskConfig.podcastHost || 'Andi'} & ${taskConfig.podcastGuest || 'Sari'} | ${taskConfig.podcastEpisodeLength || '15-20 menit'}${extras ? ` | ${extras}` : ''}`;
+      }
       case 'AUDIOBOOK_SCRIPT': return `Narasi ${taskConfig.audiobookTone || 'conversational'}, pace ${taskConfig.audiobookPace || 'medium'} — ${taskConfig.audiobookChapterFocus === 'full' ? 'seluruh bab' : 'per bab'}`;
       case 'LANDING_PAGE': return `${taskConfig.landingPageStyle === 'long-form' ? 'Long-form' : taskConfig.landingPageStyle === 'short' ? 'Short copy' : 'VSL'} landing page${taskConfig.landingPagePrice ? ` · Harga: ${taskConfig.landingPagePrice}` : ''}`;
       default: return 'Konfigurasi mode';

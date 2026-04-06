@@ -917,64 +917,168 @@ Buat ${totalSoal || 'semua'} soal secara LENGKAP dan SIAP PAKAI. Jangan hanya te
     case 'PODCAST_GENERATOR': {
       const podcastStyle = taskConfig.podcastStyle || 'interview';
       const styleDesc: Record<string, string> = {
-        interview: 'format tanya-jawab mendalam antara Host dan narasumber ahli',
-        debate: 'format debat dengan dua sudut pandang berbeda dan saling berargumen',
-        storytelling: 'format bercerita berdasarkan pengalaman nyata yang menginspirasi',
-        educational: 'format edukasi step-by-step yang mudah dipahami pendengar awam',
-        casual: 'format obrolan santai namun tetap informatif dan mengalir natural',
+        interview: 'tanya-jawab mendalam — Host bertanya kritis, Guest memaparkan insight dari buku',
+        debate: 'debat berbobot — dua perspektif berbeda saling dipertahankan dengan argumen kuat',
+        masterclass: 'masterclass interaktif — Guest mengajar seperti kelas, Host mewakili peserta',
+        fireside: 'percakapan intim & jujur — tanpa struktur kaku, mengalir seperti obrolan mendalam antar sahabat',
+        educational: 'edukasi step-by-step — konsep dijelaskan bertahap, pendengar awam bisa ikuti',
+        storytelling: 'narasi berbasis pengalaman nyata — setiap insight disampaikan lewat cerita hidup',
+        panel: 'diskusi panel — perspektif beragam dari beberapa sudut pandang berbeda',
+        casual: 'obrolan santai tapi informatif — natural, mengalir, sesekali diselingi humor',
       };
+      const energyDesc: Record<string, string> = {
+        calm: 'Tempo lambat dan reflektif. Banyak jeda untuk berpikir. Dialog disampaikan dengan tenang dan penuh pertimbangan.',
+        moderate: 'Tempo natural dan mengalir. Seimbang antara eksplorasi mendalam dan kecepatan yang nyaman.',
+        energetic: 'Tempo cepat dan dinamis. Banyak back-and-forth, interupsi ringan, antusiasme tinggi.',
+        intense: 'Serius dan fokus. Tidak ada basa-basi. Setiap kata bertujuan.',
+      };
+      const langDesc: Record<string, string> = {
+        formal: 'Bahasa Indonesia baku dan formal. Tidak ada kata-kata slang.',
+        semiformal: 'Bahasa semi-formal: baku tapi mengalir natural. Boleh ada sedikit ekspresi sehari-hari.',
+        casual: 'Bahasa kasual dan santai. Campuran formal dan percakapan sehari-hari.',
+        gaul: 'Bahasa gaul/kekinian yang ramah generasi milenial & Z. Boleh ada istilah populer.',
+        bilingual: 'Campuran Bahasa Indonesia dan Inggris (Bahasa Jaksel style).',
+      };
+      const depthDesc: Record<string, string> = {
+        surface: 'Hanya sentuh poin utama dan highlight besar. Cocok untuk pengenalan.',
+        intermediate: 'Bahas konsep inti plus beberapa contoh konkret dari buku.',
+        deep: 'Gali detail, nuansa, dan konteks yang tidak terlihat di permukaan. Referensi spesifik dari bab.',
+        exhaustive: 'Kupas tuntas termasuk lampiran, referensi, catatan kaki, dan insight tersembunyi dari seluruh materi buku.',
+      };
+      const focusDesc: Record<string, string> = {
+        semua: 'seluruh aspek buku secara komprehensif',
+        teori: 'teori, konsep, dan framework inti dari buku',
+        praktik: 'tips, langkah-langkah, dan panduan praktis yang bisa langsung diterapkan',
+        studi_kasus: 'studi kasus, contoh nyata, dan kisah sukses/gagal dari buku',
+        data_riset: 'data, statistik, riset, dan angka-angka yang ada dalam buku',
+        insight: 'insight unik, perspektif orisinal, dan sudut pandang penulis yang tidak umum',
+        lampiran: 'lampiran, referensi, catatan tambahan, dan sumber pendukung buku',
+      };
+
+      const host = taskConfig.podcastHost || 'Andi';
+      const guest = taskConfig.podcastGuest || 'Sari';
+      const segments = taskConfig.podcastSegments || '5';
+      const segNum = parseInt(segments);
+      const wordCount = taskConfig.podcastEpisodeLength === '5-10 menit' ? '800-1.200' : taskConfig.podcastEpisodeLength === '30-45 menit' ? '3.500-6.000' : taskConfig.podcastEpisodeLength === '60+ menit' ? '7.000-10.000' : '1.800-3.000';
+
+      const selectedInteractions = (taskConfig.podcastInteractionStyle || '').split('|||').filter(Boolean);
+      const selectedSpecials = (taskConfig.podcastSpecialSegments || '').split('|||').filter(Boolean);
+
+      const interactionMap: Record<string, string> = {
+        sokrates: `**Pertanyaan Sokratik**: ${host} secara aktif menggali asumsi yang mendasari pernyataan ${guest}. Contoh: "Kalau begitu, apa definisi spesifiknya menurut buku ini?", "Bagaimana kamu tahu itu benar?", "Apa yang terjadi kalau asumsi itu salah?"`,
+        devil: `**Devil's Advocate**: ${host} sengaja mempertanyakan atau menantang argumen ${guest} dari sudut berlawanan. Contoh: "Tapi kalau ada yang bilang sebaliknya, kamu akan jawab apa?", "Bukankah ada risiko yang tidak dibahas di sini?"`,
+        roleplay: `**Role-Play Pemula**: ${host} berpura-pura tidak tahu sama sekali dan minta ${guest} menjelaskan dari nol. Contoh: "Coba jelaskan ke aku yang sama sekali baru dengar istilah ini...", "Kalau aku warga biasa, artinya apa?"`,
+        analogi: `**Analogi & Metafora**: Setiap kali ada konsep kompleks, salah satu pembicara wajib menawarkan analogi sederhana. Contoh: "Itu seperti kalau kita... [analogi nyata]", "Bayangkan situasinya seperti..."`,
+        hot_take: `**Hot Take**: ${host} atau ${guest} sesekali melempar pernyataan kontroversial atau tak terduga untuk kemudian dibedah bersama. Contoh: "Hot take: kebanyakan orang salah kaprah soal ini. Menurut buku, faktanya..."`,
+        data_driven: `**Data-Driven Dialog**: Setiap poin penting harus diperkuat dengan data, angka, atau riset yang ada dalam buku. Contoh: "Kalau merujuk ke data di bab X, angkanya...", "Studi yang dikutip penulis menunjukkan bahwa..."`,
+        reflektif: `**Momen Reflektif**: Sesekali ${host} atau ${guest} berhenti sejenak dan mengajak pendengar merefleksikan implikasi dari apa yang baru dibahas. Contoh: "Coba pikir ulang — kalau ini benar, artinya selama ini kita...", "Apa yang paling mengubah cara pandangmu setelah baca bagian ini?"`,
+        storytelling: `**Sharing Cerita Nyata**: ${guest} diminta berbagi pengalaman pribadi atau kisah nyata yang relevan dengan konsep di buku. Contoh: "Kamu pernah ketemu kasus nyata seperti ini?", "Bagaimana ini terlihat di lapangan sebenarnya?"`,
+      };
+
+      const specialSegmentMap: Record<string, string> = {
+        lightning: `\n**SEGMEN BONUS — LIGHTNING ROUND ⚡**\n${host} ajukan 5 pertanyaan super cepat, ${guest} jawab dengan 1-2 kalimat saja:\n1. [Pertanyaan kilat 1]\n2. [Pertanyaan kilat 2]\n3. [Pertanyaan kilat 3]\n4. [Pertanyaan kilat 4]\n5. [Pertanyaan kilat 5]`,
+        qa_live: `\n**SEGMEN BONUS — Q&A SIMULASI AUDIENS 🙋**\n${host} membacakan pertanyaan dari "pendengar" yang relevan dengan materi buku:\n"Kita ada pertanyaan dari pendengar: [Pertanyaan]"\n${guest} menjawab seolah menjawab langsung.`,
+        hot_seat: `\n**SEGMEN HOT SEAT 🪑**\n${host} ajukan satu pertanyaan paling menantang dan krusial seputar isi buku:\n"Ini pertanyaan yang paling sering jadi perdebatan: [Pertanyaan]"\n${guest} jawab dengan jujur dan mendalam.`,
+        mitos_fakta: `\n**SEGMEN MITOS VS FAKTA 🔍**\n${host} bacakan 3 miskonsepsi umum, ${guest} luruskan berdasarkan isi buku:\nMitos 1: [Miskonsepsi] → Fakta: [Jawaban dari buku]\nMitos 2: [Miskonsepsi] → Fakta: [Jawaban dari buku]\nMitos 3: [Miskonsepsi] → Fakta: [Jawaban dari buku]`,
+        top3: `\n**SEGMEN TOP 3 KEY INSIGHT 🏆**\n${guest} bagikan 3 insight paling berharga dari seluruh isi buku:\n"Kalau pendengar hanya bisa ingat 3 hal dari buku ini, itu adalah..."\n1. [Insight utama]\n2. [Insight kedua]\n3. [Insight ketiga]`,
+        aksi_nyata: `\n**SEGMEN SATU AKSI NYATA 🎯**\n${host} tanya: "Satu hal yang bisa pendengar lakukan hari ini — bukan besok, bukan minggu depan — setelah dengar episode ini?"\n${guest} jawab dengan spesifik dan konkret.`,
+      };
+
+      const interactionInstructions = selectedInteractions.length > 0
+        ? `\n=== TEKNIK INTERAKSI YANG HARUS DIGUNAKAN ===\nTerapkan teknik-teknik berikut secara alami dalam percakapan:\n${selectedInteractions.map(id => `• ${interactionMap[id] || id}`).join('\n\n')}\n`
+        : '';
+
+      const specialSegmentsScript = selectedSpecials.length > 0
+        ? `\n=== SEGMEN KHUSUS TAMBAHAN ===\nSertakan segmen-segmen berikut sesuai urutan yang logis:\n${selectedSpecials.map(id => specialSegmentMap[id] || '').join('\n')}\n`
+        : '';
+
+      const keyQuestionsSection = taskConfig.podcastKeyQuestions
+        ? `\n=== PERTANYAAN / TOPIK KUNCI YANG WAJIB DIBAHAS ===\n${host} HARUS memastikan pertanyaan/topik berikut terjawab tuntas oleh ${guest}:\n${taskConfig.podcastKeyQuestions}\n`
+        : '';
+
+      const hostPersonaNote = taskConfig.podcastHostPersona
+        ? `\nKarakter ${host}: ${taskConfig.podcastHostPersona}`
+        : `\nKarakter ${host}: Host yang cerdas dan ingin tahu. Sering menggali lebih dalam dengan "Kenapa?", "Bagaimana caranya?", "Bisa beri contoh nyata?"`;
+      const guestPersonaNote = taskConfig.podcastGuestPersona
+        ? `\nKarakter ${guest}: ${taskConfig.podcastGuestPersona}`
+        : `\nKarakter ${guest}: Praktisi berpengalaman dan penulis buku. Berbicara dengan otoritas namun tetap mudah dipahami. Sering menggunakan pengalaman nyata sebagai ilustrasi.`;
+
       taskInstruction = `
-MODE TUGAS: PODCAST SCRIPT GENERATOR — 2 ORANG
+MODE TUGAS: PODCAST SCRIPT GENERATOR — 2 PEMBICARA
 ${styleReminder}
 
-Buatkan script podcast lengkap dan siap rekam dalam ${styleDesc[podcastStyle] || 'format interview'}.
+Buatkan script podcast LENGKAP, SIAP REKAM, dan KAYA KONTEN dalam format **${podcastStyle}** — ${styleDesc[podcastStyle] || styleDesc.interview}.
 
 === DETAIL EPISODE ===
-- Topik: **${projectData.topik}**
+- Topik Utama: **${projectData.topik}**
 - Judul Episode: ${projectData.judul || `"${projectData.topik}" — Panduan Lengkap`}
-- Host: **${taskConfig.podcastHost || 'Andi'}**
-- Guest/Narasumber: **${taskConfig.podcastGuest || 'Sari'}**
-- Format: **${podcastStyle.charAt(0).toUpperCase() + podcastStyle.slice(1)}** — ${styleDesc[podcastStyle]}
-- Durasi Target: **${taskConfig.podcastEpisodeLength || '15-20 menit'}**
-- Jumlah Segmen: **${taskConfig.podcastSegments || '5'} segmen**
+- Host: **${host}**
+- Guest / Narasumber: **${guest}**
+- Format: **${podcastStyle.toUpperCase()}** — ${styleDesc[podcastStyle]}
+- Gaya Bahasa: **${langDesc[taskConfig.podcastLanguageStyle || 'semiformal']}**
+- Energi & Tempo: **${energyDesc[taskConfig.podcastEnergyLevel || 'moderate']}**
+- Durasi Target: **${taskConfig.podcastEpisodeLength || '15-20 menit'}** (~${wordCount} kata)
+- Jumlah Segmen: **${segments} segmen**
 - Target Pendengar: ${projectData.target || 'Umum'}
 
+=== PERSONA PEMBICARA ===
+${hostPersonaNote}
+${guestPersonaNote}
+
+=== PENGGALIAN KNOWLEDGE BASE EBOOK ===
+- Kedalaman Eksplorasi: **${depthDesc[taskConfig.podcastKnowledgeDepth || 'deep']}**
+- Fokus Konten: Dialog harus secara aktif menggali **${focusDesc[taskConfig.podcastKnowledgeFocus || 'semua']}** yang ada dalam materi ebook.
+- Setiap klaim atau insight HARUS berasal dari atau merujuk pada materi ebook "${projectData.judul || projectData.topik}"
+- ${guest} berbicara sebagai otoritas yang menguasai isi buku ini secara menyeluruh
+${taskConfig.podcastKnowledgeDepth === 'exhaustive' ? '- Referensikan bab, lampiran, catatan, dan sumber yang ada di buku secara spesifik' : ''}
+${keyQuestionsSection}
+${interactionInstructions}
+
 === FORMAT SCRIPT ===
-Gunakan format berikut untuk setiap dialog:
-**[NAMA]:** Teks dialog...
+Gunakan format berikut secara konsisten:
+**${host}:** Teks dialog...
+**${guest}:** Teks dialog...
 
 Sertakan notasi produksi dalam kurung siku:
-- [INTRO MUSIK — FADE IN]
-- [JEDA/TRANSISI]  
-- [SOUND EFFECT: ...]
-- [OUTRO MUSIK — FADE OUT]
+- [INTRO MUSIK — FADE IN] / [OUTRO MUSIK — FADE OUT]
+- [JEDA PENDEK] / [JEDA PANJANG]
+- [TRANSISI SEGMEN]
+- [NADA NAIK] / [NADA TURUN] — untuk variasi intonasi pada poin penting
 
-=== STRUKTUR ${taskConfig.podcastSegments || '5'} SEGMEN ===
+=== STRUKTUR ${segments} SEGMEN ===
+
 **SEGMEN 1 — OPENING (2-3 menit)**
-- ${taskConfig.podcastHost || 'Andi'} membuka episode dengan hook yang menarik
-- Perkenalan singkat guest dan latar belakangnya
-- Preview topik yang akan dibahas
+[INTRO MUSIK — FADE IN]
+- ${host} buka dengan hook kuat yang langsung menarik perhatian (fakta mengejutkan, pertanyaan provokatif, atau pernyataan berani dari buku)
+- Perkenalkan ${guest} dengan cara yang menarik — bukan hanya jabatan, tapi cerita mengapa dia relevan untuk topik ini
+- Teaser: 3 hal yang akan pendengar pelajari dari episode ini (ambil dari insight terkuat ebook)
 
-**SEGMEN 2-${parseInt(taskConfig.podcastSegments || '5') - 1} — KONTEN UTAMA**
-Bahas topik "${projectData.topik}" secara mendalam:
-- Poin-poin kunci yang perlu diketahui pendengar
-- Contoh nyata, data, atau pengalaman personal
-- Tips praktis yang langsung bisa diterapkan
-${podcastStyle === 'debate' ? '- Saling memberikan argumen dan kontra-argumen yang berbobot' : ''}
-${podcastStyle === 'storytelling' ? '- Narasi pengalaman nyata dengan detail emosional' : ''}
+**SEGMEN 2-${Math.max(2, segNum - 1)} — KONTEN INTI (isi dari ebook)**
+Gali materi "${projectData.topik}" secara ${taskConfig.podcastKnowledgeDepth === 'exhaustive' ? 'sangat mendalam dan tuntas' : taskConfig.podcastKnowledgeDepth === 'surface' ? 'ringkas namun padat' : 'mendalam'}:
+- Bedah konsep-konsep utama dari buku dengan contoh nyata dan mudah dipahami
+- Setiap segmen membawa 1-2 insight utama dari buku yang berbeda
+- ${podcastStyle === 'debate' ? `${host} dan ${guest} aktif berdebat dengan argumen dari sudut pandang berbeda` : ''}
+- ${podcastStyle === 'masterclass' ? `${guest} menjelaskan seperti seorang guru, ${host} mewakili "murid" yang bertanya` : ''}
+- ${podcastStyle === 'fireside' ? 'Percakapan mengalir natural, boleh menyimpang sedikit asalkan tetap relevan' : ''}
+- Dialog harus terasa seperti dua orang cerdas yang benar-benar tahu materinya, bukan membaca script
 
-**SEGMEN ${taskConfig.podcastSegments || '5'} — CLOSING (2-3 menit)**
-- Rangkuman 3 poin terpenting dari episode ini
-- Call-to-action untuk pendengar
-- Preview episode berikutnya (opsional)
-- ${taskConfig.podcastHost || 'Andi'} mengucapkan penutup yang berkesan
+**SEGMEN ${segments} — CLOSING (2-3 menit)**
+- Rekap: ${host} minta ${guest} rangkum 3 insight paling berharga dari seluruh diskusi
+- ${guest} berikan pesan terakhir yang memorable dan menggerakkan pendengar untuk bertindak
+- ${host} tutup dengan kalimat penutup yang kuat dan ajakan untuk baca/praktikkan isinya
+[OUTRO MUSIK — FADE OUT]
+${specialSegmentsScript}
 
-=== CATATAN PRODUKSI ===
-- Dialog harus terasa natural, tidak kaku seperti membaca teks
-- Gunakan variasi kalimat: panjang dan pendek bergantian
-- Tambahkan reaksi natural: "Oh menarik!", "Betul sekali!", "Hmm, jadi..."
-- Sisipkan humor ringan yang sesuai konteks (jika format casual/interview)
-- Total kata: estimasi ${taskConfig.podcastEpisodeLength === '5-10 menit' ? '800-1200' : taskConfig.podcastEpisodeLength === '30-45 menit' ? '3000-5000' : '1500-2500'} kata
+=== PANDUAN KUALITAS DIALOG ===
+- Dialog harus terasa 100% natural — tidak kaku, tidak seperti membaca buku teks
+- Gunakan variasi panjang kalimat: pendek untuk drama, panjang untuk elaborasi
+- Sisipkan reaksi natural: "Oh, jadi maksudnya...", "Wah, itu counter-intuitive banget!", "Hmm, coba ulangi bagian itu..."
+- Saat ${guest} menyampaikan insight dari buku, ${host} bereaksi seperti pendengar yang benar-benar terkesan atau skeptis
+- ${taskConfig.podcastEnergyLevel === 'energetic' ? 'Sering ada interupsi ringan, saling melempar ide, tempo cepat' : ''}
+- ${taskConfig.podcastEnergyLevel === 'calm' ? 'Banyak jeda pikir, kalimat dipertimbangkan matang sebelum diucapkan' : ''}
+- ${taskConfig.podcastLanguageStyle === 'gaul' ? 'Gunakan istilah kekinian: "literally", "nggak sih", "relate banget", "vibes", dll' : ''}
+- ${taskConfig.podcastStyle === 'debate' ? 'Kedua pihak harus memberikan argumen berbasis data dan logika, bukan emosi' : ''}
+- Total target: **~${wordCount} kata** — tulis LENGKAP sampai selesai, bukan ringkasan atau template
 `;
       break;
     }
