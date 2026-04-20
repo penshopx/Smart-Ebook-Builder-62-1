@@ -9,9 +9,6 @@ import { getChaesaResponse } from "./chaesa";
 import OpenAI from "openai";
 import multer from "multer";
 import mammoth from "mammoth";
-import { createRequire } from "module";
-const _require = createRequire(import.meta.url);
-const pdfParse = _require("pdf-parse");
 
 function getUserId(req: any): string {
   return req.user?.claims?.sub ?? req.user?.id ?? '';
@@ -144,6 +141,8 @@ export async function registerRoutes(
       let text = "";
 
       if (mimetype === "application/pdf" || originalname.endsWith(".pdf")) {
+        const pdfParseModule = await import("pdf-parse");
+        const pdfParse = (pdfParseModule as any).default ?? pdfParseModule;
         const data = await pdfParse(buffer);
         text = data.text;
       } else if (
