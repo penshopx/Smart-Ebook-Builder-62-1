@@ -2050,11 +2050,22 @@ Format setiap segmen:
     try {
       const {
         prompt, title, topik, target, authorName,
-        docJenis = 'ebook', docJumlahBab = '8', docPanjangBab = 'medium',
-        docKedalaman = 'menengah', docGaya = 'semi-formal', docBahasa = 'id',
-        docElemen = ['daftar_isi', 'ringkasan_bab', 'kesimpulan', 'poin_kunci'],
-        docFormat = 'mix', docPresisi = 'deep', docFokus = 'how-to',
+        // ISO/QMS params (new)
+        docKategori = 'smm',
+        docJenisISO = 'manual_mutu',
+        docStandar = ['iso_9001'],
+        docKlausul = ['4','5','6','7','8','9','10'],
+        docNomorDok = '',
+        docVersi = '01',
+        docTanggalEfektif = '',
+        docNamaOrg = '',
+        docDepartemen = '',
+        docLingkup = '',
+        docDetailLevel = 'standar',
+        docBahasa = 'id',
         docCustomInstruksi = '',
+        // Legacy ebook params (kept for backward compat, not used in new prompts)
+        docJenis = 'ebook',
       } = req.body;
 
       if (!prompt) return res.status(400).json({ error: "Prompt is required" });
@@ -2066,138 +2077,108 @@ Format setiap segmen:
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
-      // ── Mapping labels ──
-      const jenisMap: Record<string, string> = {
-        ebook: 'Ebook (buku digital informatif)',
-        panduan: 'Panduan Praktis (step-by-step guide)',
-        laporan: 'Laporan & Analisis',
-        whitepaper: 'Whitepaper Teknis',
-        tutorial: 'Tutorial (belajar langkah demi langkah)',
-        manual: 'Manual Penggunaan',
-        proposal: 'Proposal Bisnis',
-        artikel_ilmiah: 'Artikel Ilmiah / Academic Paper',
+      // ── ISO/QMS Mapping labels ──
+      const kategoriMap: Record<string, string> = {
+        smm: 'Sistem Manajemen Mutu (QMS)',
+        k3: 'Sistem Manajemen K3/HSE',
+        lingkungan: 'Sistem Manajemen Lingkungan (EMS)',
+        infosec: 'Sistem Manajemen Keamanan Informasi (ISMS)',
+        pangan: 'Sistem Manajemen Keamanan Pangan (FSMS)',
+        terintegrasi: 'Sistem Manajemen Terintegrasi (IMS)',
       };
-      const panjangMap: Record<string, string> = {
-        short: '400-600 kata per bab — ringkas dan padat',
-        medium: '800-1200 kata per bab — standar komprehensif',
-        long: '1500-2000 kata per bab — mendalam dan detail',
-        very_long: '2500-3500 kata per bab — sangat komprehensif',
-      };
-      const kedalamanMap: Record<string, string> = {
-        pemula: 'PEMULA — gunakan bahasa sederhana, banyak analogi sehari-hari, hindari jargon teknis, jelaskan setiap istilah yang digunakan',
-        menengah: 'MENENGAH — gunakan istilah teknis yang umum, sertakan contoh terapan, asumsi pembaca sudah familiar dengan topik dasar',
-        ahli: 'AHLI — gunakan terminologi teknis penuh, framework dan metodologi lanjutan, data & angka spesifik, analisis mendalam',
-      };
-      const gayaMap: Record<string, string> = {
-        'formal': 'FORMAL — bahasa baku, struktural, tanpa singkatan, hindari kata-kata santai',
-        'semi-formal': 'SEMI-FORMAL — profesional namun mudah dipahami, boleh menggunakan "Anda", tone hangat tapi tetap kredibel',
-        'santai': 'SANTAI — percakapan, akrab, bisa menggunakan kata-kata informal, cocok untuk millennial dan Gen Z',
-        'akademis': 'AKADEMIS — ilmiah, sertakan referensi implisit, gunakan footnote/catatan, metodologis dan terstruktur ketat',
-        'jurnalistik': 'JURNALISTIK — piramida terbalik, lead yang kuat, informasi paling penting di awal, ringkas dan padat',
-        'storytelling': 'STORYTELLING — naratif, anekdot dan cerita nyata, perjalanan emosional, membuat pembaca terhanyut',
-      };
-      const formatMap: Record<string, string> = {
-        naratif: 'NARATIF — paragraf panjang yang mengalir, sedikit bullet points, penjelasan mendalam setiap konsep',
-        bullets: 'BULLET POINTS — informasi dalam poin-poin ringkas, mudah di-scan, cocok untuk panduan praktis',
-        mix: 'MIX (DIREKOMENDASIKAN) — kombinasi paragraf naratif untuk penjelasan konsep + bullet points untuk tips/langkah/poin kunci',
-        qa: 'Q&A FORMAT — format tanya-jawab, setiap sub-topik diawali pertanyaan lalu dijawab secara komprehensif',
-        numbered: 'NUMBERED LIST — daftar bernomor yang terstruktur, cocok untuk tutorial dan panduan langkah',
-      };
-      const fokusMap: Record<string, string> = {
-        'how-to': 'HOW-TO PRAKTIS — fokus pada langkah-langkah nyata yang bisa langsung dilakukan, action-oriented, berikan instruksi spesifik',
-        'teori': 'TEORI & KONSEP — framework, model, definisi, sejarah, hubungan antar konsep',
-        'story': 'STORY & NARASI — cerita nyata, anekdot, studi kasus berbasis pengalaman, perjalanan emosional',
-        'data': 'DATA & FAKTA — statistik, hasil riset, angka-angka spesifik, kutipan sumber kredibel',
-        'hybrid': 'HYBRID (SEIMBANG) — campuran proporsi seimbang antara teori, praktik, data, dan narasi',
-      };
-      const presisiMap: Record<string, string> = {
-        standard: 'STANDARD — konten berkualitas, penjelasan jelas, contoh yang relevan',
-        deep: 'DEEP CONTENT — setiap konsep dijelaskan lebih dalam, sub-aspek yang sering terlewat, nuansa dan konteks yang kaya',
-        research: 'RESEARCH-GRADE — sertakan data riset aktual, angka statistik yang relevan, temuan dari studi, tren terkini (tahun 2024-2025)',
-        expert: 'EXPERT-LEVEL — framework eksklusif, insight dari perspektif pakar, case studies mendalam, analisis komparatif, prediksi dan implikasi strategis',
+      const jenisISOMap: Record<string, string> = {
+        manual_mutu: 'Manual Mutu (Quality Manual) — Dokumen Level 1',
+        prosedur: 'Prosedur (Standard Operating Procedure/SOP) — Dokumen Level 2',
+        instruksi_kerja: 'Instruksi Kerja (Work Instruction) — Dokumen Level 3',
+        kebijakan: 'Kebijakan (Policy Statement)',
+        formulir: 'Formulir & Rekaman (Forms & Records) — Dokumen Level 4',
+        rencana_mutu: 'Rencana Mutu/K3 (Quality/Safety Plan)',
+        analisis_risiko: 'Analisis Risiko (Risk Register / HIRARC / FMEA)',
+        laporan_audit: 'Laporan Audit Internal',
+        tinjauan_manajemen: 'Laporan Tinjauan Manajemen (Management Review)',
+        sasaran_mutu: 'Sasaran Mutu & KPI (Quality/K3/Env Objectives)',
+        program_kerja: 'Program Kerja Tahunan (Annual Work Program)',
+        manual_k3: 'Manual K3/HSE (HSE/SMK3 Manual)',
       };
       const bahasaMap: Record<string, string> = {
-        id: 'Bahasa Indonesia yang baik dan benar',
+        id: 'Bahasa Indonesia yang baik dan benar sesuai kaidah EYD',
         en: 'English — use clear, professional English throughout',
-        bilingual: 'Bilingual — tulis dalam Bahasa Indonesia, sertakan istilah kunci dalam bahasa Inggris dalam tanda kurung',
+        bilingual: 'Bilingual — tulis dalam Bahasa Indonesia, sertakan istilah ISO/teknis dalam bahasa Inggris dalam tanda kurung',
+      };
+      const detailMap: Record<string, string> = {
+        ringkas: 'RINGKAS — berikan struktur dan poin-poin utama, cocok sebagai draft awal atau template',
+        standar: 'STANDAR — dokumen kerja yang lengkap dan siap diimplementasikan dengan sedikit penyesuaian',
+        komprehensif: 'KOMPREHENSIF — dokumen sangat detail: prosedur lengkap, contoh rekaman, formulir terlampir, cross-reference klausul standar, catatan interpretasi',
       };
 
-      const elemenArr = Array.isArray(docElemen) ? docElemen : [];
-      const elemenLabels: Record<string, string> = {
-        kata_pengantar: 'KATA PENGANTAR — tulis bab pembuka yang menyambut pembaca, menceritakan latar belakang buku, dan memotivasi mereka untuk membaca',
-        daftar_isi: 'DAFTAR ISI — sertakan daftar isi yang lengkap di awal dengan nomor bab dan judul sub-bab',
-        ringkasan_bab: 'RINGKASAN BAB — akhiri setiap bab dengan "Ringkasan" yang merangkum 3-5 poin utama bab tersebut',
-        poin_kunci: 'POIN KUNCI — sertakan kotak "Key Takeaways" atau "Poin Penting" di setiap bab dengan 3-5 poin terpenting',
-        studi_kasus: 'STUDI KASUS — sertakan minimal 1 studi kasus nyata per bab yang relevan dengan topik',
-        latihan: 'LATIHAN & REFLEKSI — sertakan 2-3 pertanyaan refleksi atau latihan praktis di akhir setiap bab',
-        contoh_praktis: 'CONTOH PRAKTIS — berikan minimal 2 contoh konkret dan spesifik untuk setiap konsep penting',
-        kesimpulan: 'KESIMPULAN — tulis bab penutup yang merangkum seluruh buku, pelajaran terpenting, dan langkah selanjutnya',
-        glosarium: 'GLOSARIUM — sertakan glosarium di akhir buku dengan definisi 15-25 istilah penting',
-        referensi: 'REFERENSI — sertakan daftar sumber referensi, buku rekomendasi, dan resource lanjutan',
-        action_plan: 'ACTION PLAN — sertakan rencana tindakan 30-60-90 hari di bagian akhir buku',
-        template: 'TEMPLATE & WORKSHEET — sertakan template atau worksheet yang bisa langsung digunakan pembaca',
-      };
+      const standarArr = Array.isArray(docStandar) ? docStandar : [docStandar];
+      const klausulArr = Array.isArray(docKlausul) ? docKlausul : [docKlausul];
 
-      const elemenInstruksi = elemenArr.filter(e => elemenLabels[e]).map(e => `• ${elemenLabels[e]}`).join('\n');
+      const maxTokens = docDetailLevel === 'ringkas' ? 4000 : docDetailLevel === 'standar' ? 6000 : 8000;
 
-      const maxTokens = docPresisi === 'standard' ? 5000 : docPresisi === 'deep' ? 6500 : docPresisi === 'research' ? 7500 : 8000;
+      // Build document header block
+      const headerBlock = [
+        docNamaOrg ? `Organisasi: ${docNamaOrg}` : null,
+        docDepartemen ? `Departemen/Fungsi: ${docDepartemen}` : null,
+        docNomorDok ? `Nomor Dokumen: ${docNomorDok}` : null,
+        docVersi ? `Revisi/Versi: ${docVersi}` : null,
+        docTanggalEfektif ? `Tanggal Berlaku: ${docTanggalEfektif}` : null,
+        docLingkup ? `Lingkup Penerapan: ${docLingkup}` : null,
+      ].filter(Boolean).join('\n');
 
-      const systemPrompt = `Kamu adalah expert document writer dan AI content specialist dengan pengalaman menulis lebih dari 10.000 dokumen profesional berkualitas tinggi.
+      const klausulText = klausulArr.length > 0
+        ? `Klausul yang Dicakup: ${klausulArr.join(', ')}`
+        : 'Semua klausul relevan';
+
+      const systemPrompt = `Kamu adalah konsultan ISO dan sistem manajemen senior dengan pengalaman lebih dari 15 tahun di bidang implementasi ISO 9001, ISO 45001, ISO 14001, ISO 27001, dan standar internasional lainnya. Kamu ahli dalam menyusun dokumen sistem manajemen yang compliant, praktis, dan siap diaudit oleh auditor eksternal (third-party certification body).
 
 MISI UTAMA:
-Buat ${jenisMap[docJenis] || docJenis} yang AKURAT, PRESISI, dan KOMPREHENSIF berdasarkan outline dan instruksi yang diberikan.
+Buat ${jenisISOMap[docJenisISO] || docJenisISO} untuk ${kategoriMap[docKategori] || docKategori} yang LENGKAP, COMPLIANT terhadap standar referensi, dan SIAP DIIMPLEMENTASIKAN.
 
 KONFIGURASI DOKUMEN:
-• Jenis: ${jenisMap[docJenis] || docJenis}
-• Jumlah bab: ${docJumlahBab} bab
-• Panjang per bab: ${panjangMap[docPanjangBab] || docPanjangBab}
-• Tingkat kedalaman: ${kedalamanMap[docKedalaman] || docKedalaman}
-• Gaya penulisan: ${gayaMap[docGaya] || docGaya}
-• Format konten: ${formatMap[docFormat] || docFormat}
-• Fokus konten: ${fokusMap[docFokus] || docFokus}
-• Mode presisi: ${presisiMap[docPresisi] || docPresisi}
+• Kategori Sistem Manajemen: ${kategoriMap[docKategori] || docKategori}
+• Jenis Dokumen: ${jenisISOMap[docJenisISO] || docJenisISO}
+• Standar Referensi: ${standarArr.join(', ')}
+• ${klausulText}
+• Level Kelengkapan: ${detailMap[docDetailLevel] || docDetailLevel}
 • Bahasa: ${bahasaMap[docBahasa] || docBahasa}
 
-ELEMEN WAJIB YANG HARUS DISERTAKAN:
-${elemenInstruksi || '• Ikuti struktur standar sesuai jenis dokumen'}
+PERSYARATAN KONTEN ISO YANG WAJIB DIPENUHI:
+1. Setiap klausul yang dicakup HARUS dibahas secara eksplisit dengan nomor klausul yang jelas (mis: "4.1 Memahami Organisasi dan Konteksnya")
+2. Gunakan terminologi resmi ISO (mis: "interested parties", "documented information", "nonconformity", "corrective action", "continual improvement")
+3. Sertakan referensi silang (cross-reference) ke klausul standar yang relevan
+4. Setiap prosedur/instruksi harus mencantumkan: Tujuan, Ruang Lingkup, Referensi, Definisi, Tanggung Jawab, Prosedur, Rekaman Terkait
+5. Pastikan dokumen mencerminkan pendekatan PDCA (Plan-Do-Check-Act) dan pemikiran berbasis risiko (risk-based thinking)
+6. Sertakan kolom/tabel yang lazim digunakan dalam dokumen ISO: siapa melakukan apa, kapan, bagaimana verifikasi
 
-STANDAR KUALITAS YANG WAJIB DIPENUHI:
-1. Setiap bab harus memiliki JUDUL BAB yang jelas (gunakan format: BAB [Nomor]: [Judul])
-2. Setiap sub-bab harus memiliki sub-judul yang deskriptif
-3. Setiap klaim atau informasi harus didukung dengan konteks yang jelas
-4. Gunakan transisi yang baik antar paragraf dan antar bab
-5. Pastikan konsistensi terminologi dan gaya di seluruh dokumen
-6. ${docPresisi === 'research' || docPresisi === 'expert' ? 'Sertakan data statistik, angka, dan fakta spesifik yang relevan' : 'Berikan contoh yang konkret dan relevan'}
-7. Setiap bab harus "complete in itself" — pembaca bisa memahami tanpa harus baca bab sebelumnya
+STRUKTUR FORMAT DOKUMEN ISO YANG WAJIB:
+- HALAMAN JUDUL: judul dokumen, nomor dokumen, revisi, tanggal berlaku, organisasi, departemen pemilik
+- LEMBAR PENGESAHAN: kolom dibuat oleh / diperiksa oleh / disetujui oleh (bisa dalam tabel)
+- RIWAYAT PERUBAHAN: tabel riwayat revisi dokumen
+- DAFTAR ISI
+- ISI UTAMA: sesuai jenis dokumen (klausul, prosedur, instruksi, dll.)
+- LAMPIRAN/REKAMAN TERKAIT (jika relevan)
 
-FORMAT STRUKTUR OUTPUT:
-- Mulai dengan JUDUL DOKUMEN dan info dokumen (jenis, target pembaca)
-${elemenArr.includes('daftar_isi') ? '- Sertakan DAFTAR ISI setelah judul' : ''}
-${elemenArr.includes('kata_pengantar') ? '- Tulis KATA PENGANTAR sebelum bab pertama' : ''}
-- Tulis BAB 1 hingga BAB ${docJumlahBab} secara berurutan dan lengkap
-${elemenArr.includes('kesimpulan') ? `- Tulis BAB ${parseInt(docJumlahBab) + 1}: KESIMPULAN & LANGKAH SELANJUTNYA` : ''}
-${elemenArr.includes('action_plan') ? '- Sertakan ACTION PLAN 30-60-90 hari' : ''}
-${elemenArr.includes('glosarium') ? '- Sertakan GLOSARIUM ISTILAH PENTING' : ''}
-${elemenArr.includes('referensi') ? '- Sertakan DAFTAR REFERENSI & BACAAN LANJUTAN' : ''}
+${docCustomInstruksi ? `\nINSTRUKSI KHUSUS:\n${docCustomInstruksi}` : ''}
 
 LARANGAN KERAS:
-- Jangan buat konten yang generik atau template-ish
-- Jangan skip bab atau potong konten karena panjang
-- Jangan gunakan placeholder seperti "[isi di sini]" atau "[tambahkan contoh]"
-- Setiap bab harus fully written, bukan hanya outline
+- Jangan gunakan placeholder kosong seperti "[isi di sini]", "[nama penanggung jawab]", dll.
+- Pastikan setiap klausul ditulis dengan konten substantif, bukan hanya judul
+- Jangan abaikan persyaratan documented information yang diwajibkan standar
+- Dokumen harus spesifik pada konteks organisasi yang diberikan, bukan generik`;
 
-${docCustomInstruksi ? `\nINSTRUKSI KHUSUS DARI PENULIS:\n${docCustomInstruksi}` : ''}`;
+      const userPrompt = `Buat ${jenisISOMap[docJenisISO] || 'dokumen sistem manajemen'} lengkap dengan informasi berikut:
 
-      const userPrompt = `Buat ${jenisMap[docJenis] || 'dokumen'} lengkap dengan detail berikut:
+📋 JUDUL DOKUMEN: "${title || topik}"
+${headerBlock ? `\n📌 IDENTITAS DOKUMEN:\n${headerBlock}` : ''}
+${target ? `👥 PENGGUNA DOKUMEN: ${target}` : ''}
 
-📚 JUDUL: "${title || topik}"
-${target ? `👥 TARGET PEMBACA: ${target}` : ''}
-${authorName ? `✍️ PENULIS: ${authorName}` : ''}
-
-OUTLINE & STRUKTUR YANG TELAH DIRANCANG:
+KONTEKS & KONTEN YANG MENJADI BASIS DOKUMEN:
 ${prompt}
 
-Tulis dokumen LENGKAP dan UTUH sesuai semua instruksi di atas. Pastikan setiap bab ditulis penuh, tidak ada yang disingkat atau dipotong.`;
+Buat dokumen LENGKAP dan UTUH sesuai semua instruksi di atas. Sertakan semua klausul yang diminta dengan isi yang substantif. Gunakan format tabel, daftar bernomor, dan heading yang terstruktur sesuai konvensi dokumen ISO.`;
+
+      void docJenis; // suppress unused warning
 
       const stream = await openai.chat.completions.create({
         model: "gpt-4o",
