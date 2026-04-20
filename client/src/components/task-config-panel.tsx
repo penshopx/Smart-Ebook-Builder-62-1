@@ -46,10 +46,28 @@ function EbookStyleOverride({
     currentStyle.writingStyle !== globalStyle.writingStyle ||
     currentStyle.aiCharacter !== globalStyle.aiCharacter;
 
-  const isQuickTone = QUICK_TONES_PANEL.includes(currentStyle.tone);
-  const isQuickStyle = QUICK_STYLES_PANEL.includes(currentStyle.writingStyle);
+  const selectedTones = currentStyle.tone ? currentStyle.tone.split(',').filter(Boolean) : [];
+  const selectedStyles = currentStyle.writingStyle ? currentStyle.writingStyle.split(',').filter(Boolean) : [];
   const otherTones = Array.from(TONES).filter(t => !QUICK_TONES_PANEL.includes(t));
   const otherStyles = Array.from(WRITING_STYLES).filter(s => !QUICK_STYLES_PANEL.includes(s));
+
+  const toggleTone = (opt: string) => {
+    if (selectedTones.includes(opt)) {
+      const next = selectedTones.filter(s => s !== opt);
+      onStyleChange('tone', next.length > 0 ? next.join(',') : QUICK_TONES_PANEL[0]);
+    } else {
+      onStyleChange('tone', [...selectedTones, opt].join(','));
+    }
+  };
+
+  const toggleStyle = (opt: string) => {
+    if (selectedStyles.includes(opt)) {
+      const next = selectedStyles.filter(s => s !== opt);
+      onStyleChange('writingStyle', next.length > 0 ? next.join(',') : QUICK_STYLES_PANEL[0]);
+    } else {
+      onStyleChange('writingStyle', [...selectedStyles, opt].join(','));
+    }
+  };
 
   return (
     <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 space-y-3">
@@ -75,17 +93,22 @@ function EbookStyleOverride({
       </div>
 
       <div className="space-y-2">
-        <Label className="text-[11px]">Tone</Label>
+        <Label className="text-[11px] flex items-center gap-1.5">
+          Tone
+          {selectedTones.length > 1 && (
+            <Badge className="text-[9px] px-1 py-0 h-3.5 bg-primary text-primary-foreground">{selectedTones.length}</Badge>
+          )}
+        </Label>
         <div className="flex flex-wrap gap-1">
           {QUICK_TONES_PANEL.map(opt => (
             <button
               key={opt}
               type="button"
-              onClick={() => onStyleChange('tone', opt)}
+              onClick={() => toggleTone(opt)}
               data-testid={`chip-ebook-tone-${ebookId}-${opt.toLowerCase()}`}
               className={cn(
                 "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all",
-                currentStyle.tone === opt
+                selectedTones.includes(opt)
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
               )}
@@ -93,42 +116,49 @@ function EbookStyleOverride({
               {opt}
             </button>
           ))}
-          <Select
-            value={isQuickTone ? "" : currentStyle.tone}
-            onValueChange={(v) => onStyleChange('tone', v)}
-          >
+          <Select value="" onValueChange={(v) => toggleTone(v)}>
             <SelectTrigger
               data-testid={`select-ebook-tone-more-${ebookId}`}
-              className={cn(
-                "h-6 px-2 rounded-full text-[10px] w-auto border transition-all",
-                !isQuickTone
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border"
-              )}
+              className="h-6 px-2 rounded-full text-[10px] w-auto border bg-background text-muted-foreground border-border"
             >
-              {!isQuickTone ? currentStyle.tone : "Lainnya ▾"}
+              Lainnya ▾
             </SelectTrigger>
             <SelectContent>
               {otherTones.map(t => (
-                <SelectItem key={t} value={t}>{t}</SelectItem>
+                <SelectItem key={t} value={t}>{selectedTones.includes(t) ? `✓ ${t}` : t}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+        {selectedTones.filter(t => !QUICK_TONES_PANEL.includes(t)).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {selectedTones.filter(t => !QUICK_TONES_PANEL.includes(t)).map(t => (
+              <button key={t} type="button" onClick={() => toggleTone(t)}
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary border border-primary/30 hover:text-red-500 transition-colors">
+                {t} ✕
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">
-        <Label className="text-[11px]">Gaya Penulisan</Label>
+        <Label className="text-[11px] flex items-center gap-1.5">
+          Gaya Penulisan
+          {selectedStyles.length > 1 && (
+            <Badge className="text-[9px] px-1 py-0 h-3.5 bg-primary text-primary-foreground">{selectedStyles.length}</Badge>
+          )}
+        </Label>
         <div className="flex flex-wrap gap-1">
           {QUICK_STYLES_PANEL.map(opt => (
             <button
               key={opt}
               type="button"
-              onClick={() => onStyleChange('writingStyle', opt)}
+              onClick={() => toggleStyle(opt)}
               data-testid={`chip-ebook-style-${ebookId}-${opt.toLowerCase().replace(/\s+/g, '-')}`}
               className={cn(
                 "px-2 py-0.5 rounded-full text-[10px] font-medium border transition-all",
-                currentStyle.writingStyle === opt
+                selectedStyles.includes(opt)
                   ? "bg-primary text-primary-foreground border-primary"
                   : "bg-background text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
               )}
@@ -136,28 +166,30 @@ function EbookStyleOverride({
               {opt}
             </button>
           ))}
-          <Select
-            value={isQuickStyle ? "" : currentStyle.writingStyle}
-            onValueChange={(v) => onStyleChange('writingStyle', v)}
-          >
+          <Select value="" onValueChange={(v) => toggleStyle(v)}>
             <SelectTrigger
               data-testid={`select-ebook-style-more-${ebookId}`}
-              className={cn(
-                "h-6 px-2 rounded-full text-[10px] w-auto border transition-all",
-                !isQuickStyle
-                  ? "bg-primary text-primary-foreground border-primary"
-                  : "bg-background text-muted-foreground border-border"
-              )}
+              className="h-6 px-2 rounded-full text-[10px] w-auto border bg-background text-muted-foreground border-border"
             >
-              {!isQuickStyle ? currentStyle.writingStyle : "Lainnya ▾"}
+              Lainnya ▾
             </SelectTrigger>
             <SelectContent>
               {otherStyles.map(s => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+                <SelectItem key={s} value={s}>{selectedStyles.includes(s) ? `✓ ${s}` : s}</SelectItem>
               ))}
             </SelectContent>
           </Select>
         </div>
+        {selectedStyles.filter(s => !QUICK_STYLES_PANEL.includes(s)).length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {selectedStyles.filter(s => !QUICK_STYLES_PANEL.includes(s)).map(s => (
+              <button key={s} type="button" onClick={() => toggleStyle(s)}
+                className="flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-primary/10 text-primary border border-primary/30 hover:text-red-500 transition-colors">
+                {s} ✕
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="space-y-2">

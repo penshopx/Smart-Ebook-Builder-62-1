@@ -146,7 +146,7 @@ function CollapsibleCard({
   );
 }
 
-function QuickChipSelect({
+function MultiChipSelect({
   label,
   value,
   onChange,
@@ -161,22 +161,40 @@ function QuickChipSelect({
   allOptions: readonly string[];
   testIdPrefix: string;
 }) {
-  const isQuick = quickOptions.includes(value);
+  const selected = value ? value.split(',').filter(Boolean) : [];
+
+  const toggle = (opt: string) => {
+    if (selected.includes(opt)) {
+      const next = selected.filter((s) => s !== opt);
+      onChange(next.length > 0 ? next.join(',') : quickOptions[0]);
+    } else {
+      onChange([...selected, opt].join(','));
+    }
+  };
+
   const otherOptions = allOptions.filter((o) => !quickOptions.includes(o));
+  const extraSelected = selected.filter((s) => !quickOptions.includes(s));
 
   return (
     <div className="space-y-2">
-      <Label>{label}</Label>
+      <Label className="flex items-center gap-1.5">
+        {label}
+        {selected.length > 1 && (
+          <Badge className="text-[10px] px-1.5 py-0 h-4 bg-primary text-primary-foreground">
+            {selected.length} dipilih
+          </Badge>
+        )}
+      </Label>
       <div className="flex flex-wrap gap-1.5">
         {quickOptions.map((opt) => (
           <button
             key={opt}
             type="button"
-            onClick={() => onChange(opt)}
+            onClick={() => toggle(opt)}
             data-testid={`chip-${testIdPrefix}-${opt.toLowerCase().replace(/\s+/g, '-')}`}
             className={cn(
               "px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
-              value === opt
+              selected.includes(opt)
                 ? "bg-primary text-primary-foreground border-primary shadow-sm"
                 : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50 hover:text-foreground"
             )}
@@ -184,28 +202,36 @@ function QuickChipSelect({
             {opt}
           </button>
         ))}
-        <Select
-          value={isQuick ? "" : value}
-          onValueChange={onChange}
-        >
+        <Select value="" onValueChange={(v) => toggle(v)}>
           <SelectTrigger
             data-testid={`select-${testIdPrefix}-more`}
-            className={cn(
-              "h-7 px-2.5 rounded-full text-xs w-auto border transition-all",
-              !isQuick
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
-            )}
+            className="h-7 px-2.5 rounded-full text-xs w-auto border bg-muted/50 text-muted-foreground border-border hover:border-primary/50"
           >
-            {!isQuick ? value : "Lainnya ▾"}
+            Lainnya ▾
           </SelectTrigger>
           <SelectContent>
             {otherOptions.map((opt) => (
-              <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+              <SelectItem key={opt} value={opt}>
+                {selected.includes(opt) ? `✓ ${opt}` : opt}
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
+      {extraSelected.length > 0 && (
+        <div className="flex flex-wrap gap-1">
+          {extraSelected.map((s) => (
+            <button
+              key={s}
+              type="button"
+              onClick={() => toggle(s)}
+              className="flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-medium bg-primary/10 text-primary border border-primary/30 hover:bg-red-50 hover:text-red-500 hover:border-red-300 transition-colors"
+            >
+              {s} ✕
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
@@ -493,7 +519,7 @@ export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
 
         <div className="h-px bg-border" />
 
-        <QuickChipSelect
+        <MultiChipSelect
           label="Tone Penulisan"
           value={projectData.tone}
           onChange={(v) => onChange('tone', v)}
@@ -502,7 +528,7 @@ export function ProjectForm({ projectData, onChange }: ProjectFormProps) {
           testIdPrefix="tone"
         />
 
-        <QuickChipSelect
+        <MultiChipSelect
           label="Gaya Penulisan"
           value={projectData.writingStyle}
           onChange={(v) => onChange('writingStyle', v)}
