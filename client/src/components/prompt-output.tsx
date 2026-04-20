@@ -104,6 +104,120 @@ function getSuggestedQuestions(topik: string): string[] {
 
 interface ChapterItem { id: string; number: number; title: string; subTopics: string; content: string; loading: boolean; }
 
+function mdInline(text: string): React.ReactNode {
+  const parts: React.ReactNode[] = [];
+  const re = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)|`([^`]+)`)/g;
+  let last = 0; let m: RegExpExecArray | null; let ki = 0;
+  while ((m = re.exec(text)) !== null) {
+    if (m.index > last) parts.push(<span key={ki++}>{text.slice(last, m.index)}</span>);
+    if (m[2]) parts.push(<strong key={ki++} className="font-bold">{m[2]}</strong>);
+    else if (m[3]) parts.push(<strong key={ki++} className="font-bold">{m[3]}</strong>);
+    else if (m[4]) parts.push(<strong key={ki++} className="font-bold">{m[4]}</strong>);
+    else if (m[5]) parts.push(<em key={ki++} className="italic">{m[5]}</em>);
+    else if (m[6]) parts.push(<em key={ki++} className="italic">{m[6]}</em>);
+    else if (m[7]) parts.push(<code key={ki++} className="bg-muted font-mono text-xs px-1 py-0.5 rounded">{m[7]}</code>);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) parts.push(<span key={ki++}>{text.slice(last)}</span>);
+  return <>{parts}</>;
+}
+
+function MarkdownContent({ content, className }: { content: string; className?: string }) {
+  if (!content) return null;
+  const lines = content.split('\n');
+  type Block =
+    | { type: 'empty' }
+    | { type: 'heading'; level: number; text: string }
+    | { type: 'hr' }
+    | { type: 'list'; ordered: boolean; items: string[] }
+    | { type: 'table'; header: string[]; rows: string[][] }
+    | { type: 'paragraph'; text: string };
+  const blocks: Block[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    const raw = lines[i];
+    const t = raw.trim();
+    if (t === '') { blocks.push({ type: 'empty' }); i++; }
+    else if (/^#{1,6} /.test(t)) {
+      const lvl = t.match(/^(#+)/)![1].length;
+      blocks.push({ type: 'heading', level: lvl, text: t.replace(/^#+\s*/, '') });
+      i++;
+    } else if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) { blocks.push({ type: 'hr' }); i++; }
+    else if (/^\|/.test(t)) {
+      const tableLines: string[] = [];
+      while (i < lines.length && /^\|/.test(lines[i].trim())) { tableLines.push(lines[i]); i++; }
+      const parseRow = (row: string) => row.split('|').filter((_, ci, arr) => ci > 0 && ci < arr.length - 1).map(c => c.trim());
+      const nonSep = tableLines.filter(l => !/^[\|\s\-:]+$/.test(l));
+      if (nonSep.length >= 1) {
+        const [hdr, ...dataLines] = nonSep;
+        blocks.push({ type: 'table', header: parseRow(hdr), rows: dataLines.map(parseRow) });
+      }
+    } else if (/^(\s*[-*+] |\s*\d+\. )/.test(raw)) {
+      const ordered = /^\s*\d+\. /.test(raw);
+      const items: string[] = [];
+      while (i < lines.length && /^(\s*[-*+] |\s*\d+\. )/.test(lines[i])) {
+        items.push(lines[i].trim().replace(/^[-*+]\s*/, '').replace(/^\d+\.\s*/, ''));
+        i++;
+      }
+      blocks.push({ type: 'list', ordered, items });
+    } else { blocks.push({ type: 'paragraph', text: t }); i++; }
+  }
+  return (
+    <div className={cn('text-sm leading-relaxed', className)}>
+      {blocks.map((block, bi) => {
+        if (block.type === 'empty') return <div key={bi} className="h-2" />;
+        if (block.type === 'hr') return <hr key={bi} className="my-3 border-border" />;
+        if (block.type === 'heading') {
+          const cls: Record<number, string> = {
+            1: 'text-lg font-bold text-foreground mt-5 mb-2 pb-1 border-b border-border',
+            2: 'text-base font-bold text-foreground mt-4 mb-1',
+            3: 'text-sm font-semibold text-foreground mt-3 mb-1',
+            4: 'text-sm font-semibold text-primary mt-2 mb-0.5',
+            5: 'text-sm font-medium text-primary mt-2',
+            6: 'text-xs font-medium text-muted-foreground mt-1',
+          };
+          const Tag = (['h1','h2','h3','h4','h5','h6'] as const)[block.level - 1] || 'h4';
+          return <Tag key={bi} className={cls[block.level] || cls[3]}>{mdInline(block.text)}</Tag>;
+        }
+        if (block.type === 'table') return (
+          <div key={bi} className="my-3 overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="bg-muted">
+                  {block.header.map((cell, ci) => <th key={ci} className="border border-border px-3 py-1.5 text-left font-semibold">{mdInline(cell)}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {block.rows.map((row, ri) => (
+                  <tr key={ri} className={ri % 2 === 0 ? 'bg-background' : 'bg-muted/40'}>
+                    {row.map((cell, ci) => <td key={ci} className="border border-border px-3 py-1.5">{mdInline(cell)}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        );
+        if (block.type === 'list') {
+          const Tag = block.ordered ? 'ol' : 'ul';
+          return (
+            <Tag key={bi} className={cn('pl-5 space-y-0.5 my-2', block.ordered ? 'list-decimal' : 'list-disc')}>
+              {block.items.map((item, ii) => <li key={ii} className="text-foreground">{mdInline(item)}</li>)}
+            </Tag>
+          );
+        }
+        if (block.type === 'paragraph') {
+          const isHeader = block.text.length < 100 && (
+            /^(BAB|BAGIAN|PENDAHULUAN|KESIMPULAN|PENUTUP|DAFTAR)/i.test(block.text) ||
+            (block.text === block.text.toUpperCase() && block.text.length > 3)
+          );
+          return <p key={bi} className={cn('mb-1', isHeader ? 'font-bold text-primary mt-4 text-sm' : 'text-foreground')}>{mdInline(block.text)}</p>;
+        }
+        return null;
+      })}
+    </div>
+  );
+}
+
 export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, selectedAiModel = 'dokumentender', onAiModelChange, projectTitle, projectTopik, projectTarget, uploadedFiles = [], onTopicUpdate, projectData, assistantPersona }: PromptOutputProps) {
   const [isCopied, setIsCopied] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -2408,6 +2522,81 @@ ${bodyHtml}
   const wordCount = prompt.split(/\s+/).filter(Boolean).length;
   const charCount = prompt.length;
 
+  function renderInline(text: string): React.ReactNode {
+    const parts: React.ReactNode[] = [];
+    const re = /(\*\*\*(.+?)\*\*\*|\*\*(.+?)\*\*|__(.+?)__|(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)|(?<!_)_(?!_)(.+?)(?<!_)_(?!_)|`(.+?)`)/g;
+    let last = 0;
+    let m: RegExpExecArray | null;
+    let ki = 0;
+    while ((m = re.exec(text)) !== null) {
+      if (m.index > last) parts.push(<span key={ki++}>{text.slice(last, m.index)}</span>);
+      if (m[2]) parts.push(<strong key={ki++} className="font-bold">{m[2]}</strong>);
+      else if (m[3]) parts.push(<strong key={ki++} className="font-bold">{m[3]}</strong>);
+      else if (m[4]) parts.push(<strong key={ki++} className="font-bold">{m[4]}</strong>);
+      else if (m[5]) parts.push(<em key={ki++} className="italic">{m[5]}</em>);
+      else if (m[6]) parts.push(<em key={ki++} className="italic">{m[6]}</em>);
+      else if (m[7]) parts.push(<code key={ki++} className="bg-muted text-foreground font-mono text-xs px-1 py-0.5 rounded">{m[7]}</code>);
+      last = m.index + m[0].length;
+    }
+    if (last < text.length) parts.push(<span key={ki++}>{text.slice(last)}</span>);
+    return parts.length === 1 && typeof parts[0] !== 'string' ? parts[0] : <>{parts}</>;
+  }
+
+  function parseDocBlocks(content: string) {
+    const lines = content.split('\n');
+    type Block =
+      | { type: 'empty'; lineIdx: number }
+      | { type: 'heading'; level: number; text: string; lineIdx: number }
+      | { type: 'hr'; lineIdx: number }
+      | { type: 'list'; ordered: boolean; items: { text: string; lineIdx: number }[] }
+      | { type: 'table'; header: string[]; rows: string[][]; lineIdx: number }
+      | { type: 'paragraph'; text: string; lineIdx: number };
+    const blocks: Block[] = [];
+    let i = 0;
+    while (i < lines.length) {
+      const raw = lines[i];
+      const t = raw.trim();
+      if (t === '') {
+        blocks.push({ type: 'empty', lineIdx: i });
+        i++;
+      } else if (/^#{1,6} /.test(t)) {
+        const lvl = t.match(/^(#+)/)![1].length;
+        blocks.push({ type: 'heading', level: lvl, text: t.replace(/^#+\s*/, ''), lineIdx: i });
+        i++;
+      } else if (/^(-{3,}|\*{3,}|_{3,})$/.test(t)) {
+        blocks.push({ type: 'hr', lineIdx: i });
+        i++;
+      } else if (/^\|/.test(t)) {
+        const tableLineIdx = i;
+        const tableLines: string[] = [];
+        while (i < lines.length && /^\|/.test(lines[i].trim())) {
+          tableLines.push(lines[i]);
+          i++;
+        }
+        const parseRow = (row: string) =>
+          row.split('|').filter((_, ci, arr) => ci > 0 && ci < arr.length - 1).map(c => c.trim());
+        const nonSep = tableLines.filter(l => !/^[\|\s\-:]+$/.test(l));
+        if (nonSep.length >= 1) {
+          const [headerLine, ...dataLines] = nonSep;
+          blocks.push({ type: 'table', header: parseRow(headerLine), rows: dataLines.map(parseRow), lineIdx: tableLineIdx });
+        }
+      } else if (/^(\s*[-*+] |\s*\d+\. )/.test(raw)) {
+        const ordered = /^\s*\d+\. /.test(raw);
+        const items: { text: string; lineIdx: number }[] = [];
+        while (i < lines.length && /^(\s*[-*+] |\s*\d+\. )/.test(lines[i])) {
+          const lineText = lines[i].trim().replace(/^[-*+]\s*/, '').replace(/^\d+\.\s*/, '');
+          items.push({ text: lineText, lineIdx: i });
+          i++;
+        }
+        blocks.push({ type: 'list', ordered, items });
+      } else {
+        blocks.push({ type: 'paragraph', text: t, lineIdx: i });
+        i++;
+      }
+    }
+    return blocks;
+  }
+
   const promptContent = (
     <Textarea
       ref={textAreaRef}
@@ -3182,66 +3371,129 @@ ${bodyHtml}
               </div>
             ) : (
               <ScrollArea className="h-full">
-                <div className="p-4 space-y-1" data-testid="text-document-output">
-                  {docContent.split(/\n/).map((line, idx) => {
-                    const hasImage = imageInserts[idx] !== undefined;
-                    const isHeader = line.trim().length > 0 && line.trim().length < 80 && (
-                      /^(BAB|BAGIAN|PENDAHULUAN|KESIMPULAN|PENUTUP|DAFTAR|[IVX]+\.|[0-9]+\.)/i.test(line.trim()) ||
-                      line.trim() === line.trim().toUpperCase()
-                    );
-                    return (
-                      <div key={idx} className="group/line">
-                        {hasImage && (
-                          <div className="relative my-3">
-                            <img
-                              src={imageInserts[idx]}
-                              alt={`Ilustrasi paragraf ${idx + 1}`}
-                              className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover"
-                              data-testid={`img-doc-insert-${idx}`}
-                            />
-                            <button
-                              onClick={() => handleRemoveImage(idx)}
-                              className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70 transition-colors"
-                              title="Hapus gambar"
-                            >
-                              <X className="h-3 w-3" />
-                            </button>
-                          </div>
-                        )}
-                        {line.trim() === '' ? (
-                          <div className="h-2" />
-                        ) : (
+                <div className="p-6 max-w-3xl mx-auto" data-testid="text-document-output">
+                  {parseDocBlocks(docContent).map((block, bi) => {
+                    if (block.type === 'empty') {
+                      return <div key={bi} className="h-3" />;
+                    }
+                    if (block.type === 'hr') {
+                      return <hr key={bi} className="my-4 border-border" />;
+                    }
+                    if (block.type === 'heading') {
+                      const headingClasses: Record<number, string> = {
+                        1: 'text-2xl font-bold text-foreground mt-8 mb-3 pb-1 border-b border-border',
+                        2: 'text-xl font-bold text-foreground mt-6 mb-2',
+                        3: 'text-lg font-semibold text-foreground mt-5 mb-2',
+                        4: 'text-base font-semibold text-primary mt-4 mb-1',
+                        5: 'text-sm font-semibold text-primary mt-3 mb-1',
+                        6: 'text-sm font-medium text-muted-foreground mt-2 mb-1',
+                      };
+                      const cls = headingClasses[block.level] || headingClasses[3];
+                      return (
+                        <div key={bi} className="group/line">
+                          {imageInserts[block.lineIdx] && (
+                            <div className="relative my-3">
+                              <img src={imageInserts[block.lineIdx]} alt="" className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover" data-testid={`img-doc-insert-${block.lineIdx}`} />
+                              <button onClick={() => handleRemoveImage(block.lineIdx)} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"><X className="h-3 w-3" /></button>
+                            </div>
+                          )}
+                          <div className={cls}>{renderInline(block.text)}</div>
+                          {!isGenerating && (
+                            <div className="flex items-center gap-1 my-1 opacity-0 group-hover/line:opacity-100 transition-opacity">
+                              <div className="flex-1 h-px bg-border/50" />
+                              <button onClick={() => handleOpenImagePicker(block.lineIdx, block.text, 'illustration')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-primary hover:bg-primary/10 border border-dashed border-border hover:border-primary transition-all" data-testid={`button-add-image-${block.lineIdx}`}><ImagePlus className="h-2.5 w-2.5" />Ilustrasi AI</button>
+                              <button onClick={() => handleOpenImagePicker(block.lineIdx, block.text, 'infographic')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-teal-600 hover:bg-teal-50 border border-dashed border-border hover:border-teal-400 transition-all" data-testid={`button-add-infographic-${block.lineIdx}`}><Monitor className="h-2.5 w-2.5" />Infografik AI</button>
+                              <div className="flex-1 h-px bg-border/50" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    if (block.type === 'table') {
+                      return (
+                        <div key={bi} className="my-4 overflow-x-auto">
+                          <table className="w-full border-collapse text-sm">
+                            <thead>
+                              <tr className="bg-muted">
+                                {block.header.map((cell, ci) => (
+                                  <th key={ci} className="border border-border px-3 py-2 text-left font-semibold text-foreground">
+                                    {renderInline(cell)}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {block.rows.map((row, ri) => (
+                                <tr key={ri} className={ri % 2 === 0 ? 'bg-background' : 'bg-muted/40'}>
+                                  {row.map((cell, ci) => (
+                                    <td key={ci} className="border border-border px-3 py-2 text-foreground">
+                                      {renderInline(cell)}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      );
+                    }
+                    if (block.type === 'list') {
+                      const Tag = block.ordered ? 'ol' : 'ul';
+                      return (
+                        <Tag key={bi} className={cn('my-2 pl-6 space-y-1', block.ordered ? 'list-decimal' : 'list-disc')}>
+                          {block.items.map((item, ii) => (
+                            <li key={ii} className="text-sm leading-relaxed text-foreground group/line">
+                              {imageInserts[item.lineIdx] && (
+                                <div className="relative my-2">
+                                  <img src={imageInserts[item.lineIdx]} alt="" className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover" data-testid={`img-doc-insert-${item.lineIdx}`} />
+                                  <button onClick={() => handleRemoveImage(item.lineIdx)} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"><X className="h-3 w-3" /></button>
+                                </div>
+                              )}
+                              {renderInline(item.text)}
+                              {!isGenerating && (
+                                <div className="flex items-center gap-1 my-0.5 opacity-0 group-hover/line:opacity-100 transition-opacity">
+                                  <div className="flex-1 h-px bg-border/50" />
+                                  <button onClick={() => handleOpenImagePicker(item.lineIdx, item.text, 'illustration')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-primary hover:bg-primary/10 border border-dashed border-border hover:border-primary transition-all" data-testid={`button-add-image-${item.lineIdx}`}><ImagePlus className="h-2.5 w-2.5" />Ilustrasi AI</button>
+                                  <button onClick={() => handleOpenImagePicker(item.lineIdx, item.text, 'infographic')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-teal-600 hover:bg-teal-50 border border-dashed border-border hover:border-teal-400 transition-all" data-testid={`button-add-infographic-${item.lineIdx}`}><Monitor className="h-2.5 w-2.5" />Infografik AI</button>
+                                  <div className="flex-1 h-px bg-border/50" />
+                                </div>
+                              )}
+                            </li>
+                          ))}
+                        </Tag>
+                      );
+                    }
+                    if (block.type === 'paragraph') {
+                      const isParagraphHeader = block.text.length < 100 && (
+                        /^(BAB|BAGIAN|PENDAHULUAN|KESIMPULAN|PENUTUP|DAFTAR)/i.test(block.text) ||
+                        block.text === block.text.toUpperCase()
+                      );
+                      return (
+                        <div key={bi} className="group/line">
+                          {imageInserts[block.lineIdx] && (
+                            <div className="relative my-3">
+                              <img src={imageInserts[block.lineIdx]} alt="" className="w-full max-w-md mx-auto rounded-lg shadow-md object-cover" data-testid={`img-doc-insert-${block.lineIdx}`} />
+                              <button onClick={() => handleRemoveImage(block.lineIdx)} className="absolute top-2 right-2 h-6 w-6 rounded-full bg-black/50 text-white flex items-center justify-center hover:bg-black/70"><X className="h-3 w-3" /></button>
+                            </div>
+                          )}
                           <p className={cn(
-                            "text-sm leading-relaxed",
-                            isHeader ? "font-bold text-primary mt-4 mb-1 text-base" : "text-foreground"
+                            'text-sm leading-relaxed',
+                            isParagraphHeader ? 'font-bold text-primary mt-5 mb-1 text-base' : 'text-foreground mb-1'
                           )}>
-                            {line}
+                            {renderInline(block.text)}
                           </p>
-                        )}
-                        {!isGenerating && line.trim() !== '' && (
-                          <div className="flex items-center gap-1 my-1 opacity-0 group-hover/line:opacity-100 transition-opacity">
-                            <div className="flex-1 h-px bg-border/50" />
-                            <button
-                              onClick={() => handleOpenImagePicker(idx, line, 'illustration')}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-primary hover:bg-primary/10 border border-dashed border-border hover:border-primary transition-all"
-                              data-testid={`button-add-image-${idx}`}
-                            >
-                              <ImagePlus className="h-2.5 w-2.5" />
-                              Ilustrasi AI
-                            </button>
-                            <button
-                              onClick={() => handleOpenImagePicker(idx, line, 'infographic')}
-                              className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-teal-600 hover:bg-teal-50 border border-dashed border-border hover:border-teal-400 transition-all"
-                              data-testid={`button-add-infographic-${idx}`}
-                            >
-                              <Monitor className="h-2.5 w-2.5" />
-                              Infografik AI
-                            </button>
-                            <div className="flex-1 h-px bg-border/50" />
-                          </div>
-                        )}
-                      </div>
-                    );
+                          {!isGenerating && (
+                            <div className="flex items-center gap-1 my-1 opacity-0 group-hover/line:opacity-100 transition-opacity">
+                              <div className="flex-1 h-px bg-border/50" />
+                              <button onClick={() => handleOpenImagePicker(block.lineIdx, block.text, 'illustration')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-primary hover:bg-primary/10 border border-dashed border-border hover:border-primary transition-all" data-testid={`button-add-image-${block.lineIdx}`}><ImagePlus className="h-2.5 w-2.5" />Ilustrasi AI</button>
+                              <button onClick={() => handleOpenImagePicker(block.lineIdx, block.text, 'infographic')} className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] text-muted-foreground hover:text-teal-600 hover:bg-teal-50 border border-dashed border-border hover:border-teal-400 transition-all" data-testid={`button-add-infographic-${block.lineIdx}`}><Monitor className="h-2.5 w-2.5" />Infografik AI</button>
+                              <div className="flex-1 h-px bg-border/50" />
+                            </div>
+                          )}
+                        </div>
+                      );
+                    }
+                    return null;
                   })}
                   {isGenerating && (
                     <span className="inline-block w-2 h-4 bg-emerald-600 ml-0.5 animate-pulse rounded-sm" />
@@ -4084,14 +4336,18 @@ ${bodyHtml}
                 </div>
                 <div className="flex-1 min-h-0 flex flex-col gap-2">
                   <ScrollArea className="flex-1">
-                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
-                      {sectionContent || (
+                    <div className="p-2">
+                      {sectionContent ? (
+                        <>
+                          <MarkdownContent content={sectionContent} />
+                          {monoLoading && monoContent.includes(`===${currentTab.tag}===`) && !monoContent.includes(`===AKHIR_${currentTab.tag}===`) && (
+                            <span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1" />
+                          )}
+                        </>
+                      ) : (
                         monoLoading
                           ? <span className="text-muted-foreground text-xs">Sedang di-generate... <span className="inline-block w-2 h-3 bg-green-500 animate-pulse ml-1" /></span>
                           : <span className="text-muted-foreground text-xs">Klik tab lain untuk melihat bagian ini setelah selesai di-generate.</span>
-                      )}
-                      {sectionContent && monoLoading && monoContent.includes(`===${currentTab.tag}===`) && !monoContent.includes(`===AKHIR_${currentTab.tag}===`) && (
-                        <span className="inline-block w-2 h-4 bg-green-500 animate-pulse ml-1" />
                       )}
                     </div>
                   </ScrollArea>
@@ -4232,7 +4488,7 @@ ${bodyHtml}
 
                   {/* Raw if no structure parsed */}
                   {!scorePart && reviewContent && (
-                    <div className="text-sm whitespace-pre-wrap leading-relaxed">{reviewContent}</div>
+                    <MarkdownContent content={reviewContent} />
                   )}
 
                   {reviewLoading && <div className="flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-3 w-3 animate-spin" />Menganalisis...</div>}
@@ -4530,9 +4786,13 @@ ${bodyHtml}
                 </div>
                 <div className="flex-1 min-h-0 flex flex-col gap-2">
                   <ScrollArea className="flex-1">
-                    <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
-                      {getSection(currentTab.tag) || (syllabusLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-cyan-500 animate-pulse ml-1" /></span> : '—')}
-                      {syllabusLoading && syllabusContent.includes(`===${currentTab.tag}===`) && !syllabusContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-cyan-500 animate-pulse ml-1" />}
+                    <div className="p-2">
+                      {getSection(currentTab.tag) ? (
+                        <>
+                          <MarkdownContent content={getSection(currentTab.tag)!} />
+                          {syllabusLoading && syllabusContent.includes(`===${currentTab.tag}===`) && !syllabusContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-cyan-500 animate-pulse ml-1" />}
+                        </>
+                      ) : syllabusLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-cyan-500 animate-pulse ml-1" /></span> : <span className="text-muted-foreground text-xs">—</span>}
                     </div>
                   </ScrollArea>
                   <div className="flex gap-2 flex-shrink-0">
@@ -4612,9 +4872,13 @@ ${bodyHtml}
                     </div>
                   ) : (
                     <ScrollArea className="flex-1">
-                      <div className="text-sm whitespace-pre-wrap leading-relaxed p-2">
-                        {getSection(currentTab.tag) || (appLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-slate-500 animate-pulse ml-1" /></span> : '—')}
-                        {appLoading && appContent.includes(`===${currentTab.tag}===`) && !appContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-slate-500 animate-pulse ml-1" />}
+                      <div className="p-2">
+                        {getSection(currentTab.tag) ? (
+                          <>
+                            <MarkdownContent content={getSection(currentTab.tag)!} />
+                            {appLoading && appContent.includes(`===${currentTab.tag}===`) && !appContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-slate-500 animate-pulse ml-1" />}
+                          </>
+                        ) : appLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-slate-500 animate-pulse ml-1" /></span> : <span className="text-muted-foreground text-xs">—</span>}
                       </div>
                     </ScrollArea>
                   )}
@@ -6435,7 +6699,7 @@ ${bodyHtml}
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{platformListingContent}</div>
+              <MarkdownContent content={platformListingContent} className="border rounded-lg p-4 bg-muted/30" />
             </div>
           ) : null}
         </DialogContent>
@@ -6465,7 +6729,7 @@ ${bodyHtml}
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{resellerKitContent}</div>
+              <MarkdownContent content={resellerKitContent} className="border rounded-lg p-4 bg-muted/30" />
             </div>
           ) : null}
         </DialogContent>
@@ -6495,7 +6759,7 @@ ${bodyHtml}
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{repurposingContent}</div>
+              <MarkdownContent content={repurposingContent} className="border rounded-lg p-4 bg-muted/30" />
             </div>
           ) : null}
         </DialogContent>
@@ -6567,7 +6831,7 @@ ${bodyHtml}
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{socialPilarContent}</div>
+              <MarkdownContent content={socialPilarContent} className="border rounded-lg p-4 bg-muted/30" />
             </div>
           )}
         </DialogContent>
@@ -6646,7 +6910,7 @@ ${bodyHtml}
                   <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Regenerate
                 </Button>
               </div>
-              <div className="prose prose-sm max-w-none dark:prose-invert text-sm whitespace-pre-wrap leading-relaxed border rounded-lg p-4 bg-muted/30">{threadContent}</div>
+              <MarkdownContent content={threadContent} className="border rounded-lg p-4 bg-muted/30" />
             </div>
           )}
         </DialogContent>
@@ -6846,7 +7110,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating {igCaptionJumlah} caption Instagram...</span></div>
             ) : igCaptionContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{igCaptionContent}</pre>
+                <MarkdownContent content={igCaptionContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(igCaptionContent); toast({ title: '✅ Semua caption disalin!' }); }}>
                   Copy All
@@ -6887,7 +7151,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating {reelHookJumlah} hook video...</span></div>
             ) : reelHookContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{reelHookContent}</pre>
+                <MarkdownContent content={reelHookContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(reelHookContent); toast({ title: '✅ Semua hook disalin!' }); }}>
                   Copy All
@@ -6927,7 +7191,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Merancang struktur harga 5 tier...</span></div>
             ) : pricingLadderContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{pricingLadderContent}</pre>
+                <MarkdownContent content={pricingLadderContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(pricingLadderContent); toast({ title: '✅ Pricing Ladder disalin!' }); }}>
                   Copy All
@@ -6983,7 +7247,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating timeline launch 30 hari...</span></div>
             ) : launchCheckContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{launchCheckContent}</pre>
+                <MarkdownContent content={launchCheckContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(launchCheckContent); toast({ title: '✅ Launch Checklist disalin!' }); }}>
                   Copy All
@@ -7039,7 +7303,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating 3 script TikTok Ads ({tikTokDurasi} detik)...</span></div>
             ) : tikTokAdsContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{tikTokAdsContent}</pre>
+                <MarkdownContent content={tikTokAdsContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(tikTokAdsContent); toast({ title: '✅ TikTok Ads Script disalin!' }); }}>
                   Copy All
@@ -7084,7 +7348,7 @@ ${bodyHtml}
               <div className="flex items-center justify-center h-32 gap-2 text-muted-foreground"><Loader2 className="animate-spin h-5 w-5" /><span className="text-sm">Generating RSA headlines, descriptions, dan extensions...</span></div>
             ) : googleAdsContent ? (
               <div className="relative">
-                <pre className="whitespace-pre-wrap text-xs font-sans bg-muted/30 rounded-lg p-4 leading-relaxed">{googleAdsContent}</pre>
+                <MarkdownContent content={googleAdsContent} className="bg-muted/30 rounded-lg p-4" />
                 <Button size="sm" variant="outline" className="absolute top-2 right-2 text-xs h-6"
                   onClick={() => { navigator.clipboard.writeText(googleAdsContent); toast({ title: '✅ Google Ads disalin!' }); }}>
                   Copy All
