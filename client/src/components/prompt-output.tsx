@@ -231,6 +231,14 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   // Doc Generator Config
   const [docConfigOpen, setDocConfigOpen] = useState(false);
   const [docJenis, setDocJenis] = useState('ebook');
+  // Doc Generator mode switcher
+  const [docMode, setDocMode] = useState<'iso' | 'generic'>('iso');
+  // Doc Generator — Generic Document params
+  const [docGenericKategori, setDocGenericKategori] = useState('tender');
+  const [docGenericJenis, setDocGenericJenis] = useState('');
+  const [docGenericTujuan, setDocGenericTujuan] = useState('');
+  const [docGenericPihak, setDocGenericPihak] = useState('');
+  const [docGenericFormat, setDocGenericFormat] = useState('mix');
   // Doc Generator Config — ISO / Quality Management Documents
   const [docKategori, setDocKategori] = useState('smm');
   const [docJenisISO, setDocJenisISO] = useState('manual_mutu');
@@ -2513,6 +2521,8 @@ ${bodyHtml}
           topik: projectTopik,
           target: projectTarget,
           authorName,
+          docMode,
+          // ISO params
           docKategori,
           docJenisISO,
           docStandar,
@@ -2526,6 +2536,12 @@ ${bodyHtml}
           docDetailLevel,
           docBahasa,
           docCustomInstruksi,
+          // Generic params
+          docGenericKategori,
+          docGenericJenis,
+          docGenericTujuan,
+          docGenericPihak,
+          docGenericFormat,
         }),
         signal: abortRef.current.signal,
       });
@@ -2576,7 +2592,7 @@ ${bodyHtml}
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, projectTitle, projectTopik, projectTarget, authorName, docKategori, docJenisISO, docStandar, docKlausul, docNomorDok, docVersi, docTanggalEfektif, docNamaOrg, docDepartemen, docLingkup, docDetailLevel, docBahasa, docCustomInstruksi, toast]);
+  }, [prompt, projectTitle, projectTopik, projectTarget, authorName, docMode, docKategori, docJenisISO, docStandar, docKlausul, docNomorDok, docVersi, docTanggalEfektif, docNamaOrg, docDepartemen, docLingkup, docDetailLevel, docBahasa, docCustomInstruksi, docGenericKategori, docGenericJenis, docGenericTujuan, docGenericPihak, docGenericFormat, toast]);
 
   const handleRegenerate = useCallback(async () => {
     if (!onRegenerate) return;
@@ -4845,13 +4861,29 @@ ${bodyHtml}
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base">
-              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-blue-700 to-indigo-800 text-white">
+              <div className={cn('flex items-center justify-center h-7 w-7 rounded-lg text-white', docMode === 'iso' ? 'bg-gradient-to-br from-blue-700 to-indigo-800' : 'bg-gradient-to-br from-violet-600 to-purple-700')}>
                 <FileText className="h-3.5 w-3.5" />
               </div>
-              Generator Dokumen Sistem Manajemen
-              <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">ISO · QMS · SMK3</Badge>
+              {docMode === 'iso' ? 'Generator Dokumen Sistem Manajemen' : 'Generator Dokumen Umum'}
+              {docMode === 'iso'
+                ? <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">ISO · QMS · SMK3</Badge>
+                : <Badge variant="secondary" className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-200">Perizinan · Tender · Bisnis · Konstruksi</Badge>
+              }
             </DialogTitle>
           </DialogHeader>
+
+          {/* ── MODE SWITCHER ── */}
+          <div className="shrink-0 flex gap-2 px-1 pb-2 border-b">
+            <button onClick={() => setDocMode('iso')}
+              className={cn('flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border', docMode === 'iso' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'border-border text-muted-foreground hover:bg-muted')}>
+              <span>🏅</span> Mode ISO / Sistem Manajemen
+            </button>
+            <button onClick={() => setDocMode('generic')}
+              className={cn('flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border', docMode === 'generic' ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'border-border text-muted-foreground hover:bg-muted')}>
+              <span>📄</span> Mode Dokumen Umum
+            </button>
+          </div>
+
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-5 py-3 px-1">
 
@@ -4872,6 +4904,9 @@ ${bodyHtml}
                 </div>
                 <p className="text-[10px] text-blue-600 dark:text-blue-400">💡 Konten dari ebook akan menjadi basis knowledge untuk menyusun dokumen yang spesifik dan kontekstual</p>
               </div>
+
+              {/* ══ ISO MODE CONTENT ══ */}
+              {docMode === 'iso' && <>
 
               {/* Kategori & Jenis Dokumen */}
               <div className="space-y-3">
@@ -5086,9 +5121,9 @@ ${bodyHtml}
                 />
               </div>
 
-              {/* ── SUMMARY ── */}
+              {/* ── ISO SUMMARY ── */}
               <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-3 space-y-1.5">
-                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300">📊 Ringkasan Konfigurasi Dokumen:</p>
+                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300">📊 Ringkasan Konfigurasi ISO:</p>
                 <div className="flex flex-wrap gap-2 text-[10px] text-blue-700 dark:text-blue-300">
                   <span className="bg-blue-100 dark:bg-blue-800/50 px-2 py-0.5 rounded-full font-medium">{docKategori.toUpperCase()}</span>
                   <span className="bg-blue-100 dark:bg-blue-800/50 px-2 py-0.5 rounded-full font-medium">{docJenisISO.replace(/_/g,' ').toUpperCase()}</span>
@@ -5097,14 +5132,179 @@ ${bodyHtml}
                   <span className="bg-blue-100 dark:bg-blue-800/50 px-2 py-0.5 rounded-full font-medium">{docDetailLevel}</span>
                 </div>
                 <p className="text-[10px] text-blue-600 dark:text-blue-400">
-                  ⏱️ Estimasi waktu: {docDetailLevel === 'ringkas' ? '~30 detik' : docDetailLevel === 'standar' ? '~50 detik' : '~75-90 detik'} · Model: GPT-4o · {docDetailLevel === 'komprehensif' ? '~8000' : docDetailLevel === 'standar' ? '~6000' : '~4000'} tokens
+                  ⏱️ {docDetailLevel === 'ringkas' ? '~30 detik' : docDetailLevel === 'standar' ? '~50 detik' : '~75-90 detik'} · GPT-4o · {docDetailLevel === 'komprehensif' ? '~8000' : docDetailLevel === 'standar' ? '~6000' : '~4000'} tokens
                 </p>
               </div>
+
+              </>}
+
+              {/* ══ GENERIC MODE CONTENT ══ */}
+              {docMode === 'generic' && <>
+
+              {/* Kategori Dokumen Umum */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">📂 Kategori Dokumen</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { v: 'perizinan', label: '🏛️ Perizinan & Legalitas', desc: 'SIUP, NIB, IMB, izin lingkungan, AMDAL, HO, izin operasional, sertifikasi' },
+                    { v: 'tender', label: '📋 Tender & Pengadaan', desc: 'Dok. penawaran, RFQ, spesifikasi teknis, BOQ, administrasi pengadaan' },
+                    { v: 'kontrak', label: '🤝 Kontrak & Perjanjian', desc: 'PKS, MOU, NDA, kontrak kerja, SPMK, perjanjian sewa, franchise' },
+                    { v: 'bisnis', label: '💼 Manajemen Bisnis', desc: 'SOP internal, kebijakan perusahaan, panduan operasional, manual prosedur' },
+                    { v: 'konstruksi', label: '🏗️ Konstruksi & Teknik', desc: 'Metode kerja, spesifikasi teknis, RKK, RMPK, SMKK proyek' },
+                    { v: 'keuangan', label: '💰 Keuangan & Akuntansi', desc: 'Laporan keuangan, anggaran, cashflow, RAB, laporan pertanggungjawaban' },
+                    { v: 'sdm', label: '👥 SDM & Ketenagakerjaan', desc: 'Peraturan perusahaan, perjanjian kerja, KPI, evaluasi kinerja, job desc' },
+                    { v: 'laporan', label: '📊 Laporan & Presentasi', desc: 'Laporan proyek, laporan manajemen, executive summary, progress report' },
+                    { v: 'proposal', label: '🚀 Proposal & Rencana Bisnis', desc: 'Business plan, proposal investasi, feasibility study, pitch deck outline' },
+                    { v: 'hukum', label: '⚖️ Hukum & Compliance', desc: 'Kebijakan kepatuhan, due diligence, legal audit, dokumentasi hukum' },
+                  ] as const).map(opt => (
+                    <button key={opt.v} onClick={() => setDocGenericKategori(opt.v)}
+                      className={cn('text-left p-2.5 rounded-lg border text-xs transition-colors', docGenericKategori === opt.v ? 'border-violet-600 bg-violet-50 dark:bg-violet-900/30' : 'border-border hover:border-violet-400 hover:bg-muted')}>
+                      <div className="font-semibold mb-0.5 text-[11px]">{opt.label}</div>
+                      <div className="text-muted-foreground text-[9px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Jenis Spesifik & Tujuan */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground">📄 Jenis / Nama Dokumen <span className="font-normal text-muted-foreground">(spesifik)</span></label>
+                  <input type="text"
+                    placeholder={
+                      docGenericKategori === 'perizinan' ? 'Mis: Dokumen AMDAL, Izin IMB, NIB...' :
+                      docGenericKategori === 'tender' ? 'Mis: Dokumen Penawaran Teknis, BOQ...' :
+                      docGenericKategori === 'kontrak' ? 'Mis: PKS Jasa Konsultansi, MOU Kerjasama...' :
+                      docGenericKategori === 'bisnis' ? 'Mis: SOP Pengadaan Barang, Kebijakan IT...' :
+                      docGenericKategori === 'konstruksi' ? 'Mis: Metode Kerja Pondasi, RMPK, SMKK...' :
+                      docGenericKategori === 'keuangan' ? 'Mis: RAB Proyek, Laporan Keuangan Bulanan...' :
+                      docGenericKategori === 'sdm' ? 'Mis: Peraturan Perusahaan, Job Description...' :
+                      docGenericKategori === 'laporan' ? 'Mis: Progress Report Proyek, Laporan Direksi...' :
+                      docGenericKategori === 'proposal' ? 'Mis: Business Plan, Proposal Investasi...' :
+                      'Mis: Kebijakan Kepatuhan, Due Diligence...'
+                    }
+                    value={docGenericJenis}
+                    onChange={e => setDocGenericJenis(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-foreground">🎯 Tujuan & Fungsi Dokumen</label>
+                  <input type="text"
+                    placeholder="Mis: Pengajuan izin ke DPMPTSP, Keperluan tender BUMN..."
+                    value={docGenericTujuan}
+                    onChange={e => setDocGenericTujuan(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                  />
+                </div>
+              </div>
+
+              {/* Identitas Organisasi (shared state dari ISO) */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🏢 Identitas Organisasi <span className="font-normal text-muted-foreground">(opsional — muncul di header dokumen)</span></label>
+                <div className="grid grid-cols-2 gap-2">
+                  <input type="text" placeholder="Nama perusahaan / instansi" value={docNamaOrg} onChange={e => setDocNamaOrg(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                  <input type="text" placeholder="Pihak / unit yang terlibat" value={docGenericPihak} onChange={e => setDocGenericPihak(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  <input type="text" placeholder="Nomor Dokumen (opsional)" value={docNomorDok} onChange={e => setDocNomorDok(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                  <input type="text" placeholder="Versi / Revisi" value={docVersi} onChange={e => setDocVersi(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                  <input type="text" placeholder="Tanggal (opsional)" value={docTanggalEfektif} onChange={e => setDocTanggalEfektif(e.target.value)}
+                    className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+              </div>
+
+              {/* Format Output & Level Detail */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">📐 Format Output</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'formal', label: '📝 Dokumen Formal', desc: 'Struktur bab/pasal resmi, bahasa baku, siap tandatangan' },
+                      { v: 'mix', label: '🔀 Mix (Rekomended)', desc: 'Narasi + tabel + poin — dokumen profesional lengkap' },
+                      { v: 'tabel', label: '📊 Berbasis Tabel', desc: 'Data dalam tabel, matriks, bagan — cocok untuk RAB/BOQ' },
+                      { v: 'ringkas', label: '⚡ Ringkas & Padat', desc: 'Poin utama, template kerja, draft awal' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocGenericFormat(opt.v)}
+                        className={cn('w-full text-left px-2.5 py-1.5 rounded-lg border text-xs transition-colors', docGenericFormat === opt.v ? 'border-violet-600 bg-violet-50 dark:bg-violet-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold text-[10px]">{opt.label}</div>
+                        <div className="text-[9px] text-muted-foreground">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">📏 Level Kelengkapan</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'ringkas', label: '⚡ Ringkas', desc: 'Draft & kerangka utama — untuk konsep awal' },
+                      { v: 'standar', label: '📋 Standar', desc: 'Dokumen kerja lengkap — siap digunakan' },
+                      { v: 'komprehensif', label: '🏆 Komprehensif', desc: 'Detail penuh — semua lampiran & klausul' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocDetailLevel(opt.v)}
+                        className={cn('w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors', docDetailLevel === opt.v ? 'border-violet-600 bg-violet-50 dark:bg-violet-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold mb-0.5">{opt.label}</div>
+                        <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                  <div className="space-y-1.5 pt-1">
+                    <label className="text-[10px] font-medium text-muted-foreground">Bahasa</label>
+                    <div className="flex gap-1.5">
+                      {([{ v: 'id', l: '🇮🇩 Indonesia' }, { v: 'en', l: '🇺🇸 English' }, { v: 'bilingual', l: '🌐 Bilingual' }] as const).map(opt => (
+                        <button key={opt.v} onClick={() => setDocBahasa(opt.v)}
+                          className={cn('flex-1 py-1.5 rounded-lg border text-[10px] font-medium transition-colors', docBahasa === opt.v ? 'border-violet-600 bg-violet-50 dark:bg-violet-900/30 text-violet-700' : 'border-border hover:bg-muted')}>
+                          {opt.l}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Instruksi Khusus Generic */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🛠️ Instruksi Khusus <span className="font-normal text-muted-foreground">(opsional)</span></label>
+                <Textarea
+                  placeholder={'Contoh:\n• Sesuaikan format dengan persyaratan LKPP / DPMPTSP / BUJK\n• Tambahkan lampiran daftar personil dan peralatan\n• Sertakan contoh klausul kontrak yang umum digunakan\n• Format sesuai Perpres 16/2018 atau Permen PUPR terkait'}
+                  value={docCustomInstruksi}
+                  onChange={e => setDocCustomInstruksi(e.target.value)}
+                  rows={3}
+                  className="text-xs resize-none"
+                />
+              </div>
+
+              {/* Generic Summary */}
+              <div className="rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 p-3 space-y-1.5">
+                <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300">📊 Ringkasan Konfigurasi Dokumen Umum:</p>
+                <div className="flex flex-wrap gap-2 text-[10px]">
+                  <span className="bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full font-medium text-violet-700 dark:text-violet-300">{docGenericKategori.toUpperCase()}</span>
+                  {docGenericJenis && <span className="bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full font-medium text-violet-700 dark:text-violet-300">{docGenericJenis.slice(0,30)}</span>}
+                  <span className="bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full font-medium text-violet-700 dark:text-violet-300">{docDetailLevel}</span>
+                  <span className="bg-violet-100 dark:bg-violet-800/50 px-2 py-0.5 rounded-full font-medium text-violet-700 dark:text-violet-300">{docBahasa.toUpperCase()}</span>
+                </div>
+                <p className="text-[10px] text-violet-600 dark:text-violet-400">
+                  ⏱️ {docDetailLevel === 'ringkas' ? '~30 detik' : docDetailLevel === 'standar' ? '~50 detik' : '~75-90 detik'} · GPT-4o · {docDetailLevel === 'komprehensif' ? '~8000' : docDetailLevel === 'standar' ? '~6000' : '~4000'} tokens
+                </p>
+              </div>
+
+              </>}
+
             </div>
           </div>
           <div className="flex justify-between gap-2 pt-3 border-t shrink-0">
             <Button variant="ghost" size="sm" className="text-xs text-muted-foreground"
-              onClick={() => { setDocStandar(['iso_9001']); setDocKlausul(['4','5','6','7','8','9','10']); setDocNomorDok(''); setDocVersi('01'); setDocTanggalEfektif(''); setDocNamaOrg(''); setDocDepartemen(''); setDocLingkup(''); setDocDetailLevel('standar'); setDocBahasa('id'); setDocCustomInstruksi(''); }}>
+              onClick={() => {
+                if (docMode === 'iso') {
+                  setDocStandar(['iso_9001']); setDocKlausul(['4','5','6','7','8','9','10']); setDocNomorDok(''); setDocVersi('01'); setDocTanggalEfektif(''); setDocNamaOrg(''); setDocDepartemen(''); setDocLingkup(''); setDocDetailLevel('standar'); setDocBahasa('id'); setDocCustomInstruksi('');
+                } else {
+                  setDocGenericKategori('tender'); setDocGenericJenis(''); setDocGenericTujuan(''); setDocGenericPihak(''); setDocGenericFormat('mix'); setDocNamaOrg(''); setDocNomorDok(''); setDocVersi('01'); setDocTanggalEfektif(''); setDocDetailLevel('standar'); setDocBahasa('id'); setDocCustomInstruksi('');
+                }
+              }}>
               Reset ke Default
             </Button>
             <div className="flex gap-2">

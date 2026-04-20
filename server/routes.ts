@@ -2050,7 +2050,8 @@ Format setiap segmen:
     try {
       const {
         prompt, title, topik, target, authorName,
-        // ISO/QMS params (new)
+        docMode = 'iso',
+        // ISO/QMS params
         docKategori = 'smm',
         docJenisISO = 'manual_mutu',
         docStandar = ['iso_9001'],
@@ -2064,7 +2065,13 @@ Format setiap segmen:
         docDetailLevel = 'standar',
         docBahasa = 'id',
         docCustomInstruksi = '',
-        // Legacy ebook params (kept for backward compat, not used in new prompts)
+        // Generic document params
+        docGenericKategori = 'tender',
+        docGenericJenis = '',
+        docGenericTujuan = '',
+        docGenericPihak = '',
+        docGenericFormat = 'mix',
+        // Legacy
         docJenis = 'ebook',
       } = req.body;
 
@@ -2130,7 +2137,90 @@ Format setiap segmen:
         ? `Klausul yang Dicakup: ${klausulArr.join(', ')}`
         : 'Semua klausul relevan';
 
-      const systemPrompt = `Kamu adalah konsultan ISO dan sistem manajemen senior dengan pengalaman lebih dari 15 tahun di bidang implementasi ISO 9001, ISO 45001, ISO 14001, ISO 27001, dan standar internasional lainnya. Kamu ahli dalam menyusun dokumen sistem manajemen yang compliant, praktis, dan siap diaudit oleh auditor eksternal (third-party certification body).
+      // ── Generic document category labels ──
+      const genericKategoriMap: Record<string, string> = {
+        perizinan: 'Perizinan & Legalitas',
+        tender: 'Tender & Pengadaan',
+        kontrak: 'Kontrak & Perjanjian',
+        bisnis: 'Manajemen Bisnis & SOP Internal',
+        konstruksi: 'Konstruksi & Teknik Sipil',
+        keuangan: 'Keuangan & Akuntansi',
+        sdm: 'SDM & Ketenagakerjaan',
+        laporan: 'Laporan & Presentasi',
+        proposal: 'Proposal & Rencana Bisnis',
+        hukum: 'Hukum & Compliance',
+      };
+      const genericFormatMap: Record<string, string> = {
+        formal: 'DOKUMEN FORMAL — bab/pasal/ayat terstruktur, bahasa baku resmi, siap ditandatangani',
+        mix: 'MIX — kombinasi narasi + tabel + poin-poin (format profesional lengkap, rekomended)',
+        tabel: 'BERBASIS TABEL — data dalam tabel, matriks, bagan — cocok untuk RAB/BOQ/checklist',
+        ringkas: 'RINGKAS & PADAT — poin utama, kerangka kerja, draft awal yang efisien',
+      };
+
+      // ── Build prompts based on mode ──
+      let systemPrompt: string;
+      let userPrompt: string;
+
+      if (docMode === 'generic') {
+        const genericKatLabel = genericKategoriMap[docGenericKategori] || docGenericKategori;
+        const genericHeaderBlock = [
+          docNamaOrg ? `Nama Organisasi/Perusahaan: ${docNamaOrg}` : null,
+          docGenericPihak ? `Pihak yang Terlibat: ${docGenericPihak}` : null,
+          docNomorDok ? `Nomor Dokumen: ${docNomorDok}` : null,
+          docVersi ? `Versi/Revisi: ${docVersi}` : null,
+          docTanggalEfektif ? `Tanggal: ${docTanggalEfektif}` : null,
+          docGenericTujuan ? `Tujuan Dokumen: ${docGenericTujuan}` : null,
+        ].filter(Boolean).join('\n');
+
+        systemPrompt = `Kamu adalah konsultan dokumen bisnis profesional Indonesia dengan pengalaman luas dalam menyusun berbagai jenis dokumen formal untuk keperluan perizinan, pengadaan, kontrak, manajemen bisnis, konstruksi, keuangan, SDM, laporan, dan hukum. Kamu memahami format dokumen resmi Indonesia, regulasi yang berlaku, dan standar profesional di berbagai sektor.
+
+MISI UTAMA:
+Buat ${docGenericJenis || genericKatLabel} yang LENGKAP, PROFESIONAL, dan SIAP DIGUNAKAN sesuai kebutuhan dan konteks yang diberikan.
+
+KONFIGURASI DOKUMEN:
+• Kategori: ${genericKatLabel}
+• Jenis/Nama Dokumen: ${docGenericJenis || genericKatLabel}
+${docGenericTujuan ? `• Tujuan: ${docGenericTujuan}` : ''}
+• Format Output: ${genericFormatMap[docGenericFormat] || docGenericFormat}
+• Level Kelengkapan: ${detailMap[docDetailLevel] || docDetailLevel}
+• Bahasa: ${bahasaMap[docBahasa] || docBahasa}
+
+PRINSIP PENYUSUNAN DOKUMEN:
+1. Gunakan format dan struktur yang lazim digunakan di Indonesia untuk jenis dokumen ini
+2. Bahasa harus formal, tepat, dan profesional sesuai konteks dokumen
+3. Sertakan semua komponen standar yang diharapkan ada dalam dokumen jenis ini
+4. Gunakan tabel dan daftar bernomor di mana sesuai untuk kejelasan
+5. Pastikan dokumen bersifat lengkap — tidak ada bagian yang dikosongkan atau menggunakan placeholder
+6. Sesuaikan tingkat detail dengan level yang diminta (${docDetailLevel})
+
+STRUKTUR DASAR YANG HARUS DISERTAKAN (sesuaikan dengan jenis dokumen):
+- IDENTITAS DOKUMEN (judul, nomor, tanggal, pihak terkait)
+- DASAR HUKUM / REFERENSI (jika relevan untuk jenis dokumen ini)
+- ISI/KONTEN UTAMA (lengkap sesuai jenis dokumen)
+- PENUTUP / KETENTUAN LAIN / LAMPIRAN (jika relevan)
+
+${docCustomInstruksi ? `\nINSTRUKSI KHUSUS:\n${docCustomInstruksi}` : ''}
+
+LARANGAN KERAS:
+- Jangan gunakan placeholder seperti "[isi di sini]", "[nama]", "[tanggal]" dll.
+- Jangan buat konten yang generik atau template kosong
+- Setiap bagian harus ditulis dengan konten substantif yang relevan dengan konteks yang diberikan`;
+
+        userPrompt = `Buat ${docGenericJenis || genericKatLabel} lengkap dengan informasi berikut:
+
+📄 JUDUL/JENIS DOKUMEN: "${title || topik || docGenericJenis || genericKatLabel}"
+${genericHeaderBlock ? `\n📌 IDENTITAS:\n${genericHeaderBlock}` : ''}
+${target ? `👥 PENGGUNA/PENERIMA DOKUMEN: ${target}` : ''}
+${authorName ? `✍️ DIBUAT OLEH: ${authorName}` : ''}
+
+KONTEKS & INFORMASI BASIS DOKUMEN:
+${prompt}
+
+Buat dokumen LENGKAP dan PROFESIONAL sesuai semua instruksi di atas. ${docDetailLevel === 'komprehensif' ? 'Pastikan dokumen sangat detail, sertakan semua klausul/pasal/lampiran yang relevan.' : docDetailLevel === 'standar' ? 'Buat dokumen kerja yang lengkap dan siap digunakan.' : 'Buat kerangka dan poin-poin utama yang jelas dan terstruktur.'}`;
+
+      } else {
+        // ISO mode
+        systemPrompt = `Kamu adalah konsultan ISO dan sistem manajemen senior dengan pengalaman lebih dari 15 tahun di bidang implementasi ISO 9001, ISO 45001, ISO 14001, ISO 27001, dan standar internasional lainnya. Kamu ahli dalam menyusun dokumen sistem manajemen yang compliant, praktis, dan siap diaudit oleh auditor eksternal (third-party certification body).
 
 MISI UTAMA:
 Buat ${jenisISOMap[docJenisISO] || docJenisISO} untuk ${kategoriMap[docKategori] || docKategori} yang LENGKAP, COMPLIANT terhadap standar referensi, dan SIAP DIIMPLEMENTASIKAN.
@@ -2167,7 +2257,7 @@ LARANGAN KERAS:
 - Jangan abaikan persyaratan documented information yang diwajibkan standar
 - Dokumen harus spesifik pada konteks organisasi yang diberikan, bukan generik`;
 
-      const userPrompt = `Buat ${jenisISOMap[docJenisISO] || 'dokumen sistem manajemen'} lengkap dengan informasi berikut:
+        userPrompt = `Buat ${jenisISOMap[docJenisISO] || 'dokumen sistem manajemen'} lengkap dengan informasi berikut:
 
 📋 JUDUL DOKUMEN: "${title || topik}"
 ${headerBlock ? `\n📌 IDENTITAS DOKUMEN:\n${headerBlock}` : ''}
@@ -2177,8 +2267,10 @@ KONTEKS & KONTEN YANG MENJADI BASIS DOKUMEN:
 ${prompt}
 
 Buat dokumen LENGKAP dan UTUH sesuai semua instruksi di atas. Sertakan semua klausul yang diminta dengan isi yang substantif. Gunakan format tabel, daftar bernomor, dan heading yang terstruktur sesuai konvensi dokumen ISO.`;
+      }
 
       void docJenis; // suppress unused warning
+      void authorName;
 
       const stream = await openai.chat.completions.create({
         model: "gpt-4o",
