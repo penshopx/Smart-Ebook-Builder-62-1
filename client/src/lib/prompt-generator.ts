@@ -672,7 +672,33 @@ Untuk SETIAP buku, rincikan:
 `;
       break;
 
-    case 'DRAFT_BAB':
+    case 'DRAFT_BAB': {
+      const includeKisah = taskConfig.draftIncludeKisah === 'yes';
+      const includeLampiran = taskConfig.draftIncludeLampiran === 'yes';
+      const includeBonus = taskConfig.draftIncludeBonus === 'yes';
+
+      const kisahSection = includeKisah ? `
+a) **✨ Kisah Inspiratif (Before → Proses → After)** — LETAKKAN DI BAGIAN PALING ATAS BAB, sebelum Pendahuluan.
+   Tulis kisah nyata atau fiktif-realistis tentang seseorang dari industri ${projectData.industry || 'relevan'} yang mengalami transformasi melalui penerapan materi bab ini.
+   Format wajib: Kondisi SEBELUM (masalah & struggle) → PROSES penerapan (langkah nyata, tantangan) → Kondisi SESUDAH (hasil konkret).
+   ${taskConfig.draftKisahContext ? `Konteks spesifik: ${taskConfig.draftKisahContext}` : ''}
+   Panjang: 300-500 kata. Gunakan nama tokoh dan detail industri yang spesifik.
+` : '';
+
+      const lampiranSection = includeLampiran ? `
+f) **📎 Lampiran** — LETAKKAN SETELAH PENUTUP/KESIMPULAN.
+   Sediakan materi pendukung praktis yang relevan dengan topik bab ini, seperti: template siap pakai, tabel referensi, checklist lengkap, atau form kerja.
+   ${taskConfig.draftLampiranContext ? `Jenis lampiran yang diminta: ${taskConfig.draftLampiranContext}` : 'Pilih jenis lampiran yang paling relevan dan berguna untuk pembaca.'}
+   Format lampiran harus langsung bisa digunakan (bukan sekadar deskripsi).
+` : '';
+
+      const bonusSection = includeBonus ? `
+g) **🎁 Bonus** — LETAKKAN SETELAH LAMPIRAN (atau setelah Penutup jika tidak ada Lampiran).
+   Berikan materi eksklusif bernilai tinggi yang memperkuat bab ini, seperti: prompt AI siap pakai, mini workbook, resource list, script/template eksklusif, atau tips rahasia dari praktisi.
+   ${taskConfig.draftBonusContext ? `Jenis bonus yang diminta: ${taskConfig.draftBonusContext}` : 'Pilih bonus yang paling actionable dan relevan.'}
+   Beri label "🎁 BONUS EKSKLUSIF" dan tekankan nilai tambahannya.
+` : '';
+
       taskInstruction = `
 MODE TUGAS: MENULIS DRAFT BAB (KONTEN INTI)
 ${styleReminder}
@@ -688,20 +714,21 @@ Tulis isi bab secara lengkap dalam Bahasa **${projectData.language}**.
 Pastikan isi bab ini relevan dengan level buku ("${currentEbookTitle}").
 Jangan mencampuradukkan materi dari buku level lain.
 
-Struktur Konten Bab:
-a) **Pendahuluan (Hook & Relevansi)** - Mengapa bab ini penting? Apa yang akan dipelajari?
-b) **Pembahasan Utama (Sub-bab detail)** - Penjelasan mendalam dengan contoh.
-c) **Contoh / Studi Kasus** - Ilustrasi nyata yang relevan dengan topik bab.
-d) **Actionable Steps / Checklist** - Langkah praktis yang bisa langsung diterapkan pembaca.
+Struktur Konten Bab (tulis SEMUA seksi yang disebutkan di bawah):
+${kisahSection}b) **Pendahuluan (Hook & Relevansi)** - Mengapa bab ini penting? Apa yang akan dipelajari?
+c) **Pembahasan Utama (Sub-bab detail)** - Penjelasan mendalam dengan contoh.
+d) **Contoh / Studi Kasus** - Ilustrasi nyata yang relevan dengan topik bab.
+e) **Actionable Steps / Checklist** - Langkah praktis yang bisa langsung diterapkan pembaca.
 e) **Kesimpulan & Transisi** - Rangkuman poin penting + preview bab berikutnya.
-
+${lampiranSection}${bonusSection}
 === GAYA PENULISAN ===
-- Panjang: 2000-3000 kata minimum
+- Panjang: 2000-3000 kata minimum${includeKisah || includeLampiran || includeBonus ? ' (ditambah seksi tambahan yang diminta)' : ''}
 - Gunakan sub-heading (H2, H3) untuk struktur yang jelas
 - Sertakan bullet points dan numbered list untuk kemudahan baca
 - Tambahkan "Pro Tips" atau "Warning" box jika relevan
 `;
       break;
+    }
 
     case 'VIDEO_SCRIPT': {
       const videoTypeMap: Record<string, string> = {

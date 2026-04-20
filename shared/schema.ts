@@ -923,6 +923,12 @@ export const taskConfigSchema = z.object({
   landingPageBonuses: z.string().default(''),
   landingPageCTA: z.string().default('Beli Sekarang'),
   landingPageOutputFormat: z.string().default('copy'),
+  draftIncludeKisah: z.string().default('no'),
+  draftKisahContext: z.string().default(''),
+  draftIncludeLampiran: z.string().default('no'),
+  draftLampiranContext: z.string().default(''),
+  draftIncludeBonus: z.string().default('no'),
+  draftBonusContext: z.string().default(''),
 });
 
 export const extendConfigSchema = z.object({

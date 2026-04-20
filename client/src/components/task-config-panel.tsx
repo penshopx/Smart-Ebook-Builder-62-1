@@ -473,6 +473,90 @@ export function TaskConfigPanel({
                 data-testid="textarea-tujuan-bab"
               />
             </div>
+
+            {/* Seksi Tambahan */}
+            <div className="rounded-lg border border-dashed border-primary/40 bg-primary/5 p-3 space-y-3">
+              <p className="text-xs font-semibold text-primary flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5" />
+                Seksi Tambahan (Opsional)
+              </p>
+
+              {/* Kisah Inspiratif */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="include-kisah"
+                    checked={taskConfig.draftIncludeKisah === 'yes'}
+                    onCheckedChange={(v) => onTaskConfigChange('draftIncludeKisah', v ? 'yes' : 'no')}
+                    data-testid="checkbox-draft-kisah"
+                  />
+                  <label htmlFor="include-kisah" className="text-xs font-medium cursor-pointer select-none">
+                    ✨ Kisah Inspiratif <span className="text-muted-foreground font-normal">(before → proses → after)</span>
+                    <span className="ml-1 text-[10px] text-muted-foreground">— ditempatkan di bagian atas bab</span>
+                  </label>
+                </div>
+                {taskConfig.draftIncludeKisah === 'yes' && (
+                  <Textarea
+                    placeholder="Opsional: berikan petunjuk kisah, nama tokoh, atau konteks industri spesifik yang ingin diangkat..."
+                    value={taskConfig.draftKisahContext}
+                    onChange={(e) => onTaskConfigChange('draftKisahContext', e.target.value)}
+                    className="min-h-[60px] resize-none text-xs ml-6"
+                    data-testid="textarea-draft-kisah-context"
+                  />
+                )}
+              </div>
+
+              {/* Lampiran */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="include-lampiran"
+                    checked={taskConfig.draftIncludeLampiran === 'yes'}
+                    onCheckedChange={(v) => onTaskConfigChange('draftIncludeLampiran', v ? 'yes' : 'no')}
+                    data-testid="checkbox-draft-lampiran"
+                  />
+                  <label htmlFor="include-lampiran" className="text-xs font-medium cursor-pointer select-none">
+                    📎 Lampiran <span className="text-muted-foreground font-normal">(template, checklist, atau tabel referensi)</span>
+                    <span className="ml-1 text-[10px] text-muted-foreground">— setelah Penutup</span>
+                  </label>
+                </div>
+                {taskConfig.draftIncludeLampiran === 'yes' && (
+                  <Textarea
+                    placeholder="Opsional: jelaskan jenis lampiran yang diinginkan, misal: template SOP, tabel perbandingan, checklist, dll..."
+                    value={taskConfig.draftLampiranContext}
+                    onChange={(e) => onTaskConfigChange('draftLampiranContext', e.target.value)}
+                    className="min-h-[60px] resize-none text-xs ml-6"
+                    data-testid="textarea-draft-lampiran-context"
+                  />
+                )}
+              </div>
+
+              {/* Bonus */}
+              <div className="space-y-2">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="include-bonus"
+                    checked={taskConfig.draftIncludeBonus === 'yes'}
+                    onCheckedChange={(v) => onTaskConfigChange('draftIncludeBonus', v ? 'yes' : 'no')}
+                    data-testid="checkbox-draft-bonus"
+                  />
+                  <label htmlFor="include-bonus" className="text-xs font-medium cursor-pointer select-none">
+                    🎁 Bonus <span className="text-muted-foreground font-normal">(materi eksklusif, tool, atau resource tambahan)</span>
+                    <span className="ml-1 text-[10px] text-muted-foreground">— setelah Lampiran</span>
+                  </label>
+                </div>
+                {taskConfig.draftIncludeBonus === 'yes' && (
+                  <Textarea
+                    placeholder="Opsional: jelaskan jenis bonus, misal: prompt AI siap pakai, mini workbook, link resource, dll..."
+                    value={taskConfig.draftBonusContext}
+                    onChange={(e) => onTaskConfigChange('draftBonusContext', e.target.value)}
+                    className="min-h-[60px] resize-none text-xs ml-6"
+                    data-testid="textarea-draft-bonus-context"
+                  />
+                )}
+              </div>
+            </div>
+
             {isMultiEbook && (
               <EbookStyleOverride
                 ebookId={taskConfig.selectedEbookId}
