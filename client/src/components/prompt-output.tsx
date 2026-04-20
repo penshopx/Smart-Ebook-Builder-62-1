@@ -280,7 +280,16 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [appOpen, setAppOpen] = useState(false);
   const [appContent, setAppContent] = useState('');
   const [appLoading, setAppLoading] = useState(false);
-  const [appTab, setAppTab] = useState<'konsep'|'fitur'|'screens'|'userflow'|'techstack'|'prompt_build'|'monetisasi'|'launch'>('konsep');
+  const [appTab, setAppTab] = useState<'konsep'|'fitur'|'screens'|'userflow'|'techstack'|'prototype'|'integrasi_ai'|'prompt_build'|'monetisasi'|'launch'>('konsep');
+  // Mini App Config
+  const [appConfigOpen, setAppConfigOpen] = useState(false);
+  const [appType, setAppType] = useState('auto');
+  const [appPlatform, setAppPlatform] = useState('web');
+  const [appNeedAI, setAppNeedAI] = useState(true);
+  const [appLang, setAppLang] = useState('id');
+  const [appFiturWajib, setAppFiturWajib] = useState('');
+  const [appIntegrasi, setAppIntegrasi] = useState('');
+  const [appComplexity, setAppComplexity] = useState<'simple'|'medium'|'advanced'>('medium');
   // Generator Kuis
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizContent, setQuizContent] = useState('');
@@ -2110,27 +2119,46 @@ ${bodyHtml}
     } finally { setSyllabusLoading(false); }
   }, [projectTitle, projectTopik, projectTarget, syllabusConfigDuration, syllabusConfigFormat, syllabusConfigGoal, fetchSSE, toast]);
 
-  const handleGenerateMiniApp = useCallback(async () => {
+  const handleGenerateMiniApp = useCallback(() => {
     const topikFinal = projectTopik || projectTitle;
     if (!topikFinal) {
       toast({ title: 'Isi topik / judul proyek terlebih dahulu', description: 'Blueprint Mini App membutuhkan topik proyek sebagai konteks.', variant: 'destructive' });
       return;
     }
+    setAppConfigOpen(true);
+  }, [projectTitle, projectTopik, toast]);
+
+  const doGenerateMiniApp = useCallback(async () => {
+    const topikFinal = projectTopik || projectTitle;
     markEcoUsed('miniapp');
+    setAppConfigOpen(false);
     setAppOpen(true);
     setAppContent('');
     setAppLoading(true);
     setAppTab('konsep');
     try {
       await fetchSSE('/api/generate-mini-app',
-        { title: projectTitle || topikFinal, topik: topikFinal, target: projectTarget, docContent: docContent?.slice(0, 1000) },
+        {
+          title: projectTitle || topikFinal,
+          topik: topikFinal,
+          target: projectTarget,
+          docContent: docContent?.slice(0, 3000),
+          syllabusContent: syllabusContent?.slice(0, 1000),
+          appType,
+          appPlatform,
+          appNeedAI,
+          appLang,
+          appFiturWajib: appFiturWajib || undefined,
+          appIntegrasi: appIntegrasi || undefined,
+          appComplexity,
+        },
         (chunk) => setAppContent(prev => prev + chunk),
         () => setAppLoading(false)
       );
     } catch {
       toast({ title: 'Gagal generate blueprint mini app', variant: 'destructive' });
     } finally { setAppLoading(false); }
-  }, [projectTitle, projectTopik, projectTarget, docContent, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, docContent, syllabusContent, appType, appPlatform, appNeedAI, appLang, appFiturWajib, appIntegrasi, appComplexity, fetchSSE, toast]);
 
   const handleGenerateQuiz = useCallback(async (level?: string, focus?: string) => {
     setQuizConfigOpen(false);
@@ -4834,6 +4862,181 @@ ${bodyHtml}
         </DialogContent>
       </Dialog>
 
+      {/* ── MINI APP CONFIG DIALOG ── */}
+      <Dialog open={appConfigOpen} onOpenChange={setAppConfigOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-slate-700 to-gray-800 text-white">
+                <Smartphone className="h-3.5 w-3.5" />
+              </div>
+              Konfigurasi Blueprint Mini App
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="space-y-5 py-3 px-1">
+
+              {/* Data Pipeline */}
+              <div className="rounded-lg bg-slate-50 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-700 p-3 space-y-2">
+                <p className="text-xs font-semibold text-slate-700 dark:text-slate-400">📡 Konteks dari Pipeline Ebook:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Konten Ebook', active: !!docContent, chars: docContent?.length },
+                    { label: 'Silabus', active: !!syllabusContent },
+                    { label: 'Topik', active: !!(projectTopik || projectTitle) },
+                    { label: 'Target Pembaca', active: !!projectTarget },
+                  ].map(d => (
+                    <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700 dark:text-green-400' : 'bg-muted border-border text-muted-foreground opacity-40')}>
+                      {d.active ? '✓' : '○'} {d.label}
+                      {d.chars && d.chars > 0 ? ` (${(d.chars/1000).toFixed(1)}k)` : ''}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400">Semakin banyak konten ebook yang tersedia, semakin spesifik Mini App yang dihasilkan.</p>
+              </div>
+
+              {/* Tipe Mini App */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🎯 Tipe Mini App</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'auto', label: '🤖 Auto Detect', desc: 'AI tentukan sendiri berdasarkan materi' },
+                    { value: 'kalkulator', label: '🧮 Kalkulator', desc: 'Hitung & kalkulasi dari formula ebook' },
+                    { value: 'checklist', label: '✅ Checklist', desc: 'Daftar tindakan & progress tracking' },
+                    { value: 'assessment', label: '📊 Assessment', desc: 'Kuis/tes kompetensi dari materi' },
+                    { value: 'generator', label: '✨ Generator', desc: 'Generate template/draft otomatis' },
+                    { value: 'tracker', label: '📈 Tracker', desc: 'Lacak progres & habit implementasi' },
+                    { value: 'simulator', label: '🎮 Simulator', desc: 'Simulasi skenario dari materi' },
+                    { value: 'dashboard', label: '📋 Dashboard', desc: 'Ringkasan data & metrik personal' },
+                    { value: 'tool', label: '🔧 Multi-Tool', desc: 'Kumpulan alat bantu dari materi' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setAppType(opt.value)}
+                      className={cn('text-left p-2 rounded-lg border text-xs transition-colors', appType === opt.value ? 'border-slate-600 bg-slate-100 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200' : 'border-border hover:border-slate-400 hover:bg-muted')}
+                    >
+                      <div className="font-semibold mb-0.5">{opt.label}</div>
+                      <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Kompleksitas */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">⚡ Tingkat Kompleksitas</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { value: 'simple', label: '🟢 Simple', desc: '1-2 fitur utama, selesai dalam 1 hari, cocok untuk pemula' },
+                    { value: 'medium', label: '🟡 Medium', desc: '3-5 fitur, beberapa halaman, cocok untuk 2-3 hari build' },
+                    { value: 'advanced', label: '🔴 Advanced', desc: '5+ fitur, backend, database, full product' },
+                  ] as const).map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setAppComplexity(opt.value)}
+                      className={cn('text-left p-2 rounded-lg border text-xs transition-colors', appComplexity === opt.value ? 'border-slate-600 bg-slate-100 dark:bg-slate-800/60' : 'border-border hover:border-slate-400 hover:bg-muted')}
+                    >
+                      <div className="font-semibold mb-0.5">{opt.label}</div>
+                      <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Platform & AI */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">🖥️ Platform Target</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { value: 'web', label: '🌐 Web App (React/Next.js)' },
+                      { value: 'pwa', label: '📱 PWA (Mobile-first)' },
+                      { value: 'static', label: '📄 HTML Static (1 file)' },
+                      { value: 'whatsapp', label: '💬 WhatsApp Bot' },
+                    ] as const).map(opt => (
+                      <button key={opt.value} onClick={() => setAppPlatform(opt.value)} className={cn('w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors', appPlatform === opt.value ? 'border-slate-600 bg-slate-100 dark:bg-slate-800/60 font-medium' : 'border-border hover:bg-muted')}>
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-foreground">🌍 Bahasa App</label>
+                    <div className="space-y-1.5">
+                      {([
+                        { value: 'id', label: '🇮🇩 Bahasa Indonesia' },
+                        { value: 'en', label: '🇺🇸 English' },
+                        { value: 'bilingual', label: '🌐 Bilingual (ID+EN)' },
+                      ] as const).map(opt => (
+                        <button key={opt.value} onClick={() => setAppLang(opt.value)} className={cn('w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors', appLang === opt.value ? 'border-slate-600 bg-slate-100 dark:bg-slate-800/60 font-medium' : 'border-border hover:bg-muted')}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-xs font-semibold text-foreground">🤖 Integrasi AI</label>
+                    <div className="space-y-1.5">
+                      {([
+                        { value: true, label: '✅ Ya — tambahkan AI/chatbot' },
+                        { value: false, label: '❌ Tidak — tanpa AI' },
+                      ] as const).map(opt => (
+                        <button key={String(opt.value)} onClick={() => setAppNeedAI(opt.value)} className={cn('w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors', appNeedAI === opt.value ? 'border-slate-600 bg-slate-100 dark:bg-slate-800/60 font-medium' : 'border-border hover:bg-muted')}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fitur Wajib */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🔧 Fitur Wajib Ada <span className="font-normal text-muted-foreground">(opsional — satu per baris)</span></label>
+                <Textarea
+                  placeholder={"Contoh:\nForm input data pengguna\nGrafik progress mingguan\nExport ke PDF/Excel\nSharing ke WhatsApp\nLogin dengan Google"}
+                  value={appFiturWajib}
+                  onChange={e => setAppFiturWajib(e.target.value)}
+                  rows={4}
+                  className="text-sm resize-none"
+                />
+              </div>
+
+              {/* Integrasi */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🔗 Integrasi Eksternal <span className="font-normal text-muted-foreground">(opsional)</span></label>
+                <div className="flex flex-wrap gap-1.5 mb-2">
+                  {['Google Sheets', 'Airtable', 'WhatsApp API', 'Midtrans', 'Google Analytics', 'Firebase', 'Notion API', 'Supabase'].map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => setAppIntegrasi(prev => prev.includes(opt) ? prev.replace(opt, '').replace(/\n\n/, '\n').trim() : (prev ? prev + '\n' + opt : opt))}
+                      className={cn('text-[10px] px-2 py-1 rounded border transition-colors', appIntegrasi.includes(opt) ? 'bg-slate-800 text-white border-slate-700' : 'border-border hover:bg-muted')}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+                <Textarea
+                  placeholder={"Atau ketik sendiri integrasi yang diinginkan..."}
+                  value={appIntegrasi}
+                  onChange={e => setAppIntegrasi(e.target.value)}
+                  rows={2}
+                  className="text-sm resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setAppConfigOpen(false)}>Batal</Button>
+            <Button size="sm" className="bg-gradient-to-r from-slate-700 to-gray-800 hover:from-slate-800 hover:to-gray-900 text-white" onClick={doGenerateMiniApp}>
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate Blueprint Mini App
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Mini App Blueprint Dialog */}
       <Dialog open={appOpen} onOpenChange={setAppOpen}>
         <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
@@ -4867,9 +5070,11 @@ ${bodyHtml}
               { key: 'screens', label: '📱 Screens', tag: 'SCREENS', color: 'from-purple-700 to-violet-700' },
               { key: 'userflow', label: '🗺️ User Flow', tag: 'USERFLOW', color: 'from-teal-700 to-cyan-700' },
               { key: 'techstack', label: '⚙️ Tech Stack', tag: 'TECHSTACK', color: 'from-orange-600 to-amber-600' },
-              { key: 'prompt_build', label: '🤖 Prompt Build', tag: 'PROMPT_BUILD', color: 'from-green-700 to-emerald-700' },
+              { key: 'prototype', label: '🧪 Prototype HTML', tag: 'PROTOTYPE', color: 'from-violet-700 to-purple-700' },
+              { key: 'integrasi_ai', label: '🤖 Integrasi AI', tag: 'INTEGRASI_AI', color: 'from-sky-700 to-blue-700' },
+              { key: 'prompt_build', label: '🚀 Prompt Build', tag: 'PROMPT_BUILD', color: 'from-green-700 to-emerald-700' },
               { key: 'monetisasi', label: '💰 Monetisasi', tag: 'MONETISASI', color: 'from-yellow-600 to-orange-600' },
-              { key: 'launch', label: '🚀 Launch', tag: 'LAUNCH', color: 'from-red-600 to-rose-600' },
+              { key: 'launch', label: '📋 Launch Plan', tag: 'LAUNCH', color: 'from-red-600 to-rose-600' },
             ] as const;
             const currentTab = tabs.find(t => t.key === appTab)!;
             return (
@@ -4883,10 +5088,56 @@ ${bodyHtml}
                   ))}
                 </div>
                 <div className="flex-1 min-h-0 flex flex-col gap-2">
-                  {appTab === 'prompt_build' ? (
+                  {appTab === 'prototype' ? (
+                    <div className="flex-1 min-h-0 flex flex-col gap-2">
+                      <div className="bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 rounded-lg p-3 text-xs text-violet-700 dark:text-violet-400 flex-shrink-0">
+                        <strong>🧪 Prototype HTML Siap Pakai</strong> — Kode HTML/CSS/JS yang bisa langsung dibuka di browser. Simpan sebagai <code>.html</code> dan buka di browser untuk preview instan!
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="text-xs font-mono bg-slate-900 text-slate-100 dark:bg-slate-950 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                          {getSection('PROTOTYPE') || (appLoading ? '// Generating prototype...' : '// —')}
+                        </div>
+                      </ScrollArea>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button onClick={() => { navigator.clipboard.writeText(getSection('PROTOTYPE')); toast({ title: '🧪 Kode prototype disalin! Simpan sebagai index.html dan buka di browser' }); }} className="bg-violet-600 hover:bg-violet-700 text-white flex-1">
+                          <Copy className="h-4 w-4 mr-2" />Salin Kode Prototype
+                        </Button>
+                        <Button variant="outline" onClick={() => {
+                          const code = getSection('PROTOTYPE');
+                          if (!code) return;
+                          const b = new Blob([code], { type: 'text/html' });
+                          const u = URL.createObjectURL(b);
+                          const a = document.createElement('a');
+                          a.href = u;
+                          a.download = `prototype-${(projectTitle||'app').slice(0,20).replace(/\s+/g,'-')}.html`;
+                          a.click();
+                          URL.revokeObjectURL(u);
+                          toast({ title: 'File prototype didownload!' });
+                        }}>
+                          <Download className="h-4 w-4 mr-2" />Download .html
+                        </Button>
+                      </div>
+                    </div>
+                  ) : appTab === 'integrasi_ai' ? (
+                    <div className="flex-1 min-h-0 flex flex-col gap-2">
+                      <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-700 rounded-lg p-3 text-xs text-sky-700 dark:text-sky-400 flex-shrink-0">
+                        <strong>🤖 Panduan Integrasi AI</strong> — Cara menambahkan kecerdasan buatan ke mini app kamu: chatbot, auto-generate, analisis, dan lebih.
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="p-2">
+                          {getSection('INTEGRASI_AI') ? (
+                            <>
+                              <MarkdownContent content={getSection('INTEGRASI_AI')!} />
+                              {appLoading && appContent.includes('===INTEGRASI_AI===') && !appContent.includes('===AKHIR_INTEGRASI_AI===') && <span className="inline-block w-2 h-4 bg-sky-500 animate-pulse ml-1" />}
+                            </>
+                          ) : appLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-sky-500 animate-pulse ml-1" /></span> : <span className="text-muted-foreground text-xs">—</span>}
+                        </div>
+                      </ScrollArea>
+                    </div>
+                  ) : appTab === 'prompt_build' ? (
                     <div className="flex-1 min-h-0 flex flex-col gap-2">
                       <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 rounded-lg p-3 text-xs text-green-700 dark:text-green-400 flex-shrink-0">
-                        <strong>🤖 Prompt Siap Pakai untuk Cursor, Lovable, atau Bolt.new</strong> — Copy dan paste langsung ke AI coding tool untuk mulai build!
+                        <strong>🚀 Prompt Build Siap Pakai untuk Cursor, Lovable, atau Bolt.new</strong> — Copy dan paste langsung ke AI coding tool untuk mulai build full app!
                       </div>
                       <ScrollArea className="flex-1">
                         <div className="text-sm font-mono bg-muted rounded-lg p-3 whitespace-pre-wrap leading-relaxed">

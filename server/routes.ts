@@ -1146,92 +1146,262 @@ Kriteria kelulusan dan teks sertifikat:
 
   app.post("/api/generate-mini-app", isAuthenticated, async (req, res) => {
     try {
-      const { title, topik, target, docContent } = req.body;
+      const { title, topik, target, docContent, syllabusContent, appType, appPlatform, appNeedAI, appLang, appFiturWajib, appIntegrasi, appComplexity } = req.body;
       if (!topik && !title) return res.status(400).json({ error: "Topic required" });
 
       res.setHeader("Content-Type", "text/event-stream");
       res.setHeader("Cache-Control", "no-cache");
       res.setHeader("Connection", "keep-alive");
 
+      const judulEbook = title || topik;
+      const platformLabel = appPlatform === 'web' ? 'React/Next.js Web App' : appPlatform === 'pwa' ? 'Progressive Web App (PWA, mobile-first)' : appPlatform === 'static' ? 'Single-file HTML/CSS/JS (tidak butuh backend)' : 'WhatsApp Bot (Node.js + wa-bot)';
+      const langLabel = appLang === 'id' ? 'Bahasa Indonesia' : appLang === 'en' ? 'English' : 'Bilingual Indonesia & English';
+      const complexityLabel = appComplexity === 'simple' ? 'Simple (1-2 fitur utama, bisa selesai 1 hari)' : appComplexity === 'advanced' ? 'Advanced (5+ fitur, backend, database, production-ready)' : 'Medium (3-5 fitur, beberapa halaman)';
+      const tipeLabel = appType === 'auto' ? 'Auto — AI tentukan tipe terbaik berdasarkan materi ebook' : appType;
+      const aiLabel = appNeedAI ? 'Ya — sertakan integrasi AI/chatbot/generative AI' : 'Tidak — tanpa AI';
+
+      const contextBlock = [
+        docContent ? `=== KONTEN EBOOK (${docContent.length} karakter) ===\n${docContent.slice(0, 3000)}` : '',
+        syllabusContent ? `=== SILABUS EBOOK ===\n${syllabusContent.slice(0, 1000)}` : '',
+      ].filter(Boolean).join('\n\n');
+
       const stream = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "Kamu adalah product manager dan app designer yang ahli dalam merancang mini web apps berbasis AI untuk pasar Indonesia. Kamu bisa merancang blueprint aplikasi yang spesifik, buildable, dan bernilai bisnis.",
+            content: `Kamu adalah senior product engineer & UX designer spesialis "Digital Learning Tools" untuk pasar Indonesia.
+
+Tugasmu BUKAN membuat app generik — tapi membuat MINI APP yang menjadi ALAT IMPLEMENTASI LANGSUNG dari materi ebook. App ini harus:
+1. Menggunakan konsep/framework/formula dari ebook sebagai logika inti app
+2. Membantu pembaca MEMPRAKTIKKAN materi ebook — bukan sekadar membaca
+3. Memberikan output konkret (kalkulasi, rekomendasi, checklist, draft, analisis) berbasis input pengguna
+4. Terasa seperti "worksheet interaktif digital" dari ebook tersebut
+
+Kamu paham React, Next.js, Tailwind, Supabase, OpenAI API, dan bisa menulis kode HTML/CSS/JS prototype yang langsung bisa dijalankan di browser. Bahasa output sesuai instruksi.`,
           },
           {
             role: "user",
-            content: `Rancang blueprint MINI WEB APP yang lahir dari ebook berikut:
+            content: `Buat BLUEPRINT MINI APP sebagai penunjang implementasi materi ebook berikut:
 
-Judul Ebook: ${title || topik}
-Topik: ${topik}
-Target Pengguna App: ${target || 'pembaca ebook'}
-${docContent ? `Ringkasan konten ebook:\n${docContent.slice(0, 1000)}` : ''}
+📚 EBOOK: "${judulEbook}"
+👤 TARGET PEMBACA: ${target || 'pembaca ebook umum'}
+🎯 TIPE APP YANG DIMINTA: ${tipeLabel}
+🖥️ PLATFORM: ${platformLabel}
+⚡ KOMPLEKSITAS: ${complexityLabel}
+🌍 BAHASA APP: ${langLabel}
+🤖 INTEGRASI AI: ${aiLabel}
+${appFiturWajib ? `🔧 FITUR WAJIB ADA:\n${appFiturWajib}` : ''}
+${appIntegrasi ? `🔗 INTEGRASI EKSTERNAL:\n${appIntegrasi}` : ''}
 
-Buat blueprint dalam format PERSIS ini:
+${contextBlock ? `--- KONTEKS MATERI EBOOK ---\n${contextBlock}\n--- AKHIR KONTEKS ---` : ''}
+
+INSTRUKSI PENTING:
+- App harus mengimplementasikan LANGSUNG formula/framework/konsep spesifik dari materi ebook
+- Bukan app generic — harus terasa seperti "ebook interaktif digital"
+- Kalau tipe 'auto', pilih tipe yang paling cocok untuk materi ini
+- Prototype HTML harus BENAR-BENAR BISA DIJALANKAN di browser (1 file, self-contained)
+- Prompt Build harus sangat detail, min 300 kata, siap paste ke Lovable/Cursor/Bolt
+
+Tulis output dalam format PERSIS ini (jangan skip section manapun):
 
 ===KONSEP===
-📱 NAMA APP: [nama yang catchy & relevan]
-🎯 TAGLINE: [1 kalimat value proposition]
-💡 KONSEP: [2-3 kalimat: apa yang dilakukan app ini dan kenapa orang butuh ini]
-🔥 PROBLEM SOLVED: [masalah spesifik yang diselesaikan — dari sudut pandang pengguna]
+📱 NAMA APP: [nama catchy yang mencerminkan fungsi implementasi ebook]
+🎯 TAGLINE: [1 kalimat value proposition — manfaat konkret untuk pembaca ebook]
+💡 KONSEP UTAMA: [3-4 kalimat: app ini mengimplementasikan BAGIAN MANA dari ebook, bagaimana caranya, dan hasil apa yang diperoleh pembaca]
+🔥 PROBLEM SOLVED: [masalah nyata pembaca ebook yang diselesaikan app ini]
+🎯 DIFFERENSIASI: [apa yang membuat app ini berbeda dari app sejenis — kaitannya dengan materi ebook]
+📊 SUCCESS METRIC: [bagaimana pembaca tahu app ini berhasil membantu mereka]
 ===AKHIR_KONSEP===
 
 ===FITUR===
-[5 fitur utama dengan format:]
-🔧 FITUR [N]: [Nama Fitur]
-Deskripsi: [apa yang bisa dilakukan pengguna]
-User Value: [mengapa pengguna butuh fitur ini]
-Tech Behind: [teknologi/API yang digunakan]
+[Minimal 6 fitur utama, setiap fitur HARUS terkait langsung dengan materi ebook]
+
+🔧 FITUR 1: [Nama Fitur]
+Deskripsi: [apa yang dilakukan fitur ini]
+Kaitannya dengan Ebook: [formula/konsep dari ebook yang diimplementasikan]
+User Story: [Sebagai pembaca, saya bisa... sehingga saya...]
+Input: [apa yang diisi pengguna]
+Output: [hasil konkret yang didapat pengguna]
+
+[ulangi format untuk fitur 2-6]
 ===AKHIR_FITUR===
 
 ===SCREENS===
-[5 halaman utama dengan deskripsi wireframe detail:]
-📱 HALAMAN [N]: [Nama Halaman]
-Layout: [deskripsi elemen UI yang ada]
-Aksi Pengguna: [apa yang bisa dilakukan]
-Data Ditampilkan: [informasi apa yang muncul]
+[Minimal 5 halaman/view — wireframe tekstual yang sangat detail]
+
+📱 SCREEN 1: [Nama Screen]
+Tujuan: [apa tujuan screen ini dalam konteks ebook]
+Layout: [deskripsi elemen UI: header, form fields, buttons, cards, dll]
+Konten Dinamis: [data apa yang berubah berdasarkan input]
+CTA Utama: [tombol/aksi paling penting di screen ini]
+
+[ulangi untuk screen 2-5]
 ===AKHIR_SCREENS===
 
 ===USERFLOW===
-🗺️ USER FLOW (Step by step dari install sampai hasil):
-[Langkah 1-10 yang jelas dan konkret]
+🗺️ ALUR PENGGUNA DARI AWAL SAMPAI HASIL:
+
+ENTRY POINT: [Dari mana pengguna mulai — buka app, onboarding, dll]
+
+[Langkah 1-12: sangat spesifik dengan format]
+→ Langkah [N]: [Aksi pengguna] → [Respon app] → [Yang didapat/dipelajari pengguna]
+
+HASIL AKHIR: [Output konkret yang diperoleh pengguna setelah menggunakan app]
 ===AKHIR_USERFLOW===
 
 ===TECHSTACK===
 ⚙️ TECH STACK REKOMENDASI:
-Frontend: [framework + library UI]
-Backend: [framework/BaaS]
-Database: [pilihan + alasan]
-AI/API: [AI API yang diintegrasikan]
-Hosting: [platform deployment]
-Build Time Estimasi: [dengan AI coding tools]
-Biaya Bulanan Estimasi: [server + API cost]
+
+Frontend: [framework + styling + state management]
+Backend: [framework/BaaS — atau 'Tidak perlu backend' jika static]
+Database: [DB + alasan pemilihan]
+${appNeedAI ? 'AI Integration: [model AI + cara integrasi + use case spesifik]' : ''}
+${appIntegrasi ? `Integrasi Eksternal: [detail integrasi yang diminta]` : ''}
+Hosting/Deploy: [platform + estimasi biaya]
+Build Time: [dengan AI coding tools seperti Lovable/Cursor]
+Biaya Operasional/Bulan: [estimasi realistis dalam IDR]
+
+💡 CATATAN TEKNIS:
+[Poin-poin teknis penting yang perlu diperhatikan saat development]
 ===AKHIR_TECHSTACK===
 
-===PROMPT_BUILD===
-🤖 PROMPT SIAP PAKAI UNTUK BUILD DI CURSOR/LOVABLE/BOLT:
+===PROTOTYPE===
+[KODE HTML LENGKAP YANG BISA LANGSUNG DIJALANKAN DI BROWSER — 1 file self-contained]
+[Gunakan Tailwind CDN untuk styling, vanilla JS untuk logika]
+[Prototype ini harus mendemonstrasikan FITUR UTAMA app — bukan placeholder]
+[Minimal 80-120 baris kode yang benar-benar fungsional]
+[Sertakan minimal 1 fitur interaktif yang mencerminkan implementasi materi ebook]
 
-"[Tulis prompt lengkap dan detail yang bisa langsung di-paste ke AI coding tool untuk memulai build app ini. Min 200 kata, sangat spesifik tentang fitur, UI, tech stack, dan behavior yang diinginkan]"
+<!DOCTYPE html>
+<html lang="${appLang === 'en' ? 'en' : 'id'}">
+[... kode lengkap di sini ...]
+</html>
+===AKHIR_PROTOTYPE===
+
+===INTEGRASI_AI===
+${appNeedAI ? `🤖 PANDUAN INTEGRASI AI UNTUK APP INI:
+
+**1. Use Case AI yang Paling Relevan:**
+[Jelaskan 3-4 cara AI bisa meningkatkan app ini — spesifik untuk materi ebook]
+
+**2. Pilihan Model AI & Kapan Menggunakannya:**
+- GPT-4o: [untuk use case apa]
+- GPT-4o-mini: [untuk use case apa — lebih hemat]
+- [Model lain jika relevan]
+
+**3. Contoh Prompt System untuk App Ini:**
+\`\`\`
+[Tulis contoh system prompt yang spesifik untuk konteks ebook ini]
+\`\`\`
+
+**4. Implementasi di Frontend:**
+\`\`\`javascript
+// Contoh kode pemanggilan API OpenAI
+[kode JavaScript/TypeScript minimal untuk mengimplementasikan AI di app ini]
+\`\`\`
+
+**5. Estimasi Biaya AI per Pengguna:**
+[estimasi token usage dan biaya dalam IDR per bulan per pengguna aktif]
+
+**6. Tips Optimasi:**
+[cara menekan biaya AI sambil tetap memberikan value]` : `ℹ️ Integrasi AI tidak diminta untuk versi ini.
+
+Namun, berikut 3 fitur AI yang bisa ditambahkan di masa depan jika ingin upgrade:
+
+[3 ide konkret integrasi AI yang akan meningkatkan nilai app ini untuk pembaca ebook]`}
+===AKHIR_INTEGRASI_AI===
+
+===PROMPT_BUILD===
+PROMPT SIAP PAKAI UNTUK CURSOR / LOVABLE / BOLT.NEW:
+
+Paste prompt di bawah ini langsung ke AI coding tool untuk mulai build:
+
+---
+Build a web application called "[nama app]" — [tagline].
+
+CONTEXT:
+This app is a digital implementation tool for an ebook titled "${judulEbook}". It helps readers practice and apply the ebook's concepts directly through an interactive experience.
+
+TARGET USERS: ${target || 'ebook readers'}
+PLATFORM: ${platformLabel}
+LANGUAGE: ${langLabel}
+COMPLEXITY: ${complexityLabel}
+
+CORE CONCEPT:
+[jelaskan konsep inti app dan hubungannya dengan materi ebook — 3-4 kalimat]
+
+FEATURES TO BUILD:
+[list semua fitur dengan deskripsi detail — min 6 fitur]
+
+UI/UX REQUIREMENTS:
+- Design style: Clean, professional, mobile-responsive
+- Color scheme: [warna yang sesuai dengan tema ebook]
+- Typography: [font rekomendasi]
+- Key components: [list komponen UI utama]
+
+SCREENS & NAVIGATION:
+[deskripsi semua screen dan flow navigasi]
+
+TECHNICAL REQUIREMENTS:
+- Tech stack: ${platformLabel}
+${appNeedAI ? '- AI Integration: OpenAI API (GPT-4o-mini for cost efficiency)' : ''}
+${appIntegrasi ? `- External Integrations: ${appIntegrasi}` : ''}
+- [requirements teknis lainnya]
+
+IMPORTANT BEHAVIORS:
+[spesifikasi behavior penting — validasi, error handling, loading states, dll]
+
+START BY creating the main layout and the most important feature first.
+---
 ===AKHIR_PROMPT_BUILD===
 
 ===MONETISASI===
 💰 STRATEGI MONETISASI:
-Model: [freemium / one-time / subscription]
-Free Tier: [apa yang gratis]
-Paid Tier: [apa yang berbayar + harga dalam IDR]
-Revenue Estimasi: [proyeksi realistis per bulan]
+
+**Model Bisnis yang Direkomendasikan:** [pilih 1: freemium / one-time / subscription / bundled dengan ebook]
+
+**Alasan:** [kenapa model ini paling cocok untuk target pengguna dan tipe app ini]
+
+**Tier Gratis:**
+- [fitur apa saja yang gratis]
+- [limitasi apa]
+
+**Tier Berbayar:** [harga dalam IDR]
+- [fitur premium apa saja]
+- [alasan orang mau upgrade]
+
+**Strategi Bundling dengan Ebook:**
+[cara menjual app ini sebagai bonus/upsell dari ebook — harga bundle yang direkomendasikan]
+
+**Proyeksi Revenue:**
+- Konversi dari pembaca ebook ke pengguna app: [%]
+- Konversi ke berbayar: [%]
+- Revenue estimasi per bulan: [angka dalam IDR]
 ===AKHIR_MONETISASI===
 
 ===LAUNCH===
-🚀 LAUNCH CHECKLIST (10 langkah):
-[Langkah 1-10 dari development sampai live]
+📋 LAUNCH PLAN — DARI DEVELOPMENT KE LIVE:
+
+**FASE 1: BUILD (Minggu 1-2)**
+[langkah 1-4: development dengan AI coding tools]
+
+**FASE 2: TEST (Minggu 2)**
+[langkah 5-6: testing dengan early users — pembaca ebook]
+
+**FASE 3: LAUNCH (Minggu 3)**
+[langkah 7-8: soft launch ke pembeli ebook]
+
+**FASE 4: GROW (Minggu 4+)**
+[langkah 9-10: marketing, feedback loop, iterasi]
+
+**Checklist Minimum Viable:**
+□ [10 hal yang harus ada sebelum launch ke pembeli ebook pertama]
 ===AKHIR_LAUNCH===`,
           },
         ],
         stream: true,
-        max_completion_tokens: 3000,
+        max_completion_tokens: 6000,
       });
 
       for await (const chunk of stream) {
