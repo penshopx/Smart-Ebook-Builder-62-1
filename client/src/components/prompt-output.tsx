@@ -4861,49 +4861,64 @@ ${bodyHtml}
         <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base">
-              <div className={cn('flex items-center justify-center h-7 w-7 rounded-lg text-white', docMode === 'iso' ? 'bg-gradient-to-br from-blue-700 to-indigo-800' : 'bg-gradient-to-br from-violet-600 to-purple-700')}>
+              <div className={cn('flex items-center justify-center h-7 w-7 rounded-lg text-white flex-shrink-0', docMode === 'iso' ? 'bg-gradient-to-br from-blue-700 to-indigo-800' : 'bg-gradient-to-br from-violet-600 to-purple-700')}>
                 <FileText className="h-3.5 w-3.5" />
               </div>
-              {docMode === 'iso' ? 'Generator Dokumen Sistem Manajemen' : 'Generator Dokumen Umum'}
-              {docMode === 'iso'
-                ? <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">ISO · QMS · SMK3</Badge>
-                : <Badge variant="secondary" className="text-xs bg-violet-100 text-violet-700 dark:bg-violet-900 dark:text-violet-200">Perizinan · Tender · Bisnis · Konstruksi</Badge>
-              }
+              <div>
+                <div className="leading-tight">Generator Dokumen Implementasi</div>
+                <div className="text-[10px] font-normal text-muted-foreground mt-0.5">Ubah konten ebook Anda menjadi dokumen formal siap pakai</div>
+              </div>
             </DialogTitle>
           </DialogHeader>
+
+          {/* ── EBOOK AS SOURCE BANNER ── */}
+          <div className="shrink-0 mx-0 px-1 pt-1 pb-2">
+            <div className={cn('rounded-lg p-2.5 border flex items-start gap-2.5', prompt ? 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-200 dark:border-emerald-700' : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-700')}>
+              <div className={cn('flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-base font-bold mt-0.5', prompt ? 'bg-emerald-100 dark:bg-emerald-800' : 'bg-amber-100 dark:bg-amber-800')}>
+                📖
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className={cn('text-xs font-bold', prompt ? 'text-emerald-700 dark:text-emerald-300' : 'text-amber-700 dark:text-amber-300')}>
+                    {prompt ? '✓ Konten Ebook Siap Digunakan' : '⚠ Konten Ebook Belum Ada'}
+                  </span>
+                  {prompt && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-800/50 px-1.5 py-0.5 rounded font-medium">{Math.round(prompt.length/100)*100} karakter</span>}
+                  {projectTopik && <span className="text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-800/50 px-1.5 py-0.5 rounded font-medium truncate max-w-[140px]">📌 {projectTopik.slice(0,30)}</span>}
+                </div>
+                <p className="text-[10px] mt-0.5 leading-snug text-muted-foreground">
+                  {prompt
+                    ? 'AI akan membaca seluruh konten ebook Anda dan menggunakannya sebagai basis pengetahuan untuk menyusun dokumen implementasi yang spesifik dan kontekstual.'
+                    : 'Generate ebook terlebih dahulu. Konten ebook akan menjadi sumber utama untuk membuat dokumen implementasi.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Flow visual */}
+            <div className="flex items-center justify-center gap-2 mt-2 text-[10px] text-muted-foreground">
+              <span className="bg-muted px-2 py-1 rounded-md font-medium">📖 Ebook / Materi</span>
+              <span className="text-muted-foreground">→</span>
+              <span className="bg-muted px-2 py-1 rounded-md font-medium">🤖 AI Generator</span>
+              <span className="text-muted-foreground">→</span>
+              <span className={cn('px-2 py-1 rounded-md font-medium', docMode === 'iso' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300' : 'bg-violet-100 text-violet-700 dark:bg-violet-900/50 dark:text-violet-300')}>
+                {docMode === 'iso' ? '🏅 Dok. ISO/QMS' : '📄 Dok. Implementasi'}
+              </span>
+            </div>
+          </div>
 
           {/* ── MODE SWITCHER ── */}
           <div className="shrink-0 flex gap-2 px-1 pb-2 border-b">
             <button onClick={() => setDocMode('iso')}
               className={cn('flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border', docMode === 'iso' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'border-border text-muted-foreground hover:bg-muted')}>
-              <span>🏅</span> Mode ISO / Sistem Manajemen
+              <span>🏅</span> Dokumen ISO / Sistem Manajemen
             </button>
             <button onClick={() => setDocMode('generic')}
               className={cn('flex-1 py-2 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-all border', docMode === 'generic' ? 'bg-violet-600 text-white border-violet-600 shadow-sm' : 'border-border text-muted-foreground hover:bg-muted')}>
-              <span>📄</span> Mode Dokumen Umum
+              <span>📄</span> Dokumen Umum / Operasional
             </button>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-5 py-3 px-1">
-
-              {/* Context pipeline */}
-              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-3 space-y-1.5">
-                <p className="text-xs font-semibold text-blue-700 dark:text-blue-400">📋 Konteks yang digunakan AI untuk membuat dokumen:</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {[
-                    { label: 'Topik/Standar', active: !!projectTopik, note: projectTopik?.slice(0,25) },
-                    { label: 'Judul Dokumen', active: !!projectTitle, note: projectTitle?.slice(0,25) },
-                    { label: 'Organisasi', active: !!docNamaOrg, note: docNamaOrg?.slice(0,20) },
-                    { label: 'Konten Ebook/Riset', active: !!prompt, note: `${Math.round(prompt.length/100)*100} char` },
-                  ].map(d => (
-                    <span key={d.label} className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', d.active ? 'bg-blue-100 border-blue-300 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600 dark:text-blue-300' : 'bg-muted border-border text-muted-foreground opacity-40')}>
-                      {d.active ? '✓' : '○'} {d.label}{d.note ? ` (${d.note})` : ''}
-                    </span>
-                  ))}
-                </div>
-                <p className="text-[10px] text-blue-600 dark:text-blue-400">💡 Konten dari ebook akan menjadi basis knowledge untuk menyusun dokumen yang spesifik dan kontekstual</p>
-              </div>
 
               {/* ══ ISO MODE CONTENT ══ */}
               {docMode === 'iso' && <>
@@ -5309,8 +5324,9 @@ ${bodyHtml}
             </Button>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setDocConfigOpen(false)}>Batal</Button>
-              <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white" onClick={doGenerateDocument}>
-                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate Dokumen Sekarang
+              <Button size="sm" className={cn('text-white', docMode === 'iso' ? 'bg-gradient-to-r from-blue-600 to-indigo-700 hover:from-blue-700 hover:to-indigo-800' : 'bg-gradient-to-r from-violet-600 to-purple-700 hover:from-violet-700 hover:to-purple-800')} onClick={doGenerateDocument}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" />
+                {docMode === 'iso' ? 'Generate Dokumen ISO' : 'Generate Dokumen Implementasi'}
               </Button>
             </div>
           </div>
