@@ -5160,38 +5160,91 @@ ${bodyHtml}
                       </div>
                     </ScrollArea>
                   )}
-                  {/* AI Tool Quick Links */}
+                  {/* AI Coding Tool — Build Launcher */}
                   {appContent && !appLoading && (() => {
                     const buildPrompt = appContent.match(/===PROMPT_BUILD===[\s\S]*?===AKHIR_PROMPT_BUILD===/)?.[0]?.replace('===PROMPT_BUILD===','').replace('===AKHIR_PROMPT_BUILD===','').trim() || '';
+                    const encodedPrompt = encodeURIComponent(buildPrompt);
                     return (
-                      <div className="flex-shrink-0 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-3 space-y-2">
-                        <p className="text-xs font-semibold text-green-800 dark:text-green-300 flex items-center gap-1.5">
-                          <Rocket className="h-3.5 w-3.5" />
-                          Build langsung dengan AI Coding Tool:
-                        </p>
-                        <div className="flex gap-2 flex-wrap">
-                          <a href={`https://lovable.dev`} target="_blank" rel="noopener noreferrer"
-                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Lovable' }); }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-medium hover:from-purple-700 hover:to-pink-700 transition-all">
-                            <ExternalLink className="h-3 w-3" />Lovable.dev
-                          </a>
-                          <a href={`https://bolt.new`} target="_blank" rel="noopener noreferrer"
-                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Bolt.new' }); }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-medium hover:from-orange-600 hover:to-yellow-600 transition-all">
-                            <ExternalLink className="h-3 w-3" />Bolt.new
-                          </a>
-                          <a href={`https://cursor.sh`} target="_blank" rel="noopener noreferrer"
-                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Cursor' }); }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-slate-700 to-gray-700 text-white text-xs font-medium hover:from-slate-800 hover:to-gray-800 transition-all">
-                            <ExternalLink className="h-3 w-3" />Cursor
-                          </a>
-                          <a href={`https://replit.com`} target="_blank" rel="noopener noreferrer"
-                            onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: 'Prompt build disalin! Paste ke Replit' }); }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-medium hover:from-blue-700 hover:to-indigo-700 transition-all">
-                            <ExternalLink className="h-3 w-3" />Replit
-                          </a>
+                      <div className="flex-shrink-0 border border-border rounded-xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-slate-800 to-gray-800 px-3 py-2 flex items-center justify-between">
+                          <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                            <Rocket className="h-3.5 w-3.5" />
+                            Build App Sekarang — Pilih AI Coding Tool:
+                          </p>
+                          <span className="text-[10px] text-slate-400">Prompt Build siap dikirim</span>
                         </div>
-                        <p className="text-[10px] text-green-600 dark:text-green-400">Klik salah satu → Prompt Build otomatis disalin → Paste di app</p>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900/40 space-y-2">
+                          {/* Row 1: Tools dengan direct URL injection */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-semibold text-green-700 dark:text-green-400 flex items-center gap-1">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                              Otomatis — klik langsung, prompt sudah terisi tanpa perlu paste:
+                            </p>
+                            <div className="flex gap-2 flex-wrap">
+                              {/* Bolt.new — mendukung ?prompt= di URL */}
+                              <a
+                                href={`https://bolt.new/?prompt=${encodedPrompt}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => toast({ title: '⚡ Membuka Bolt.new — prompt sudah otomatis terisi!' })}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-yellow-600 transition-all shadow-sm"
+                              >
+                                <Zap className="h-3 w-3" />
+                                Bolt.new
+                                <span className="bg-white/20 rounded px-1 text-[9px] font-bold">AUTO</span>
+                              </a>
+                              {/* Replit — pakai /new dengan AI prompt di URL */}
+                              <a
+                                href={`https://replit.com/new?${new URLSearchParams({ description: buildPrompt.slice(0, 500) }).toString()}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: '⚡ Membuka Replit — prompt juga disalin sebagai backup!' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm"
+                              >
+                                <Zap className="h-3 w-3" />
+                                Replit
+                                <span className="bg-white/20 rounded px-1 text-[9px] font-bold">AUTO</span>
+                              </a>
+                            </div>
+                          </div>
+                          {/* Row 2: Tools dengan manual paste */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-semibold text-amber-700 dark:text-amber-400 flex items-center gap-1">
+                              <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                              Copy + Paste — prompt otomatis disalin, tinggal paste di app:
+                            </p>
+                            <div className="flex gap-2 flex-wrap">
+                              <a
+                                href="https://lovable.dev/projects/new"
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: '📋 Prompt disalin! Paste ke kolom di Lovable.dev' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold hover:from-purple-700 hover:to-pink-700 transition-all shadow-sm"
+                              >
+                                <Copy className="h-3 w-3" />
+                                Lovable.dev
+                              </a>
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: '📋 Prompt disalin! Buka Cursor → New Chat → Paste', description: 'Cursor adalah IDE desktop — buka aplikasinya lalu paste prompt di AI chat.' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-slate-700 to-gray-700 text-white text-xs font-semibold hover:from-slate-800 hover:to-gray-800 transition-all shadow-sm"
+                              >
+                                <Copy className="h-3 w-3" />
+                                Cursor IDE
+                              </button>
+                              <button
+                                onClick={() => { navigator.clipboard.writeText(buildPrompt); toast({ title: '📋 Prompt disalin! Buka Claude.ai → Paste di chat', description: 'Claude sangat baik untuk generate kode lengkap dari prompt ini.' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 text-white text-xs font-semibold hover:from-amber-700 hover:to-orange-700 transition-all shadow-sm"
+                              >
+                                <Copy className="h-3 w-3" />
+                                Claude.ai
+                              </button>
+                            </div>
+                          </div>
+                          {/* Info Replit */}
+                          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-2 text-[10px] text-blue-700 dark:text-blue-300">
+                            <strong>💡 Rekomendasi untuk pemula:</strong> Gunakan <strong>Bolt.new</strong> (paling mudah, langsung bisa dipakai) atau <strong>Replit</strong> (ada AI Agent yang bisa bantu debug dan deploy sekaligus). Keduanya gratis untuk memulai.
+                          </div>
+                        </div>
                       </div>
                     );
                   })()}
