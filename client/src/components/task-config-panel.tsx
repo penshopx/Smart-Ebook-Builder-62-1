@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -10,11 +11,519 @@ import {
   TONES, WRITING_STYLES, AI_CHARACTERS
 } from '@shared/schema';
 import type { ProjectData, TaskConfig, ExtendConfig, EbookStyle } from '@shared/schema';
-import { Settings2, Palette, RotateCcw, Sparkles } from 'lucide-react';
+import { Settings2, Palette, RotateCcw, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const QUICK_TONES_PANEL = ["Authoritative", "Professional", "Technical", "Narrative", "Friendly", "Persuasive", "Conversational", "Instructive"];
 const QUICK_STYLES_PANEL = ["Instructive", "Technical", "Narrative", "Conversational", "Storytelling", "Analytical", "Direct Response", "Informative"];
+
+// ─── DOC GENERATOR SUB-PANEL ──────────────────────────────────────────────────
+const DOC_ISO_KATEGORI = [
+  { v: 'smm',          label: '🏅 Mutu (QMS)',      desc: 'ISO 9001' },
+  { v: 'k3',           label: '⛑️ K3/HSE',          desc: 'ISO 45001, SMK3' },
+  { v: 'lingkungan',   label: '🌿 Lingkungan',       desc: 'ISO 14001' },
+  { v: 'infosec',      label: '🔐 Keamanan Info',    desc: 'ISO 27001' },
+  { v: 'pangan',       label: '🍎 Pangan',           desc: 'ISO 22000, HACCP' },
+  { v: 'terintegrasi', label: '🔗 Terintegrasi',     desc: 'IMS multi-standar' },
+] as const;
+
+const DOC_ISO_JENIS = [
+  { v: 'manual_mutu',         label: '📘 Manual Mutu',      desc: 'Level 1' },
+  { v: 'prosedur',            label: '📋 Prosedur (SOP)',    desc: 'Level 2' },
+  { v: 'instruksi_kerja',     label: '⚙️ Instruksi Kerja',  desc: 'Level 3' },
+  { v: 'kebijakan',           label: '📜 Kebijakan',         desc: 'Policy' },
+  { v: 'formulir',            label: '📝 Formulir/Form',     desc: 'Level 4' },
+  { v: 'rencana_mutu',        label: '🗓️ Rencana Mutu',     desc: 'QP/SP' },
+  { v: 'analisis_risiko',     label: '⚠️ Analisis Risiko',  desc: 'HIRARC/FMEA' },
+  { v: 'laporan_audit',       label: '🔍 Laporan Audit',     desc: 'Audit Rpt' },
+  { v: 'tinjauan_manajemen',  label: '👔 Tinjauan Mgmt',    desc: 'MRR' },
+  { v: 'sasaran_mutu',        label: '🎯 Sasaran & KPI',     desc: 'Objectives' },
+  { v: 'program_kerja',       label: '📅 Program Kerja',     desc: 'Annual Plan' },
+  { v: 'manual_k3',           label: '⛑️ Manual K3',        desc: 'HSE Manual' },
+] as const;
+
+const DOC_ISO_STANDAR = [
+  { v: 'iso_9001',    label: 'ISO 9001:2015',    desc: 'Mutu' },
+  { v: 'iso_14001',   label: 'ISO 14001:2015',   desc: 'Lingkungan' },
+  { v: 'iso_45001',   label: 'ISO 45001:2018',   desc: 'K3' },
+  { v: 'iso_27001',   label: 'ISO 27001:2022',   desc: 'Infosec' },
+  { v: 'iso_22000',   label: 'ISO 22000:2018',   desc: 'Pangan' },
+  { v: 'smk3',        label: 'PP 50/2012 SMK3',  desc: 'K3 Nasional' },
+  { v: 'ohsas_18001', label: 'OHSAS 18001',      desc: 'K3 Legacy' },
+  { v: 'iso_37001',   label: 'ISO 37001:2016',   desc: 'Anti-suap' },
+  { v: 'iso_31000',   label: 'ISO 31000:2018',   desc: 'Risk Mgmt' },
+] as const;
+
+const DOC_GENERIC_KATEGORI = [
+  { v: 'perizinan',  label: '🏛️ Perizinan',     desc: 'SIUP, NIB, IMB, AMDAL' },
+  { v: 'tender',     label: '📋 Tender',          desc: 'Penawaran, BOQ, LPSE' },
+  { v: 'kontrak',    label: '🤝 Kontrak',          desc: 'PKS, MOU, NDA, SPMK' },
+  { v: 'bisnis',     label: '💼 Bisnis',           desc: 'SOP, kebijakan, panduan' },
+  { v: 'konstruksi', label: '🏗️ Konstruksi',      desc: 'RKK, RMPK, spek teknis' },
+  { v: 'keuangan',   label: '💰 Keuangan',         desc: 'RAB, cashflow, laporan' },
+  { v: 'sdm',        label: '👥 SDM / HR',         desc: 'PP, PKWT, KPI, JD' },
+  { v: 'laporan',    label: '📊 Laporan',           desc: 'Progress, manajemen, notulen' },
+  { v: 'proposal',   label: '🚀 Proposal',          desc: 'Business plan, investasi' },
+  { v: 'hukum',      label: '⚖️ Hukum',            desc: 'Compliance, due diligence' },
+  { v: 'pemasaran',  label: '📣 Pemasaran',         desc: 'Marketing plan, brand guide' },
+  { v: 'digital',    label: '💻 Digital/IT',        desc: 'Privacy policy, SOP sistem' },
+  { v: 'pendidikan', label: '🎓 Pendidikan',        desc: 'Modul, silabus, assessment' },
+  { v: 'startup',    label: '🌟 Startup',           desc: 'Pitch deck, investor memo' },
+  { v: 'properti',   label: '🏠 Properti',          desc: 'PPJB, AJB, akta sewa' },
+  { v: 'media',      label: '📢 Media',             desc: 'Press release, company profile' },
+] as const;
+
+const DOC_GENERIC_TEMPLATES: Record<string, string[]> = {
+  perizinan:  ['Dokumen NIB','Dokumen AMDAL','Surat Permohonan IMB','Izin Lingkungan','Sertifikasi Halal BPJPH','Izin Operasional DPMPTSP','Dokumen SIUP','Surat Keterangan Usaha'],
+  tender:     ['Dokumen Penawaran Teknis','Dokumen Penawaran Administrasi','Bill of Quantity (BOQ)','Metode Pelaksanaan Pekerjaan','Jadwal Pelaksanaan (Time Schedule)','Profil Perusahaan untuk Tender','Surat Penawaran Harga','Dokumen Kualifikasi Penyedia'],
+  kontrak:    ['Perjanjian Kerja Sama (PKS)','Memorandum of Understanding (MOU)','Non-Disclosure Agreement (NDA)','Kontrak Jasa Konsultansi','Surat Perintah Mulai Kerja (SPMK)','Perjanjian Sewa Menyewa','Addendum Kontrak','Kontrak Franchise'],
+  bisnis:     ['SOP Pengadaan Barang & Jasa','SOP Manajemen Proyek','Kebijakan Perusahaan','Panduan Operasional','Manual Prosedur','Kebijakan Keamanan Informasi','SOP Keuangan & Kasir','Peraturan Internal Perusahaan'],
+  konstruksi: ['Metode Kerja Konstruksi','Rencana Keselamatan Konstruksi (RKK)','Rencana Mutu Pekerjaan Konstruksi (RMPK)','Spesifikasi Teknis','Dokumen SMKK','Laporan Harian Proyek','Laporan Kemajuan Fisik','Shop Drawing Requirement'],
+  keuangan:   ['Rencana Anggaran Biaya (RAB)','Laporan Cashflow Proyek','Laporan Keuangan Bulanan','Anggaran Tahunan (RKAP)','Laporan Pertanggungjawaban Dana','Proyeksi Keuangan 5 Tahun','Rekapitulasi Biaya','Laporan Realisasi Anggaran'],
+  sdm:        ['Peraturan Perusahaan (PP)','Perjanjian Kerja Waktu Tertentu (PKWT)','Job Description','KPI & Target Kinerja','Formulir Penilaian Kinerja','SOP Recruitment','Kebijakan Cuti & Absensi','Surat Penawaran Kerja (Job Offer)'],
+  laporan:    ['Laporan Kemajuan Proyek','Laporan Direksi / Manajemen','Executive Summary','Laporan Tahunan (Annual Report)','Laporan Evaluasi Program','Notulen Rapat','Laporan Audit Internal','Laporan Kinerja Perusahaan'],
+  proposal:   ['Business Plan','Proposal Investasi','Feasibility Study','Proposal Kerjasama','Rencana Pengembangan Bisnis','Proposal Kredit Bank','Executive Summary Bisnis','Market Research Report'],
+  hukum:      ['Kebijakan Kepatuhan (Compliance Policy)','Laporan Due Diligence','Legal Audit Checklist','Perjanjian Kerahasiaan','Kebijakan Anti-Suap & Gratifikasi','Dokumen GCG','Pendapat Hukum (Legal Opinion)','Surat Kuasa Hukum'],
+  pemasaran:  ['Marketing Plan Tahunan','Brand Guidelines','Strategi Digital Marketing','Kampanye Media Sosial','Content Calendar','Laporan Marketing','Value Proposition Canvas','Customer Persona'],
+  digital:    ['Kebijakan Privasi (Privacy Policy)','Terms of Service','SOP Keamanan Siber','User Manual Sistem','Kebijakan IT Perusahaan','Rencana Implementasi Sistem','Spesifikasi Teknis Aplikasi','Panduan Penggunaan Software'],
+  pendidikan: ['Modul Pelatihan','Silabus Kursus','Kurikulum Program','Rencana Sesi Pelatihan','Formulir Evaluasi Training','Panduan Fasilitator','Assessment & Soal Uji Kompetensi','Sertifikat Pelatihan (Template)'],
+  startup:    ['Pitch Deck Outline','Investor Memo (IM)','Product Brief','Go-to-Market Strategy','One Pager Startup','Business Model Canvas Narrative','Cap Table Overview','Term Sheet Template'],
+  properti:   ['Perjanjian Pengikatan Jual Beli (PPJB)','Surat Perjanjian Sewa','Dokumen AJB','Perjanjian KPR','Spesifikasi Bangunan','Berita Acara Serah Terima','Perjanjian Pengelolaan Properti','Dokumen HGB'],
+  media:      ['Press Release','Siaran Pers','Company Profile','Editorial Plan','Laporan CSR','Media Kit','Panduan Identitas Merek','Artikel Blog / Opini Profesional'],
+};
+
+const DOC_PAKET_LIST = [
+  { v: 'tender_lengkap',     label: '📋 Paket Tender Lengkap',    color: 'blue',   docs: ['Surat Penawaran Harga','Penawaran Teknis','Profil Perusahaan','RAB','Time Schedule','Daftar Personil & Peralatan'] },
+  { v: 'startup_package',    label: '🌟 Paket Startup & Investor', color: 'yellow', docs: ['Executive Summary','Business Plan','Pitch Deck Outline','Financial Projection','Market Research','One Pager'] },
+  { v: 'iso_implementation', label: '🏅 Paket ISO 9001',           color: 'green',  docs: ['Manual Mutu','Prosedur Pengendalian Dokumen','SOP Audit Internal','Formulir Tinjauan Manajemen','Risk Register','Sasaran Mutu'] },
+  { v: 'bisnis_lengkap',     label: '💼 Paket Bisnis Lengkap',     color: 'purple', docs: ['Company Profile','Peraturan Perusahaan','SOP Keuangan','Perjanjian Kerjasama','Kebijakan SDM','Panduan Operasional'] },
+  { v: 'konstruksi_paket',   label: '🏗️ Paket Konstruksi',        color: 'orange', docs: ['RKK','RMPK','Spesifikasi Teknis','Metode Kerja','Laporan Harian','Dokumen SMKK'] },
+  { v: 'hr_package',         label: '👥 Paket SDM Lengkap',        color: 'teal',   docs: ['Peraturan Perusahaan','Job Description Template','PKWT/PKWTT','KPI Framework','SOP Rekrutmen','Formulir Evaluasi Kinerja'] },
+  { v: 'marketing_package',  label: '📣 Paket Marketing Kit',      color: 'pink',   docs: ['Marketing Plan','Brand Guidelines','Content Calendar','Customer Persona','Value Proposition','Laporan Kinerja Marketing'] },
+  { v: 'perizinan_paket',    label: '🏛️ Paket Perizinan Usaha',   color: 'indigo', docs: ['Dokumen NIB','Permohonan Izin Usaha','AMDAL/UKL-UPL','Profil Perusahaan','Akta Pendirian','NPWP Perusahaan'] },
+] as const;
+
+interface DocGeneratorPanelProps {
+  taskConfig: TaskConfig;
+  onTaskConfigChange: (name: string, value: string | number) => void;
+}
+
+function DocGeneratorPanel({ taskConfig, onTaskConfigChange }: DocGeneratorPanelProps) {
+  const [fieldLainOpen, setFieldLainOpen] = useState(false);
+
+  const docMode = taskConfig.docMode || 'generic';
+  const docIsoKategori = taskConfig.docIsoKategori || 'smm';
+  const docIsoJenis = taskConfig.docIsoJenis || 'manual_mutu';
+  const docIsoStandar = (taskConfig.docIsoStandar || 'iso_9001').split('|||').filter(Boolean);
+  const docIsoKlausul = (taskConfig.docIsoKlausul || '4|||5|||6|||7|||8|||9|||10').split('|||').filter(Boolean);
+  const docDetailLevel = taskConfig.docDetailLevel || 'komprehensif';
+  const docBahasa = taskConfig.docBahasa || 'id';
+  const docGenericKategori = taskConfig.docGenericKategori || 'tender';
+  const docGenericJenis = taskConfig.docGenericJenis || '';
+  const docPaket = taskConfig.docPaket || 'tender_lengkap';
+
+  const toggleStandar = (v: string) => {
+    const arr = docIsoStandar.includes(v) ? docIsoStandar.filter(s => s !== v) : [...docIsoStandar, v];
+    onTaskConfigChange('docIsoStandar', arr.join('|||'));
+  };
+  const toggleKlausul = (v: string) => {
+    const arr = docIsoKlausul.includes(v) ? docIsoKlausul.filter(k => k !== v) : [...docIsoKlausul, v];
+    onTaskConfigChange('docIsoKlausul', arr.join('|||'));
+  };
+
+  const modeColor = docMode === 'iso' ? 'blue' : docMode === 'paket' ? 'amber' : 'violet';
+
+  const paketSelected = DOC_PAKET_LIST.find(p => p.v === docPaket);
+
+  return (
+    <div className="space-y-4">
+      {/* ── MODE SWITCHER ── */}
+      <div className="flex gap-1">
+        {([
+          { v: 'iso',     label: '🏅 ISO/QMS',       active: 'bg-blue-600 text-white border-blue-600' },
+          { v: 'generic', label: '📄 Dok. Umum',      active: 'bg-violet-600 text-white border-violet-600' },
+          { v: 'paket',   label: '📦 Paket',          active: 'bg-amber-500 text-white border-amber-500' },
+        ] as const).map(opt => (
+          <button key={opt.v} onClick={() => onTaskConfigChange('docMode', opt.v)}
+            className={cn('flex-1 py-1.5 rounded-lg text-[11px] font-semibold border transition-all', docMode === opt.v ? opt.active : 'border-border text-muted-foreground hover:bg-muted')}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
+
+      {/* ══ ISO MODE ══ */}
+      {docMode === 'iso' && (
+        <div className="space-y-3">
+          {/* Kategori */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📂 Kategori Sistem Manajemen</label>
+            <div className="grid grid-cols-2 gap-1">
+              {DOC_ISO_KATEGORI.map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docIsoKategori', opt.v)}
+                  className={cn('text-left px-2 py-1.5 rounded-lg border text-[10px] transition-colors', docIsoKategori === opt.v ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-border hover:bg-muted')}>
+                  <div className="font-semibold">{opt.label}</div>
+                  <div className="text-muted-foreground text-[9px]">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Jenis Dokumen */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📄 Jenis Dokumen</label>
+            <div className="grid grid-cols-2 gap-1">
+              {DOC_ISO_JENIS.map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docIsoJenis', opt.v)}
+                  className={cn('text-left px-2 py-1.5 rounded-lg border text-[10px] transition-colors', docIsoJenis === opt.v ? 'border-blue-600 bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'border-border hover:bg-muted')}>
+                  <div className="font-semibold">{opt.label}</div>
+                  <div className="text-muted-foreground text-[9px]">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Standar Referensi */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📌 Standar Referensi <span className="font-normal text-muted-foreground">(multi-pilih)</span></label>
+            <div className="grid grid-cols-1 gap-0.5">
+              {DOC_ISO_STANDAR.map(opt => (
+                <label key={opt.v} className={cn('flex items-center gap-2 px-2 py-1 rounded cursor-pointer text-[10px] transition-colors', docIsoStandar.includes(opt.v) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300' : 'hover:bg-muted')}>
+                  <div className={cn('w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center text-[8px]', docIsoStandar.includes(opt.v) ? 'bg-blue-600 border-blue-600 text-white' : 'border-border')}
+                    onClick={() => toggleStandar(opt.v)}>
+                    {docIsoStandar.includes(opt.v) && '✓'}
+                  </div>
+                  <span className="font-medium" onClick={() => toggleStandar(opt.v)}>{opt.label}</span>
+                  <span className="text-muted-foreground ml-auto" onClick={() => toggleStandar(opt.v)}>{opt.desc}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Klausul */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="text-xs font-semibold text-foreground">📑 Klausul ISO HLS</label>
+              <div className="flex gap-2">
+                <button onClick={() => onTaskConfigChange('docIsoKlausul', '4|||5|||6|||7|||8|||9|||10')} className="text-[10px] text-blue-600 hover:underline">Semua Utama</button>
+                <button onClick={() => onTaskConfigChange('docIsoKlausul', '')} className="text-[10px] text-muted-foreground hover:underline">Reset</button>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {['4','5','6','7','8','9','10'].map(k => (
+                <button key={k} onClick={() => toggleKlausul(k)}
+                  className={cn('px-2 py-0.5 rounded border text-[10px] font-medium transition-colors', docIsoKlausul.includes(k) ? 'bg-blue-600 text-white border-blue-600' : 'border-border hover:bg-muted')}>
+                  Kl.{k}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Identitas Org */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">🏢 Identitas Organisasi</label>
+            <input type="text" placeholder="Nama perusahaan / organisasi"
+              value={taskConfig.docNamaOrg || ''} onChange={e => onTaskConfigChange('docNamaOrg', e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            <input type="text" placeholder="Departemen / Fungsi pemilik dokumen"
+              value={taskConfig.docDepartemen || ''} onChange={e => onTaskConfigChange('docDepartemen', e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            <input type="text" placeholder="Lingkup penerapan dokumen"
+              value={taskConfig.docLingkup || ''} onChange={e => onTaskConfigChange('docLingkup', e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+          </div>
+
+          {/* No. Dok & Versi */}
+          <div className="grid grid-cols-3 gap-1.5">
+            <div>
+              <label className="text-[10px] text-muted-foreground">No. Dokumen</label>
+              <input type="text" placeholder="MM-QMS-001" value={taskConfig.docIsoNomorDok || ''} onChange={e => onTaskConfigChange('docIsoNomorDok', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Versi/Rev</label>
+              <input type="text" placeholder="01" value={taskConfig.docIsoVersi || ''} onChange={e => onTaskConfigChange('docIsoVersi', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Tgl. Berlaku</label>
+              <input type="text" placeholder="20 Apr 2025" value={taskConfig.docIsoTanggal || ''} onChange={e => onTaskConfigChange('docIsoTanggal', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+          </div>
+
+          {/* Level & Bahasa */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📏 Level Kelengkapan</label>
+            <div className="flex gap-1">
+              {([{ v: 'ringkas', l: '⚡ Ringkas' }, { v: 'standar', l: '📋 Standar' }, { v: 'komprehensif', l: '🏆 Lengkap' }] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docDetailLevel', opt.v)}
+                  className={cn('flex-1 py-1 rounded-lg border text-[10px] font-medium transition-colors', docDetailLevel === opt.v ? 'bg-blue-600 text-white border-blue-600' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">🌍 Bahasa Dokumen</label>
+            <div className="flex gap-1">
+              {([{ v: 'id', l: '🇮🇩 Indonesia' }, { v: 'en', l: '🇺🇸 English' }, { v: 'bilingual', l: '🌐 Bilingual' }] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docBahasa', opt.v)}
+                  className={cn('flex-1 py-1 rounded-lg border text-[10px] font-medium transition-colors', docBahasa === opt.v ? 'bg-blue-600 text-white border-blue-600' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ GENERIC MODE ══ */}
+      {docMode === 'generic' && (
+        <div className="space-y-3">
+          {/* Kategori */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📂 Kategori Dokumen <span className="font-normal text-muted-foreground">16 kategori</span></label>
+            <div className="grid grid-cols-2 gap-1">
+              {DOC_GENERIC_KATEGORI.map(opt => (
+                <button key={opt.v} onClick={() => { onTaskConfigChange('docGenericKategori', opt.v); onTaskConfigChange('docGenericJenis', ''); }}
+                  className={cn('text-left px-2 py-1.5 rounded-lg border text-[10px] transition-colors', docGenericKategori === opt.v ? 'border-violet-600 bg-violet-50 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300' : 'border-border hover:bg-muted')}>
+                  <div className="font-semibold">{opt.label}</div>
+                  <div className="text-muted-foreground text-[9px]">{opt.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Template Chips */}
+          {(DOC_GENERIC_TEMPLATES[docGenericKategori] || []).length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">⚡ Quick Template</label>
+              <div className="flex flex-wrap gap-1">
+                {(DOC_GENERIC_TEMPLATES[docGenericKategori] || []).map(c => (
+                  <button key={c} onClick={() => onTaskConfigChange('docGenericJenis', c)}
+                    className={cn('text-[9px] px-2 py-0.5 rounded-full border transition-colors font-medium', docGenericJenis === c ? 'bg-violet-600 text-white border-violet-600' : 'border-border hover:border-violet-400 hover:bg-violet-50 dark:hover:bg-violet-900/20')}>
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Jenis / Nama Dokumen */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📄 Jenis / Nama Dokumen</label>
+            <input type="text" placeholder="Pilih quick template atau ketik kustom..."
+              value={docGenericJenis} onChange={e => onTaskConfigChange('docGenericJenis', e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+          </div>
+
+          {/* Tujuan */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">🎯 Tujuan & Fungsi Dokumen</label>
+            <input type="text" placeholder="Mis: Pengajuan izin DPMPTSP, Keperluan tender..."
+              value={taskConfig.docGenericTujuan || ''} onChange={e => onTaskConfigChange('docGenericTujuan', e.target.value)}
+              className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+          </div>
+
+          {/* Identitas Org */}
+          <div className="grid grid-cols-2 gap-1.5">
+            <div>
+              <label className="text-[10px] text-muted-foreground">Nama Perusahaan</label>
+              <input type="text" placeholder="PT / Instansi..." value={taskConfig.docNamaOrg || ''} onChange={e => onTaskConfigChange('docNamaOrg', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground">Pihak / Unit Terlibat</label>
+              <input type="text" placeholder="Pihak / dept..." value={taskConfig.docGenericPihak || ''} onChange={e => onTaskConfigChange('docGenericPihak', e.target.value)}
+                className="w-full mt-0.5 px-2 py-1 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+            </div>
+          </div>
+
+          {/* Format Output */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📐 Format Output</label>
+            <div className="grid grid-cols-2 gap-1">
+              {([
+                { v: 'formal',  l: '📝 Dokumen Formal' },
+                { v: 'mix',     l: '🔀 Mix (Rekomended)' },
+                { v: 'tabel',   l: '📊 Berbasis Tabel' },
+                { v: 'ringkas', l: '⚡ Ringkas & Padat' },
+              ] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docGenericFormat', opt.v)}
+                  className={cn('py-1.5 rounded-lg border text-[10px] font-medium transition-colors', (taskConfig.docGenericFormat || 'mix') === opt.v ? 'bg-violet-600 text-white border-violet-600' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Level & Bahasa */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📏 Level Kelengkapan</label>
+            <div className="flex gap-1">
+              {([{ v: 'ringkas', l: '⚡ Ringkas' }, { v: 'standar', l: '📋 Standar' }, { v: 'komprehensif', l: '🏆 Lengkap' }] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docDetailLevel', opt.v)}
+                  className={cn('flex-1 py-1 rounded-lg border text-[10px] font-medium transition-colors', docDetailLevel === opt.v ? 'bg-violet-600 text-white border-violet-600' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">🌍 Bahasa Dokumen</label>
+            <div className="flex gap-1">
+              {([{ v: 'id', l: '🇮🇩 ID' }, { v: 'en', l: '🇺🇸 EN' }, { v: 'bilingual', l: '🌐 Bilingual' }] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docBahasa', opt.v)}
+                  className={cn('flex-1 py-1 rounded-lg border text-[10px] font-medium transition-colors', docBahasa === opt.v ? 'bg-violet-600 text-white border-violet-600' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ PAKET DOKUMEN MODE ══ */}
+      {docMode === 'paket' && (
+        <div className="space-y-3">
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-300 p-2.5">
+            <p className="text-[10px] font-bold text-amber-800 dark:text-amber-300">📦 Satu Generasi, Satu Paket Lengkap</p>
+            <p className="text-[10px] text-amber-700 dark:text-amber-400 mt-0.5 leading-snug">AI membuat semua dokumen dalam paket sekaligus menggunakan konten ebook Anda.</p>
+          </div>
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">📦 Pilih Paket Dokumen</label>
+            <div className="space-y-1.5">
+              {DOC_PAKET_LIST.map(pkg => (
+                <button key={pkg.v} onClick={() => onTaskConfigChange('docPaket', pkg.v)}
+                  className={cn('w-full text-left px-3 py-2 rounded-lg border text-[10px] transition-colors', docPaket === pkg.v ? 'border-amber-500 bg-amber-50 dark:bg-amber-900/30' : 'border-border hover:bg-muted')}>
+                  <div className="font-semibold text-xs">{pkg.label}</div>
+                  <div className="text-muted-foreground mt-0.5">{pkg.docs.slice(0,3).join(' · ')}{pkg.docs.length > 3 ? ` +${pkg.docs.length - 3} lagi` : ''}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+          {paketSelected && (
+            <div className="rounded-lg bg-muted/50 border p-2.5 space-y-1">
+              <p className="text-[10px] font-semibold">Dokumen dalam paket ini:</p>
+              {paketSelected.docs.map((d, i) => (
+                <div key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                  <span className="text-amber-500 mt-0.5">▸</span><span>{d}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {/* Level & Bahasa for Paket */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-semibold text-foreground">🌍 Bahasa Dokumen</label>
+            <div className="flex gap-1">
+              {([{ v: 'id', l: '🇮🇩 ID' }, { v: 'en', l: '🇺🇸 EN' }, { v: 'bilingual', l: '🌐 Bilingual' }] as const).map(opt => (
+                <button key={opt.v} onClick={() => onTaskConfigChange('docBahasa', opt.v)}
+                  className={cn('flex-1 py-1 rounded-lg border text-[10px] font-medium transition-colors', docBahasa === opt.v ? 'bg-amber-500 text-white border-amber-500' : 'border-border hover:bg-muted')}>
+                  {opt.l}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ══ FIELD LAINNYA — COLLAPSIBLE (semua mode) ══ */}
+      <div className="border rounded-lg overflow-hidden">
+        <button onClick={() => setFieldLainOpen(v => !v)}
+          className="w-full flex items-center justify-between px-3 py-2 text-xs font-semibold hover:bg-muted/50 transition-colors">
+          <span>📋 Informasi Tambahan Dokumen <span className="font-normal text-muted-foreground">(opsional)</span></span>
+          {fieldLainOpen ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
+        </button>
+        {fieldLainOpen && (
+          <div className="px-3 pb-3 space-y-2 border-t bg-muted/20">
+            <div className="pt-2 space-y-2">
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Nama Dokumen Spesifik</label>
+                <input type="text" placeholder="Mis: Manual Mutu PT Sejahtera — Rev.01"
+                  value={taskConfig.docNamaDokumen || ''} onChange={e => onTaskConfigChange('docNamaDokumen', e.target.value)}
+                  className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Deskripsi / Tujuan Dokumen</label>
+                <textarea rows={2} placeholder="Jelaskan tujuan & latar belakang dokumen ini..."
+                  value={taskConfig.docDeskripsi || ''} onChange={e => onTaskConfigChange('docDeskripsi', e.target.value)}
+                  className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
+              </div>
+              <div className="grid grid-cols-2 gap-1.5">
+                <div>
+                  <label className="text-[10px] text-muted-foreground font-medium">Nilai Kontrak / Anggaran</label>
+                  <input type="text" placeholder="Mis: Rp 2,5 Miliar"
+                    value={taskConfig.docNilaiKontrak || ''} onChange={e => onTaskConfigChange('docNilaiKontrak', e.target.value)}
+                    className="w-full mt-0.5 px-2 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+                <div>
+                  <label className="text-[10px] text-muted-foreground font-medium">Periode / Jangka Waktu</label>
+                  <input type="text" placeholder="Mis: Jan – Des 2025"
+                    value={taskConfig.docPeriode || ''} onChange={e => onTaskConfigChange('docPeriode', e.target.value)}
+                    className="w-full mt-0.5 px-2 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+                </div>
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Lokasi Proyek / Wilayah</label>
+                <input type="text" placeholder="Mis: Proyek Jl. Sudirman, Jakarta Pusat"
+                  value={taskConfig.docLokasiProyek || ''} onChange={e => onTaskConfigChange('docLokasiProyek', e.target.value)}
+                  className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Penanggungjawab / PIC</label>
+                <input type="text" placeholder="Nama dan jabatan PIC..."
+                  value={taskConfig.docPenanggungJawab || ''} onChange={e => onTaskConfigChange('docPenanggungJawab', e.target.value)}
+                  className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring" />
+              </div>
+              <div>
+                <label className="text-[10px] text-muted-foreground font-medium">Konteks Tambahan Lainnya</label>
+                <textarea rows={2} placeholder="Informasi penting lain untuk AI..."
+                  value={taskConfig.docKonteksLain || ''} onChange={e => onTaskConfigChange('docKonteksLain', e.target.value)}
+                  className="w-full mt-0.5 px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── INSTRUKSI KHUSUS ── */}
+      <div className="space-y-1.5">
+        <label className="text-xs font-semibold text-foreground">🛠️ Instruksi Khusus <span className="font-normal text-muted-foreground">(opsional)</span></label>
+        <textarea rows={3} placeholder={docMode === 'iso' ? 'Contoh: Sesuaikan dengan industri konstruksi, tambahkan contoh formulir yang sudah terisi...' : docMode === 'paket' ? 'Contoh: Sesuaikan nama perusahaan, tambahkan klausul khusus...' : 'Contoh: Sesuaikan format dengan LKPP, tambahkan lampiran personil...'}
+          value={taskConfig.docCustomInstruksi || ''} onChange={e => onTaskConfigChange('docCustomInstruksi', e.target.value)}
+          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring resize-none" />
+      </div>
+
+      {/* ── SUMMARY ── */}
+      <div className={cn('rounded-lg p-2.5 space-y-1 border', docMode === 'iso' ? 'bg-blue-50 dark:bg-blue-900/20 border-blue-200' : docMode === 'paket' ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-200' : 'bg-violet-50 dark:bg-violet-900/20 border-violet-200')}>
+        <p className={cn('text-[10px] font-bold', docMode === 'iso' ? 'text-blue-700 dark:text-blue-300' : docMode === 'paket' ? 'text-amber-800 dark:text-amber-300' : 'text-violet-700 dark:text-violet-300')}>📊 Ringkasan Konfigurasi:</p>
+        <div className="flex flex-wrap gap-1.5 text-[9px]">
+          {docMode === 'iso' && <>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300')}>{docIsoKategori.toUpperCase()}</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300')}>{docIsoJenis.replace(/_/g,' ')}</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300')}>{docIsoStandar.length} standar</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300')}>{docDetailLevel}</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-blue-100 dark:bg-blue-800/50 text-blue-700 dark:text-blue-300')}>{docBahasa.toUpperCase()}</span>
+          </>}
+          {docMode === 'generic' && <>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-violet-100 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300')}>{docGenericKategori}</span>
+            {docGenericJenis && <span className={cn('px-2 py-0.5 rounded-full font-medium bg-violet-100 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300')}>{docGenericJenis.slice(0,25)}{docGenericJenis.length > 25 ? '...' : ''}</span>}
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-violet-100 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300')}>{docDetailLevel}</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-violet-100 dark:bg-violet-800/50 text-violet-700 dark:text-violet-300')}>{docBahasa.toUpperCase()}</span>
+          </>}
+          {docMode === 'paket' && <>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-300')}>{paketSelected?.label.replace(/^[^\s]+\s/,'').slice(0,30)}</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-300')}>{paketSelected?.docs.length} dokumen</span>
+            <span className={cn('px-2 py-0.5 rounded-full font-medium bg-amber-100 dark:bg-amber-800/50 text-amber-800 dark:text-amber-300')}>{docBahasa.toUpperCase()}</span>
+          </>}
+        </div>
+        <p className={cn('text-[9px]', docMode === 'iso' ? 'text-blue-600 dark:text-blue-400' : docMode === 'paket' ? 'text-amber-700 dark:text-amber-400' : 'text-violet-600 dark:text-violet-400')}>
+          ⏱️ {docMode === 'paket' ? '~90-120 detik · 8000 tokens' : docDetailLevel === 'ringkas' ? '~30 detik · ~4000 tokens' : docDetailLevel === 'standar' ? '~50 detik · ~6000 tokens' : '~75 detik · ~8000 tokens'}
+        </p>
+      </div>
+    </div>
+  );
+}
 
 interface TaskConfigPanelProps {
   activeMode: string;
