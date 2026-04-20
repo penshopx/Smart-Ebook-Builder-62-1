@@ -228,6 +228,19 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [isRegenerating, setIsRegenerating] = useState(false);
   const [docContent, setDocContent] = useState('');
   const [docError, setDocError] = useState('');
+  // Doc Generator Config
+  const [docConfigOpen, setDocConfigOpen] = useState(false);
+  const [docJenis, setDocJenis] = useState('ebook');
+  const [docJumlahBab, setDocJumlahBab] = useState('8');
+  const [docPanjangBab, setDocPanjangBab] = useState('medium');
+  const [docKedalaman, setDocKedalaman] = useState('menengah');
+  const [docGaya, setDocGaya] = useState('semi-formal');
+  const [docBahasa, setDocBahasa] = useState('id');
+  const [docElemen, setDocElemen] = useState<string[]>(['daftar_isi', 'ringkasan_bab', 'kesimpulan', 'poin_kunci']);
+  const [docFormat, setDocFormat] = useState('mix');
+  const [docPresisi, setDocPresisi] = useState('deep');
+  const [docFokus, setDocFokus] = useState('how-to');
+  const [docCustomInstruksi, setDocCustomInstruksi] = useState('');
   const [isDocCopied, setIsDocCopied] = useState(false);
   const [imageInserts, setImageInserts] = useState<Record<number, string>>({});
   const [imgPickerOpen, setImgPickerOpen] = useState(false);
@@ -2464,7 +2477,11 @@ ${bodyHtml}
       });
       return;
     }
+    setDocConfigOpen(true);
+  }, [prompt, toast]);
 
+  const doGenerateDocument = useCallback(async () => {
+    setDocConfigOpen(false);
     setDocContent('');
     setDocError('');
     setImageInserts({});
@@ -2477,7 +2494,24 @@ ${bodyHtml}
       const response = await fetch('/api/generate-document', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({
+          prompt,
+          title: projectTitle || projectTopik,
+          topik: projectTopik,
+          target: projectTarget,
+          authorName,
+          docJenis,
+          docJumlahBab,
+          docPanjangBab,
+          docKedalaman,
+          docGaya,
+          docBahasa,
+          docElemen,
+          docFormat,
+          docPresisi,
+          docFokus,
+          docCustomInstruksi,
+        }),
         signal: abortRef.current.signal,
       });
 
@@ -2527,7 +2561,7 @@ ${bodyHtml}
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, toast]);
+  }, [prompt, projectTitle, projectTopik, projectTarget, authorName, docJenis, docJumlahBab, docPanjangBab, docKedalaman, docGaya, docBahasa, docElemen, docFormat, docPresisi, docFokus, docCustomInstruksi, toast]);
 
   const handleRegenerate = useCallback(async () => {
     if (!onRegenerate) return;
@@ -4787,6 +4821,284 @@ ${bodyHtml}
             <Button className="flex-1 bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white" onClick={() => handleGenerateQuiz()}>
               <ClipboardList className="h-4 w-4 mr-2" />Generate Kuis
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── DOCUMENT GENERATOR CONFIG DIALOG ── */}
+      <Dialog open={docConfigOpen} onOpenChange={setDocConfigOpen}>
+        <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-600 to-teal-700 text-white">
+                <FileText className="h-3.5 w-3.5" />
+              </div>
+              Konfigurasi Generator Dokumen
+              <Badge variant="secondary" className="text-xs">Presisi & Akurat</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="space-y-5 py-3 px-1">
+
+              {/* Context pipeline */}
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 p-3 space-y-1.5">
+                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📋 Data yang akan digunakan AI:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Topik', active: !!projectTopik, note: projectTopik?.slice(0,20) },
+                    { label: 'Judul', active: !!projectTitle, note: projectTitle?.slice(0,20) },
+                    { label: 'Target', active: !!projectTarget },
+                    { label: 'Penulis', active: !!authorName },
+                    { label: 'Outline Ebook', active: !!prompt, note: `${Math.round(prompt.length/100)*100} char` },
+                  ].map(d => (
+                    <span key={d.label} className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', d.active ? 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-600 dark:text-emerald-300' : 'bg-muted border-border text-muted-foreground opacity-40')}>
+                      {d.active ? '✓' : '○'} {d.label}{d.note ? ` (${d.note})` : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Jenis Dokumen */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">📄 Jenis Dokumen</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {([
+                    { v: 'ebook', label: '📗 Ebook', desc: 'Buku digital informatif' },
+                    { v: 'panduan', label: '🗺️ Panduan', desc: 'Step-by-step guide' },
+                    { v: 'laporan', label: '📊 Laporan', desc: 'Report & analisis data' },
+                    { v: 'whitepaper', label: '🔬 Whitepaper', desc: 'Paper teknis mendalam' },
+                    { v: 'tutorial', label: '🎓 Tutorial', desc: 'Belajar langkah demi langkah' },
+                    { v: 'manual', label: '⚙️ Manual', desc: 'Petunjuk penggunaan' },
+                    { v: 'proposal', label: '💼 Proposal', desc: 'Dokumen usulan bisnis' },
+                    { v: 'artikel_ilmiah', label: '📑 Artikel Ilmiah', desc: 'Academic paper berstruktur' },
+                  ] as const).map(opt => (
+                    <button key={opt.v} onClick={() => setDocJenis(opt.v)}
+                      className={cn('text-left p-2 rounded-lg border text-xs transition-colors', docJenis === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:border-emerald-400 hover:bg-muted')}>
+                      <div className="font-semibold mb-0.5 text-[11px]">{opt.label}</div>
+                      <div className="text-muted-foreground text-[9px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Jumlah Bab & Panjang */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">📚 Jumlah Bab / Bagian</label>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {['3','5','7','8','10','12','15','20','25'].map(n => (
+                      <button key={n} onClick={() => setDocJumlahBab(n)}
+                        className={cn('py-1.5 rounded-lg border text-xs font-medium transition-colors', docJumlahBab === n ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'border-border hover:bg-muted')}>
+                        {n} bab
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">📏 Panjang Setiap Bab</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'short', label: 'Singkat', desc: '~400-600 kata/bab', badge: 'Cepat' },
+                      { v: 'medium', label: 'Sedang', desc: '~800-1200 kata/bab', badge: 'Standar' },
+                      { v: 'long', label: 'Panjang', desc: '~1500-2000 kata/bab', badge: 'Lengkap' },
+                      { v: 'very_long', label: 'Sangat Panjang', desc: '~2500-3500 kata/bab', badge: 'Komprehensif' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocPanjangBab(opt.v)}
+                        className={cn('w-full text-left px-2.5 py-1.5 rounded-lg border text-xs flex items-center justify-between transition-colors', docPanjangBab === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div>
+                          <span className="font-semibold">{opt.label}</span>
+                          <span className="text-muted-foreground ml-1.5 text-[10px]">{opt.desc}</span>
+                        </div>
+                        <Badge variant="outline" className="text-[9px] px-1.5">{opt.badge}</Badge>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Kedalaman & Gaya */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">🎯 Tingkat Kedalaman</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'pemula', label: '🟢 Pemula', desc: 'Penjelasan dasar, banyak analogi sederhana, hindari jargon teknis' },
+                      { v: 'menengah', label: '🟡 Menengah', desc: 'Konsep moderat, beberapa istilah teknis, praktik terapan' },
+                      { v: 'ahli', label: '🔴 Ahli', desc: 'Mendalam, data teknis, framework & metodologi lanjutan' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocKedalaman(opt.v)}
+                        className={cn('w-full text-left px-2.5 py-2 rounded-lg border text-xs transition-colors', docKedalaman === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold mb-0.5">{opt.label}</div>
+                        <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">✍️ Gaya Penulisan</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'formal', label: '👔 Formal', desc: 'Struktural, bahasa baku, tanpa singkatan' },
+                      { v: 'semi-formal', label: '🤝 Semi-Formal', desc: 'Profesional tapi mudah dicerna, rekomended' },
+                      { v: 'santai', label: '😊 Santai', desc: 'Percakapan, akrab, cocok untuk millennial' },
+                      { v: 'akademis', label: '🎓 Akademis', desc: 'Ilmiah, referensi, footnote, metodologis' },
+                      { v: 'jurnalistik', label: '📰 Jurnalistik', desc: 'Piramida terbalik, lead kuat, ringkas padat' },
+                      { v: 'storytelling', label: '📖 Storytelling', desc: 'Naratif, anekdot, perjalanan emosional' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocGaya(opt.v)}
+                        className={cn('w-full text-left px-2.5 py-1.5 rounded-lg border text-xs flex items-center gap-2 transition-colors', docGaya === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div>
+                          <span className="font-semibold">{opt.label}</span>
+                          <span className="text-muted-foreground ml-1.5 text-[10px]">{opt.desc}</span>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Elemen Dokumen */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🧩 Elemen yang Dimasukkan <span className="font-normal text-muted-foreground">(multi-pilih)</span></label>
+                <div className="grid grid-cols-3 gap-2">
+                  {([
+                    { v: 'kata_pengantar', label: '📝 Kata Pengantar', desc: 'Sambutan penulis & konteks buku' },
+                    { v: 'daftar_isi', label: '📋 Daftar Isi', desc: 'TOC dengan nomor halaman' },
+                    { v: 'ringkasan_bab', label: '📌 Ringkasan Bab', desc: 'Poin-poin di akhir setiap bab' },
+                    { v: 'poin_kunci', label: '🔑 Poin Kunci', desc: 'Key takeaways highlight di setiap bab' },
+                    { v: 'studi_kasus', label: '🔎 Studi Kasus', desc: 'Contoh nyata & analisis mendalam' },
+                    { v: 'latihan', label: '✏️ Latihan', desc: 'Soal latihan & refleksi di tiap bab' },
+                    { v: 'contoh_praktis', label: '💡 Contoh Praktis', desc: 'Ilustrasi & contoh konkret di setiap konsep' },
+                    { v: 'kesimpulan', label: '🎯 Kesimpulan', desc: 'Bab penutup yang merangkum semua' },
+                    { v: 'glosarium', label: '📖 Glosarium', desc: 'Daftar istilah & definisi' },
+                    { v: 'referensi', label: '📚 Referensi', desc: 'Daftar pustaka & sumber data' },
+                    { v: 'action_plan', label: '🚀 Action Plan', desc: 'Rencana tindakan langkah berikutnya' },
+                    { v: 'template', label: '📐 Template', desc: 'Template & worksheet yang bisa diunduh' },
+                  ] as const).map(opt => (
+                    <button key={opt.v}
+                      onClick={() => setDocElemen(prev => prev.includes(opt.v) ? prev.filter(e => e !== opt.v) : [...prev, opt.v])}
+                      className={cn('text-left p-2 rounded-lg border text-xs flex items-start gap-1.5 transition-colors', docElemen.includes(opt.v) ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                      <div className={cn('mt-0.5 w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center text-[9px]', docElemen.includes(opt.v) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-border')}>
+                        {docElemen.includes(opt.v) && '✓'}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-[10px]">{opt.label}</div>
+                        <div className="text-muted-foreground text-[9px] leading-snug">{opt.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Format & Fokus & Presisi */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">📐 Format Konten</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'naratif', label: '📝 Naratif', desc: 'Paragraf panjang, mengalir' },
+                      { v: 'bullets', label: '• Bullet Points', desc: 'Daftar poin ringkas' },
+                      { v: 'mix', label: '🔀 Mix (Rekomended)', desc: 'Campuran paragraf + poin' },
+                      { v: 'qa', label: '❓ Q&A Format', desc: 'Pertanyaan & jawaban' },
+                      { v: 'numbered', label: '1. Numbered', desc: 'Daftar bernomor terstruktur' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocFormat(opt.v)}
+                        className={cn('w-full text-left px-2 py-1.5 rounded-lg border text-xs transition-colors', docFormat === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold text-[10px]">{opt.label}</div>
+                        <div className="text-[9px] text-muted-foreground">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">🎯 Fokus Konten</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'how-to', label: '⚡ How-To Praktis', desc: 'Langkah nyata, action-oriented' },
+                      { v: 'teori', label: '🔬 Teori & Konsep', desc: 'Framework, model, definisi' },
+                      { v: 'story', label: '📖 Story & Narasi', desc: 'Anekdot, perjalanan, emosi' },
+                      { v: 'data', label: '📊 Data & Fakta', desc: 'Statistik, riset, angka' },
+                      { v: 'hybrid', label: '🌟 Hybrid (Semua)', desc: 'Campuran seimbang semuanya' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocFokus(opt.v)}
+                        className={cn('w-full text-left px-2 py-1.5 rounded-lg border text-xs transition-colors', docFokus === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold text-[10px]">{opt.label}</div>
+                        <div className="text-[9px] text-muted-foreground">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">🔬 Mode Presisi</label>
+                  <div className="space-y-1.5">
+                    {([
+                      { v: 'standard', label: '⚡ Standard', desc: 'Cepat, konten umum berkualitas' },
+                      { v: 'deep', label: '🔍 Deep Content', desc: 'Detail, sub-konsep mendalam' },
+                      { v: 'research', label: '🔬 Research-Grade', desc: 'Data riset, statistik, fakta terverifikasi' },
+                      { v: 'expert', label: '🏆 Expert-Level', desc: 'Framework eksklusif, insight ahli, case studies' },
+                    ] as const).map(opt => (
+                      <button key={opt.v} onClick={() => setDocPresisi(opt.v)}
+                        className={cn('w-full text-left px-2 py-1.5 rounded-lg border text-xs transition-colors', docPresisi === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                        <div className="font-semibold text-[10px]">{opt.label}</div>
+                        <div className="text-[9px] text-muted-foreground">{opt.desc}</div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bahasa */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🌍 Bahasa Dokumen</label>
+                <div className="flex gap-2">
+                  {([
+                    { v: 'id', label: '🇮🇩 Bahasa Indonesia' },
+                    { v: 'en', label: '🇺🇸 English' },
+                    { v: 'bilingual', label: '🌐 Bilingual (ID+EN)' },
+                  ] as const).map(opt => (
+                    <button key={opt.v} onClick={() => setDocBahasa(opt.v)}
+                      className={cn('flex-1 py-2 rounded-lg border text-xs font-medium transition-colors', docBahasa === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300' : 'border-border hover:bg-muted')}>
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Custom Instructions */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🛠️ Instruksi Khusus <span className="font-normal text-muted-foreground">(opsional — tambahan arahan untuk AI)</span></label>
+                <Textarea
+                  placeholder={'Contoh instruksi khusus:\n• Setiap bab harus dimulai dengan quote inspiratif\n• Sertakan minimal 3 contoh nyata dari industri konstruksi\n• Gunakan framework AIDA di setiap bagian persuasif\n• Tambahkan kotak "Perhatian!" untuk poin-poin kritis\n• Akhiri setiap bab dengan checklist singkat'}
+                  value={docCustomInstruksi}
+                  onChange={e => setDocCustomInstruksi(e.target.value)}
+                  rows={4}
+                  className="text-xs resize-none"
+                />
+              </div>
+
+              {/* Summary perkiraan output */}
+              <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-3 space-y-1">
+                <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300">📊 Perkiraan Output dengan Konfigurasi Ini:</p>
+                <div className="flex flex-wrap gap-3 text-[10px] text-blue-600 dark:text-blue-400">
+                  <span>📄 {docJumlahBab} bab</span>
+                  <span>📏 ~{docPanjangBab === 'short' ? `${parseInt(docJumlahBab)*500}` : docPanjangBab === 'medium' ? `${parseInt(docJumlahBab)*1000}` : docPanjangBab === 'long' ? `${parseInt(docJumlahBab)*1750}` : `${parseInt(docJumlahBab)*3000}`} kata total</span>
+                  <span>🧩 {docElemen.length} elemen tambahan</span>
+                  <span>🎯 {docPresisi === 'standard' ? 'Cepat (~45 detik)' : docPresisi === 'deep' ? 'Mendalam (~60 detik)' : docPresisi === 'research' ? 'Research mode (~75 detik)' : 'Expert level (~90 detik)'}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-between gap-2 pt-3 border-t shrink-0">
+            <Button variant="ghost" size="sm" className="text-xs text-muted-foreground"
+              onClick={() => { setDocJumlahBab('8'); setDocPanjangBab('medium'); setDocKedalaman('menengah'); setDocGaya('semi-formal'); setDocBahasa('id'); setDocElemen(['daftar_isi','ringkasan_bab','kesimpulan','poin_kunci']); setDocFormat('mix'); setDocPresisi('deep'); setDocFokus('how-to'); setDocCustomInstruksi(''); }}>
+              Reset ke Default
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setDocConfigOpen(false)}>Batal</Button>
+              <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-white" onClick={doGenerateDocument}>
+                <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate Dokumen Sekarang
+              </Button>
+            </div>
           </div>
         </DialogContent>
       </Dialog>
