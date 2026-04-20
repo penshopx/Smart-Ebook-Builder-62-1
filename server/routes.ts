@@ -2071,6 +2071,8 @@ Format setiap segmen:
         docGenericTujuan = '',
         docGenericPihak = '',
         docGenericFormat = 'mix',
+        // Paket Dokumen params
+        docPaket = 'tender_lengkap',
         // Legacy
         docJenis = 'ebook',
       } = req.body;
@@ -2121,7 +2123,7 @@ Format setiap segmen:
       const standarArr = Array.isArray(docStandar) ? docStandar : [docStandar];
       const klausulArr = Array.isArray(docKlausul) ? docKlausul : [docKlausul];
 
-      const maxTokens = docDetailLevel === 'ringkas' ? 4000 : docDetailLevel === 'standar' ? 6000 : 8000;
+      const maxTokens = docMode === 'paket' ? 8000 : docDetailLevel === 'ringkas' ? 4000 : docDetailLevel === 'standar' ? 6000 : 8000;
 
       // Build document header block
       const headerBlock = [
@@ -2149,6 +2151,12 @@ Format setiap segmen:
         laporan: 'Laporan & Presentasi',
         proposal: 'Proposal & Rencana Bisnis',
         hukum: 'Hukum & Compliance',
+        pemasaran: 'Pemasaran & Branding',
+        digital: 'Teknologi & Digital (IT)',
+        pendidikan: 'Pendidikan & Pelatihan',
+        startup: 'Startup & Inovasi',
+        properti: 'Properti & Real Estate',
+        media: 'Media & Komunikasi',
       };
       const genericFormatMap: Record<string, string> = {
         formal: 'DOKUMEN FORMAL — bab/pasal/ayat terstruktur, bahasa baku resmi, siap ditandatangani',
@@ -2267,6 +2275,87 @@ KONTEKS & KONTEN YANG MENJADI BASIS DOKUMEN:
 ${prompt}
 
 Buat dokumen LENGKAP dan UTUH sesuai semua instruksi di atas. Sertakan semua klausul yang diminta dengan isi yang substantif. Gunakan format tabel, daftar bernomor, dan heading yang terstruktur sesuai konvensi dokumen ISO.`;
+      }
+
+      // ── Paket Dokumen mode — override prompts if mode is paket ──
+      if (docMode === 'paket') {
+        const paketMap: Record<string, { label: string; docs: string[] }> = {
+          tender_lengkap: {
+            label: 'Paket Tender Lengkap',
+            docs: ['1. SURAT PENAWARAN HARGA — surat resmi berisi nilai penawaran, validitas, dan pernyataan kepatuhan persyaratan tender','2. DOKUMEN PENAWARAN TEKNIS & METODOLOGI — uraian pendekatan teknis, metodologi pelaksanaan, dan inovasi yang ditawarkan','3. PROFIL PERUSAHAAN — company profile singkat untuk kelengkapan tender: legalitas, pengalaman, personil kunci','4. REKAPITULASI & RINCIAN RAB — Rencana Anggaran Biaya dalam format tabel, dengan breakdown item pekerjaan dan harga satuan','5. JADWAL PELAKSANAAN (TIME SCHEDULE) — bar chart / tabel jadwal dengan milestone dan durasi pekerjaan per item','6. DAFTAR PERSONIL & PERALATAN — tabel personil (posisi, kualifikasi, pengalaman) dan daftar peralatan yang disediakan'],
+          },
+          startup_package: {
+            label: 'Paket Startup & Investor',
+            docs: ['1. EXECUTIVE SUMMARY — ringkasan bisnis 2 halaman untuk investor: masalah, solusi, market size, traction, tim, ask','2. BUSINESS PLAN — rencana bisnis lengkap: latar belakang, analisis pasar, produk/layanan, strategi, operasional, keuangan','3. PITCH DECK OUTLINE (SLIDE PER SLIDE) — struktur 12-15 slide dengan judul, poin kunci, dan narasi tiap slide','4. PROYEKSI KEUANGAN 3-5 TAHUN — tabel revenue projection, cost structure, EBITDA, break-even analysis','5. MARKET RESEARCH SUMMARY — analisis pasar, TAM/SAM/SOM, kompetitor, tren, dan positioning','6. ONE PAGER — ringkasan satu halaman yang bisa dikirim ke investor sebelum meeting'],
+          },
+          iso_implementation: {
+            label: 'Paket Implementasi ISO 9001',
+            docs: ['1. KEBIJAKAN MUTU (QUALITY POLICY) — pernyataan kebijakan mutu resmi yang ditandatangani top management, sesuai klausul 5.2','2. MANUAL MUTU LEVEL 1 — manual mutu organisasi mencakup klausul 4-10 ISO 9001:2015, konteks, proses utama, tanggung jawab','3. SOP PROSES INTI — prosedur operasi standar untuk proses utama bisnis (level 2), lengkap dengan flowchart','4. SOP PENGENDALIAN KETIDAKSESUAIAN & TINDAKAN KOREKTIF — prosedur NC/CA sesuai klausul 10.2','5. SOP AUDIT INTERNAL — prosedur pelaksanaan audit internal sesuai klausul 9.2, termasuk checklist audit','6. SASARAN MUTU & KPI — tabel sasaran mutu per departemen, target terukur, dan program pencapaiannya (klausul 6.2)','7. FORMULIR AUDIT INTERNAL & TINJAUAN MANAJEMEN — template formulir laporan audit dan agenda tinjauan manajemen'],
+          },
+          bisnis_lengkap: {
+            label: 'Paket Manajemen Bisnis',
+            docs: ['1. STRUKTUR ORGANISASI & JOB DESCRIPTION — bagan organisasi + uraian tugas, wewenang, dan tanggung jawab tiap posisi kunci','2. PERATURAN PERUSAHAAN (PP) — peraturan perusahaan lengkap sesuai UU Ketenagakerjaan: hak-kewajiban, sanksi, PKB','3. 5 SOP OPERASIONAL UTAMA — prosedur standar untuk proses-proses kunci: pengadaan, keuangan, SDM, operasional, pelayanan pelanggan','4. KEBIJAKAN KEUANGAN & PENGADAAN — kebijakan otorisasi keuangan, batas anggaran, prosedur pengadaan internal','5. TEMPLATE KONTRAK KERJA (PKWT & PKWTT) — template perjanjian kerja waktu tertentu dan tidak tertentu, sesuai PP No.35/2021','6. KPI & SISTEM PENILAIAN KINERJA — framework KPI per departemen, formulir penilaian kinerja, dan mekanisme reward'],
+          },
+          konstruksi_proyek: {
+            label: 'Paket Dokumen Proyek Konstruksi',
+            docs: ['1. RENCANA MUTU PEKERJAAN KONSTRUKSI (RMPK) — sesuai Permen PUPR, mencakup pengendalian mutu material, pekerjaan, dan pengujian','2. RENCANA KESELAMATAN KONSTRUKSI (RKK) — identifikasi bahaya, penilaian risiko K3, pengendalian, dan program K3 proyek','3. METODE KERJA UTAMA — metode pelaksanaan pekerjaan struktural/utama secara detail: tahapan, peralatan, tenaga, QC point','4. JADWAL PELAKSANAAN & KURVA S — time schedule proyek dalam format tabel + kurva S bobot pekerjaan','5. LAPORAN HARIAN & MINGGUAN (TEMPLATE) — template laporan progres harian (cuaca, pekerja, volume) dan mingguan (kemajuan fisik, masalah, rencana)','6. DOKUMEN SMKK & JSA — Sistem Manajemen Keselamatan Konstruksi + Job Safety Analysis untuk pekerjaan berisiko tinggi'],
+          },
+          sdm_hr: {
+            label: 'Paket SDM & HR Lengkap',
+            docs: ['1. PERATURAN PERUSAHAAN LENGKAP — PP komprehensif: waktu kerja, cuti, gaji, tunjangan, sanksi, PHK, sesuai UU No.13/2003 jo UU Cipta Kerja','2. TEMPLATE KONTRAK KERJA (PKWT & PKWTT) — template kontrak kerja lengkap dengan klausul perlindungan perusahaan dan karyawan','3. JOB DESCRIPTION POSISI KUNCI — uraian jabatan lengkap untuk 5-8 posisi kunci: kualifikasi, tugas, KPI, reporting line','4. SISTEM KPI & EVALUASI KINERJA — framework penilaian kinerja: KPI per divisi, skala penilaian, proses review, kalender evaluasi','5. SOP RECRUITMENT & ONBOARDING — prosedur rekrutmen (dari MRF hingga offer) dan program orientasi karyawan baru','6. KEBIJAKAN CUTI, ABSENSI & PENGGAJIAN — kebijakan detil cuti tahunan, cuti sakit, izin, sistem absensi, dan mekanisme penggajian'],
+          },
+          pemasaran_digital: {
+            label: 'Paket Pemasaran Digital',
+            docs: ['1. MARKETING PLAN TAHUNAN — rencana pemasaran 12 bulan: tujuan, target, strategi, channel, anggaran, dan KPI','2. BRAND GUIDELINES — panduan identitas merek: logo usage, warna, tipografi, tone of voice, do\'s & don\'ts','3. STRATEGI KONTEN & CONTENT CALENDAR — strategi konten per platform + kalender konten 12 bulan dengan tema dan jenis konten','4. PERSONA PELANGGAN & SEGMENTASI — 3-4 customer persona detail: demografi, psikografi, pain points, buying journey','5. CAMPAIGN BRIEF & TEMPLATE IKLAN — brief kampanye iklan untuk social media, email, dan Google Ads','6. KPI MARKETING & DASHBOARD — framework KPI pemasaran digital: conversion rate, CAC, ROAS, engagement, dan template dashboard'],
+          },
+          perizinan_usaha: {
+            label: 'Paket Perizinan Usaha',
+            docs: ['1. PANDUAN & CHECKLIST NIB OSS — panduan langkah demi langkah mengurus NIB di OSS + checklist dokumen yang disiapkan','2. DOKUMEN PERMOHONAN IZIN USAHA — surat permohonan, formulir isian, dan lampiran untuk pengajuan izin ke DPMPTSP','3. COMPANY PROFILE SINGKAT — profil perusahaan untuk keperluan perizinan: legalitas, kegiatan usaha, struktur, lokasi','4. PANDUAN AMDAL / UKL-UPL — overview proses, jenis kegiatan wajib AMDAL vs UKL-UPL, tahapan, dan institusi terkait','5. CHECKLIST DOKUMEN LEGALITAS — checklist kelengkapan dokumen perusahaan: akta, SK Menkumham, NPWP, SIUP, NIB, izin-izin sektoral','6. PANDUAN SERTIFIKASI PRODUK (HALAL/SNI) — tahapan, lembaga, persyaratan, biaya, dan template dokumen untuk sertifikasi halal atau SNI (sesuaikan konteks ebook)'],
+          },
+        };
+
+        const selectedPaket = paketMap[docPaket] || paketMap['tender_lengkap'];
+        const paketOrgBlock = [
+          docNamaOrg ? `Organisasi/Perusahaan: ${docNamaOrg}` : null,
+          docGenericPihak ? `Industri/Bidang Usaha: ${docGenericPihak}` : null,
+        ].filter(Boolean).join('\n');
+
+        systemPrompt = `Kamu adalah konsultan dokumen bisnis senior dan pakar penyusunan dokumen profesional Indonesia dengan pengalaman lebih dari 20 tahun. Kamu ahli dalam menyusun berbagai jenis dokumen untuk keperluan tender, investasi, manajemen bisnis, SDM, konstruksi, pemasaran, dan perizinan. Setiap dokumen yang kamu buat LENGKAP, PROFESIONAL, dan SIAP DIGUNAKAN.
+
+MISI UTAMA:
+Buat PAKET DOKUMEN LENGKAP "${selectedPaket.label}" — yaitu semua dokumen dalam paket ini sekaligus dalam satu output terstruktur, menggunakan konten ebook sebagai basis pengetahuan.
+
+DOKUMEN YANG HARUS DIBUAT DALAM PAKET INI:
+${selectedPaket.docs.join('\n')}
+
+PRINSIP WAJIB:
+1. Setiap dokumen dalam paket HARUS ditulis dengan konten SUBSTANTIF dan LENGKAP — bukan hanya judul atau outline
+2. Pisahkan setiap dokumen dengan header yang jelas: "══════════════════════════════" dan judul dokumen
+3. Gunakan format yang tepat untuk setiap jenis dokumen (tabel untuk RAB, narasi untuk kebijakan, checklist untuk formulir, dst.)
+4. Gunakan bahasa ${bahasaMap[docBahasa] || 'Bahasa Indonesia formal'}
+5. Setiap dokumen harus konsisten satu sama lain dalam konteks/informasi organisasi
+6. Jangan gunakan placeholder kosong — isi dengan konten yang nyata dan kontekstual berdasarkan ebook
+7. Kalau ada info organisasi yang disediakan, gunakan di semua dokumen dalam paket
+${docCustomInstruksi ? `\nINSTRUKSI KHUSUS:\n${docCustomInstruksi}` : ''}
+
+LARANGAN KERAS:
+- Jangan skip dokumen mana pun dalam daftar — semua harus hadir dan lengkap
+- Jangan gunakan "[isi di sini]", "[nama]", "[tgl]" atau placeholder sejenisnya
+- Output harus bisa langsung digunakan, bukan sekadar template`;
+
+        userPrompt = `Buat ${selectedPaket.label} yang LENGKAP untuk:
+
+📖 BASIS PENGETAHUAN (konten ebook):
+${prompt}
+
+${paketOrgBlock ? `🏢 IDENTITAS ORGANISASI:\n${paketOrgBlock}\n` : ''}
+${title ? `📌 Topik/Konteks: ${title || topik}` : ''}
+
+BUAT SEMUA ${selectedPaket.docs.length} DOKUMEN BERIKUT SECARA LENGKAP DAN BERURUTAN:
+${selectedPaket.docs.map((d, i) => `${i+1}. ${d.split('—')[0].trim()}`).join('\n')}
+
+Untuk setiap dokumen: buat konten lengkap yang substantif, spesifik pada konteks ebook di atas, siap digunakan.
+Level kelengkapan: ${docDetailLevel === 'komprehensif' ? 'KOMPREHENSIF — sangat detail' : 'STANDAR — lengkap dan siap pakai'}`;
       }
 
       void docJenis; // suppress unused warning
