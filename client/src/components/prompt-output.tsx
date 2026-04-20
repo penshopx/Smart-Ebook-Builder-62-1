@@ -2072,6 +2072,11 @@ ${bodyHtml}
   }, [chatInput, chatLoading, chatMessages, chatSystemPrompt, fetchSSE, toast]);
 
   const handleGenerateSyllabus = useCallback(async (duration?: string, format?: string, goal?: string) => {
+    const topikFinal = projectTopik || projectTitle;
+    if (!topikFinal) {
+      toast({ title: 'Isi topik / judul proyek terlebih dahulu', description: 'Silabus Kursus membutuhkan topik proyek sebagai konteks.', variant: 'destructive' });
+      return;
+    }
     markEcoUsed('ecourse');
     setSyllabusConfigOpen(false);
     setSyllabusOpen(true);
@@ -2081,8 +2086,8 @@ ${bodyHtml}
     try {
       await fetchSSE('/api/generate-course-syllabus',
         {
-          title: projectTitle || projectTopik,
-          topik: projectTopik,
+          title: projectTitle || topikFinal,
+          topik: topikFinal,
           target: projectTarget,
           courseDuration: duration || syllabusConfigDuration,
           courseFormat: format || syllabusConfigFormat,
@@ -2097,6 +2102,11 @@ ${bodyHtml}
   }, [projectTitle, projectTopik, projectTarget, syllabusConfigDuration, syllabusConfigFormat, syllabusConfigGoal, fetchSSE, toast]);
 
   const handleGenerateMiniApp = useCallback(async () => {
+    const topikFinal = projectTopik || projectTitle;
+    if (!topikFinal) {
+      toast({ title: 'Isi topik / judul proyek terlebih dahulu', description: 'Blueprint Mini App membutuhkan topik proyek sebagai konteks.', variant: 'destructive' });
+      return;
+    }
     markEcoUsed('miniapp');
     setAppOpen(true);
     setAppContent('');
@@ -2104,7 +2114,7 @@ ${bodyHtml}
     setAppTab('konsep');
     try {
       await fetchSSE('/api/generate-mini-app',
-        { title: projectTitle || projectTopik, topik: projectTopik, target: projectTarget, docContent: docContent?.slice(0, 1000) },
+        { title: projectTitle || topikFinal, topik: topikFinal, target: projectTarget, docContent: docContent?.slice(0, 1000) },
         (chunk) => setAppContent(prev => prev + chunk),
         () => setAppLoading(false)
       );
