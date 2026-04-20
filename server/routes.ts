@@ -23,17 +23,7 @@ const isSessionActive = (req: any, res: any, next: any) => {
 async function checkPlanLimit(req: any, res: any): Promise<boolean> {
   const userId = getUserId(req);
   if (!userId) { res.status(401).json({ error: 'Unauthorized' }); return false; }
-  const result = await authStorage.trackPromptUsage(userId);
-  if (!result.allowed) {
-    res.status(429).json({
-      error: 'Limit harian tercapai',
-      message: `Kamu sudah menggunakan ${result.used} dari ${result.limit} prompt hari ini. Upgrade ke Pro untuk unlimited prompt.`,
-      used: result.used,
-      limit: result.limit,
-      code: 'DAILY_LIMIT_EXCEEDED',
-    });
-    return false;
-  }
+  // Monetization disabled — all users have unlimited access
   return true;
 }
 
@@ -465,24 +455,6 @@ export async function registerRoutes(
       const userId = getUserId(req);
       const parsed = createProjectSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
-
-      // Enforce project limit based on plan (admin/sub_admin bypass limit)
-      const user = await authStorage.getUser(userId);
-      const isAdminRole = user?.role === 'admin' || user?.role === 'sub_admin';
-      if (!isAdminRole) {
-        const plan = (user?.plan ?? 'free') as keyof typeof PLAN_LIMITS;
-        const limits = PLAN_LIMITS[plan];
-        if (limits.maxProjects !== Infinity) {
-          const count = await storage.countProjects(userId);
-          if (count >= (limits.maxProjects as number)) {
-            return res.status(403).json({
-              error: 'Batas proyek tercapai',
-              message: `Paket ${limits.label} hanya mendukung ${limits.maxProjects} proyek. Upgrade ke Pro untuk lebih banyak proyek.`,
-              code: 'PROJECT_LIMIT_EXCEEDED',
-            });
-          }
-        }
-      }
 
       const project = await storage.createProject(userId, parsed.data);
       res.status(201).json(project);

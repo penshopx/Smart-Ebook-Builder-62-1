@@ -62,44 +62,44 @@ export const emailWhitelist = pgTable("email_whitelist", {
 export type EmailWhitelistEntry = typeof emailWhitelist.$inferSelect;
 export type InsertEmailWhitelist = typeof emailWhitelist.$inferInsert;
 
-// Plan limits
+// Plan limits — monetization disabled, all plans have full access
 export const PLAN_LIMITS = {
   free: {
-    promptsPerDay: 5,
-    maxProjects: 3,
-    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE'],
-    exports: ['txt'],
+    promptsPerDay: Infinity,
+    maxProjects: Infinity,
+    allowedModes: 'all' as const,
+    exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
     label: 'Free',
     color: 'gray',
   },
   pro: {
-    promptsPerDay: 25,
-    maxProjects: 25,
-    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT'],
-    exports: ['txt', 'pdf'],
+    promptsPerDay: Infinity,
+    maxProjects: Infinity,
+    allowedModes: 'all' as const,
+    exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
     label: 'Pro',
     color: 'blue',
   },
   premium: {
-    promptsPerDay: 75,
+    promptsPerDay: Infinity,
     maxProjects: Infinity,
-    allowedModes: ['BRAINSTORM', 'BIG_IDEA', 'OUTLINE', 'DRAFT_BAB', 'VIDEO_SCRIPT', 'QUIZ_MAKER', 'EXTEND_TEXT', 'MARKETING_KIT', 'E_COURSE', 'GPT_BUILDER', 'DOCUMENT_GENERATOR', 'MINI_APP'],
-    exports: ['txt', 'pdf', 'docx', 'md'],
+    allowedModes: 'all' as const,
+    exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
     label: 'Premium',
     color: 'primary',
   },
   advance: {
     promptsPerDay: Infinity,
     maxProjects: Infinity,
-    allowedModes: 'all',
-    exports: ['txt', 'pdf', 'docx', 'md', 'html'],
+    allowedModes: 'all' as const,
+    exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
     label: 'Advance',
     color: 'purple',
   },
   enterprise: {
     promptsPerDay: Infinity,
     maxProjects: Infinity,
-    allowedModes: 'all',
+    allowedModes: 'all' as const,
     exports: ['txt', 'pdf', 'docx', 'md', 'html', 'api'],
     label: 'Enterprise',
     color: 'amber',
