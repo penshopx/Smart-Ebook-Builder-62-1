@@ -290,6 +290,12 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [appFiturWajib, setAppFiturWajib] = useState('');
   const [appIntegrasi, setAppIntegrasi] = useState('');
   const [appComplexity, setAppComplexity] = useState<'simple'|'medium'|'advanced'>('medium');
+  // Mini App History (max 10, FIFO, persisted to localStorage)
+  type AppHistoryItem = { id: string; label: string; appType: string; appPlatform: string; appLang: string; appComplexity: string; content: string; createdAt: string; };
+  const [appHistory, setAppHistory] = useState<AppHistoryItem[]>(() => {
+    try { return JSON.parse(localStorage.getItem('chaesa_miniapp_history') || '[]'); } catch { return []; }
+  });
+  const [appViewingId, setAppViewingId] = useState<string | null>(null);
   // Generator Kuis
   const [quizOpen, setQuizOpen] = useState(false);
   const [quizContent, setQuizContent] = useState('');
@@ -2128,14 +2134,48 @@ ${bodyHtml}
     setAppConfigOpen(true);
   }, [projectTitle, projectTopik, toast]);
 
+  const saveAppToHistory = useCallback((content: string, config: { appType: string; appPlatform: string; appLang: string; appComplexity: string }) => {
+    if (!content || content.length < 100) return;
+    const typeLabel = config.appType === 'auto' ? 'Auto' : config.appType;
+    const platLabel = config.appPlatform === 'web' ? 'Web' : config.appPlatform === 'pwa' ? 'PWA' : config.appPlatform === 'static' ? 'HTML' : 'WA Bot';
+    const complexLabel = config.appComplexity === 'simple' ? '🟢' : config.appComplexity === 'advanced' ? '🔴' : '🟡';
+    const timeStr = new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    const dateStr = new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+    const item: { id: string; label: string; appType: string; appPlatform: string; appLang: string; appComplexity: string; content: string; createdAt: string } = {
+      id: Date.now().toString(),
+      label: `${complexLabel} ${typeLabel} · ${platLabel} · ${dateStr} ${timeStr}`,
+      appType: config.appType,
+      appPlatform: config.appPlatform,
+      appLang: config.appLang,
+      appComplexity: config.appComplexity,
+      content,
+      createdAt: new Date().toISOString(),
+    };
+    setAppHistory(prev => {
+      const newHistory = [...prev, item].slice(-10);
+      try { localStorage.setItem('chaesa_miniapp_history', JSON.stringify(newHistory)); } catch {}
+      return newHistory;
+    });
+    setAppViewingId(item.id);
+    const totalAfter = Math.min((appHistory.length) + 1, 10);
+    if (appHistory.length >= 9) {
+      toast({ title: `📦 Blueprint ke-${totalAfter} disimpan (slot terlama ditimpa)`, description: 'Riwayat penuh — ekspor blueprint lama agar tidak hilang.' });
+    } else {
+      toast({ title: `✅ Blueprint disimpan ke riwayat (${totalAfter}/10)`, description: 'Bisa dilihat kembali kapan saja dari panel riwayat.' });
+    }
+  }, [appHistory.length, toast]);
+
   const doGenerateMiniApp = useCallback(async () => {
     const topikFinal = projectTopik || projectTitle;
+    const currentConfig = { appType, appPlatform, appLang, appComplexity };
     markEcoUsed('miniapp');
     setAppConfigOpen(false);
     setAppOpen(true);
     setAppContent('');
+    setAppViewingId(null);
     setAppLoading(true);
     setAppTab('konsep');
+    let collectedContent = '';
     try {
       await fetchSSE('/api/generate-mini-app',
         {
@@ -2152,13 +2192,16 @@ ${bodyHtml}
           appIntegrasi: appIntegrasi || undefined,
           appComplexity,
         },
-        (chunk) => setAppContent(prev => prev + chunk),
-        () => setAppLoading(false)
+        (chunk) => { collectedContent += chunk; setAppContent(prev => prev + chunk); },
+        () => {
+          setAppLoading(false);
+          saveAppToHistory(collectedContent, currentConfig);
+        }
       );
     } catch {
       toast({ title: 'Gagal generate blueprint mini app', variant: 'destructive' });
     } finally { setAppLoading(false); }
-  }, [projectTitle, projectTopik, projectTarget, docContent, syllabusContent, appType, appPlatform, appNeedAI, appLang, appFiturWajib, appIntegrasi, appComplexity, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, docContent, syllabusContent, appType, appPlatform, appNeedAI, appLang, appFiturWajib, appIntegrasi, appComplexity, fetchSSE, toast, saveAppToHistory]);
 
   const handleGenerateQuiz = useCallback(async (level?: string, focus?: string) => {
     setQuizConfigOpen(false);
@@ -5046,9 +5089,136 @@ ${bodyHtml}
                 <Smartphone className="h-3.5 w-3.5" />
               </div>
               Blueprint Mini App
-              <Badge variant="secondary" className="ml-1 text-xs">Konsep · Fitur · Tech Stack · Prompt Build</Badge>
+              <Badge variant="secondary" className="ml-1 text-xs">{appHistory.length}/10 tersimpan</Badge>
+              {appHistory.length >= 8 && (
+                <Badge variant="destructive" className="ml-1 text-[10px]">⚠️ Hampir penuh</Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
+
+          {/* ── HISTORY BAR ── */}
+          {appHistory.length > 0 && (
+            <div className="flex-shrink-0 border border-border rounded-lg overflow-hidden">
+              <div className="bg-slate-100 dark:bg-slate-800/60 px-2.5 py-1.5 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-slate-600 dark:text-slate-400">
+                  <ClipboardList className="h-3 w-3" />
+                  Riwayat Blueprint ({appHistory.length}/10 slot)
+                  {appHistory.length >= 8 && (
+                    <span className="text-amber-600 dark:text-amber-400">— Ekspor lama sebelum slot habis!</span>
+                  )}
+                </div>
+                <div className="flex gap-1">
+                  <button
+                    onClick={() => {
+                      const allContent = appHistory.map((h, i) => `\n${'='.repeat(60)}\nBLUEPRINT #${i+1}: ${h.label}\n${'='.repeat(60)}\n${h.content}`).join('\n');
+                      const b = new Blob([allContent], { type: 'text/plain' });
+                      const u = URL.createObjectURL(b);
+                      const a = document.createElement('a');
+                      a.href = u;
+                      a.download = `semua-blueprint-miniapp-${new Date().toISOString().slice(0,10)}.txt`;
+                      a.click();
+                      URL.revokeObjectURL(u);
+                      toast({ title: `📥 ${appHistory.length} blueprint didownload sekaligus!` });
+                    }}
+                    className="text-[10px] px-2 py-0.5 rounded border border-slate-300 dark:border-slate-600 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors text-slate-600 dark:text-slate-400 flex items-center gap-1"
+                  >
+                    <Download className="h-2.5 w-2.5" />Ekspor Semua
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (!confirm(`Hapus semua ${appHistory.length} blueprint dari riwayat?`)) return;
+                      setAppHistory([]);
+                      setAppViewingId(null);
+                      try { localStorage.removeItem('chaesa_miniapp_history'); } catch {}
+                      toast({ title: 'Riwayat blueprint dihapus.' });
+                    }}
+                    className="text-[10px] px-2 py-0.5 rounded border border-red-200 dark:border-red-800 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors text-red-600 dark:text-red-400"
+                  >Hapus Semua</button>
+                </div>
+              </div>
+              <div className="flex gap-1.5 px-2.5 py-2 overflow-x-auto scrollbar-thin">
+                {/* Chip: Live / Terbaru */}
+                {!appLoading && appContent && (
+                  <button
+                    onClick={() => { setAppViewingId(null); }}
+                    className={cn(
+                      'shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium border transition-all whitespace-nowrap',
+                      appViewingId === null ? 'bg-slate-800 text-white border-transparent' : 'border-border hover:border-slate-400 hover:bg-muted'
+                    )}
+                  >
+                    <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-400" />
+                    Terbaru (live)
+                  </button>
+                )}
+                {/* History chips — terbaru di kanan */}
+                {[...appHistory].reverse().map((item, ridx) => {
+                  const realIdx = appHistory.length - 1 - ridx;
+                  return (
+                    <div key={item.id} className="shrink-0 flex items-center gap-0.5">
+                      <button
+                        onClick={() => {
+                          setAppViewingId(item.id);
+                          setAppContent(item.content);
+                          setAppTab('konsep');
+                        }}
+                        className={cn(
+                          'flex items-center gap-1 px-2.5 py-1 rounded-l-full text-[10px] font-medium border border-r-0 transition-all whitespace-nowrap',
+                          appViewingId === item.id ? 'bg-slate-700 text-white border-transparent' : 'border-border hover:border-slate-400 hover:bg-muted'
+                        )}
+                      >
+                        #{realIdx + 1} {item.label}
+                      </button>
+                      <button
+                        onClick={() => {
+                          const b = new Blob([item.content], { type: 'text/plain' });
+                          const u = URL.createObjectURL(b);
+                          const a = document.createElement('a');
+                          a.href = u;
+                          a.download = `blueprint-${item.label.replace(/[^a-z0-9]/gi, '-').slice(0, 30)}.txt`;
+                          a.click();
+                          URL.revokeObjectURL(u);
+                          toast({ title: `Blueprint #${realIdx+1} didownload.` });
+                        }}
+                        title="Download blueprint ini"
+                        className={cn(
+                          'flex items-center px-1.5 py-1 rounded-none text-[10px] border border-r-0 transition-all',
+                          appViewingId === item.id ? 'bg-slate-700 text-slate-300 border-transparent' : 'border-border hover:bg-muted'
+                        )}
+                      >
+                        <Download className="h-2.5 w-2.5" />
+                      </button>
+                      <button
+                        onClick={() => {
+                          setAppHistory(prev => {
+                            const updated = prev.filter(h => h.id !== item.id);
+                            try { localStorage.setItem('chaesa_miniapp_history', JSON.stringify(updated)); } catch {}
+                            return updated;
+                          });
+                          if (appViewingId === item.id) {
+                            setAppViewingId(null);
+                          }
+                          toast({ title: `Blueprint #${realIdx+1} dihapus dari riwayat.` });
+                        }}
+                        title="Hapus dari riwayat"
+                        className={cn(
+                          'flex items-center px-1.5 py-1 rounded-r-full text-[10px] border transition-all',
+                          appViewingId === item.id ? 'bg-slate-700 text-red-300 border-transparent hover:text-red-200' : 'border-border hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-500'
+                        )}
+                      >
+                        <X className="h-2.5 w-2.5" />
+                      </button>
+                    </div>
+                  );
+                })}
+                {appHistory.length === 10 && (
+                  <div className="shrink-0 flex items-center px-2 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                    ⚠️ Penuh — generate berikutnya timpa #1
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           {appLoading && !appContent && (
             <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
               <div className="relative">
