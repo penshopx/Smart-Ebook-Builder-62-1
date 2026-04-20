@@ -2139,11 +2139,12 @@ Buat analisis yang sangat spesifik dan actionable untuk pasar Indonesia!`,
       res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
       res.end();
     } catch (error: any) {
+      console.error("[research-ebook] error:", error?.message || error, error?.status, error?.code);
       if (res.headersSent) {
         res.write(`data: ${JSON.stringify({ error: "Gagal melakukan riset" })}\n\n`);
         res.end();
       } else {
-        res.status(500).json({ error: "Failed to research ebook" });
+        res.status(500).json({ error: "Failed to research ebook", detail: error?.message });
       }
     }
   });
