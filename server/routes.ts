@@ -1837,7 +1837,7 @@ Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max
   // ── LANDING PAGE GENERATOR ────────────────────────────────────────────────
   app.post("/api/generate-landing-page", isAuthenticated, async (req, res) => {
     try {
-      const { title, topik, target, author, mockupUrl, syllabusSnippet, landingPageStyle, landingPageGoal, landingPagePrice, landingPageBonuses, landingPageCTA, landingPageOutputFormat, docContent } = req.body;
+      const { title, topik, target, author, mockupUrl, syllabusSnippet, landingPageStyle, landingPageGoal, landingPagePrice, landingPageHargaCoret, landingPageBonuses, landingPageCTA, landingPageOutputFormat, docContent, landingPageProblem, landingPageKondisi, landingPageSolusi, landingPageValueProp, landingPageManfaat, landingPageKredibilitas, landingPageGaransi } = req.body;
       if (!topik && !title) return res.status(400).json({ error: "Topic required" });
 
       res.setHeader("Content-Type", "text/event-stream");
@@ -1866,83 +1866,112 @@ Tulis dalam bahasa Indonesia yang natural untuk DIDENGAR — kalimat pendek, max
         ? landingPageBonuses.split('\n').filter(Boolean).map((b: string, i: number) => `${i + 1}. ${b.trim()}`).join('\n')
         : '';
 
+      const manfaatList = landingPageManfaat?.trim()
+        ? landingPageManfaat.split('\n').filter(Boolean).map((m: string, i: number) => `✅ ${m.trim()}`).join('\n')
+        : '';
+
       const stream = await openai.chat.completions.create({
         model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: `Kamu adalah copywriter profesional Indonesia yang ahli dalam direct response marketing, sales letter, dan conversion optimization. Kamu menguasai framework AIDA, PAS, dan teknik copywriting lainnya untuk pasar Indonesia.`,
+            content: `Kamu adalah copywriter profesional Indonesia yang ahli dalam direct response marketing, sales letter, dan conversion optimization. Kamu menguasai framework AIDA, PAS, Before-After-Bridge (BAB), dan StoryBrand untuk pasar Indonesia. Gunakan data yang diberikan oleh user — jangan mengarang jika sudah ada data spesifik.`,
           },
           {
             role: "user",
-            content: `Buatkan LANDING PAGE ${styleMap[landingPageStyle || 'long-form']} untuk ebook berikut:
+            content: `Buatkan LANDING PAGE ${styleMap[landingPageStyle || 'long-form']} untuk produk berikut:
 
-Judul Ebook: ${title || topik}
+═══ DATA PRODUK ═══
+Judul: ${title || topik}
 Topik: ${topik}
 Target Pembaca: ${target || 'umum'}
 Penulis/Author: ${author || 'Pakar di bidang ini'}
-Harga: ${landingPagePrice || '(belum ditentukan)'}
-Tujuan: ${goalMap[landingPageGoal || 'sell']}
+${landingPageKredibilitas ? `Kredibilitas Penulis: ${landingPageKredibilitas}` : ''}
+
+═══ PROBLEM & KONDISI PASAR ═══
+${landingPageProblem ? `Masalah yang dialami target:\n${landingPageProblem}` : ''}
+${landingPageKondisi ? `Kondisi eksisting (before):\n${landingPageKondisi}` : ''}
+
+═══ SOLUSI & VALUE ═══
+${landingPageSolusi ? `Solusi yang ditawarkan:\n${landingPageSolusi}` : ''}
+${landingPageValueProp ? `Value Proposition / USP:\n${landingPageValueProp}` : ''}
+${manfaatList ? `Manfaat utama:\n${manfaatList}` : ''}
+
+═══ HARGA & PENAWARAN ═══
+Harga Jual: ${landingPagePrice || '(belum ditentukan)'}
+${landingPageHargaCoret ? `Harga Normal/Coret: ${landingPageHargaCoret}` : ''}
 Tombol CTA: "${landingPageCTA || 'Beli Sekarang'}"
+Garansi: ${landingPageGaransi || '30 hari uang kembali'}
 ${bonusList ? `\nBonus Produk:\n${bonusList}` : ''}
-${docContent ? `\nReferensi konten ebook:\n${docContent.slice(0, 1500)}` : ''}
-${syllabusSnippet ? `\nStruktur E-Course:\n${syllabusSnippet}` : ''}
-${mockupUrl ? `\nNote: Tersedia gambar mockup ebook untuk visual produk.` : ''}
+
+═══ KONTEKS TAMBAHAN ═══
+${docContent ? `Referensi konten ebook:\n${docContent.slice(0, 1500)}` : ''}
+${syllabusSnippet ? `Struktur E-Course:\n${syllabusSnippet}` : ''}
+${mockupUrl ? `Note: Tersedia gambar mockup ebook untuk visual produk.` : ''}
+
+Tujuan halaman: ${goalMap[landingPageGoal || 'sell']}
 
 FORMAT OUTPUT:
 ${outputInstr[landingPageOutputFormat || 'copy']}
 
-STRUKTUR WAJIB (sesuaikan dengan gaya ${landingPageStyle || 'long-form'}):
+STRUKTUR WAJIB (sesuaikan gaya ${landingPageStyle || 'long-form'}):
 
 1. HERO SECTION
-- Headline utama: benefit-driven, max 10 kata, langsung menyentuh masalah
-- Subheadline: perjelas proposisi nilai (1-2 kalimat)
-- CTA pertama: "${landingPageCTA || 'Beli Sekarang'}"
+- Headline: benefit-driven, max 10 kata, langsung menyentuh masalah utama
+- Subheadline: perjelas USP (1-2 kalimat)
+- Hook: tunjukkan kondisi before vs after
+- CTA: "${landingPageCTA || 'Beli Sekarang'}"
 
-2. PROBLEM AGITATION  
-- 3-5 masalah konkret yang dirasakan target pembaca
-- Gunakan teknik "Sebelum vs Sesudah" atau PAS
+2. PROBLEM AGITATION (Before)
+${landingPageProblem ? `Gunakan masalah ini: ${landingPageProblem}` : '- 3-5 masalah konkret yang dirasakan target pembaca'}
+${landingPageKondisi ? `Kondisi eksisting: ${landingPageKondisi}` : ''}
+- Gunakan teknik PAS (Problem-Agitate-Solution)
 
-3. SOLUSI & UNIQUE VALUE PROPOSITION
-- Kenalkan ebook sebagai solusi terbaik
-- Apa yang membuatnya berbeda dari solusi lain
+3. SOLUSI & UNIQUE VALUE PROPOSITION (After + Bridge)
+${landingPageSolusi ? `Gunakan solusi ini: ${landingPageSolusi}` : '- Kenalkan ebook sebagai solusi terbaik'}
+${landingPageValueProp ? `USP: ${landingPageValueProp}` : '- Apa yang membuatnya berbeda dari solusi lain'}
 
-4. ISI EBOOK / FITUR
-- Daftar bab/materi (dengan manfaat, bukan sekadar nama bab)
-- Format: "Di bab ini kamu akan: [manfaat konkret]"
+4. MANFAAT KONKRET (Benefit-Driven)
+${manfaatList || '- Ubah fitur menjadi manfaat yang dirasakan pembaca\n- Format: "Kamu akan bisa [hasil spesifik] dalam [waktu]"'}
 
-5. UNTUK SIAPA
+5. ISI / APA YANG DIDAPAT
+- Daftar materi ebook (dengan benefit per bab/bagian)
+- Format: "✅ [Nama Bab/Bagian]: kamu akan [manfaat konkret]"
+
+6. UNTUK SIAPA
 - ✅ Cocok untuk: (3-5 profil ideal)
 - ❌ Bukan untuk: (1-2 yang tidak cocok)
 
-6. TESTIMONI (3 contoh template realistis)
-Format: "[Kutipan] — Nama, Pekerjaan"
+7. TESTIMONI SOSIAL (3 contoh realistis)
+- Format: "[Kutipan spesifik dengan hasil nyata] — Nama, Pekerjaan, Kota"
 
-7. TENTANG PENULIS
-${author ? `Nama: ${author}\nTulis bio singkat yang membangun kredibilitas ${author} sebagai ahli di bidang ${topik || title}.` : 'Template bio yang bisa dikustomisasi'}
+8. TENTANG PENULIS
+${landingPageKredibilitas ? `Gunakan kredibilitas ini: ${landingPageKredibilitas}` : `${author ? `Nama: ${author} — tulis bio singkat yang membangun kredibilitas` : 'Template bio yang bisa dikustomisasi'}`}
 
-${bonusList ? `8. SEKSI BONUS
-Tampilkan setiap bonus dengan nilai yang dirasakan\n` : ''}
+${bonusList ? `9. SEKSI BONUS\nTampilkan setiap bonus dengan nilai moneter yang dirasakan\n` : ''}
 
-${bonusList ? '9' : '8'}. HARGA & PENAWARAN
+${bonusList ? '10' : '9'}. HARGA & PENAWARAN
 - Harga: ${landingPagePrice || '(isi harga Anda)'}
-- Urgency copy (stok/waktu terbatas)
+${landingPageHargaCoret ? `- Harga normal/coret: ${landingPageHargaCoret} (hemat ${landingPageHargaCoret})` : ''}
+- Urgency & scarcity copy
 - CTA utama: "${landingPageCTA || 'Beli Sekarang'}"
 
-${bonusList ? '10' : '9'}. GARANSI
-Template garansi uang kembali
+${bonusList ? '11' : '10'}. GARANSI
+- ${landingPageGaransi || 'Garansi 30 hari uang kembali'}
+- Framing yang mengurangi risiko pembelian
 
-${bonusList ? '11' : '10'}. FAQ (5 pertanyaan + jawaban meyakinkan)
+${bonusList ? '12' : '11'}. FAQ (5-7 pertanyaan + jawaban persuasif)
 
-${bonusList ? '12' : '11'}. CLOSING CTA FINAL
-Rangkum nilai + CTA akhir yang kuat
+${bonusList ? '13' : '12'}. CLOSING CTA FINAL
+- Rangkum value + remind konsekuensi tidak beli
+- CTA akhir yang kuat
 
-Gunakan bahasa yang natural dan conversational — bukan bahasa brosur.
-Sertakan angka/data konkret untuk meningkatkan kredibilitas.`,
+Gunakan bahasa conversational Indonesia yang natural — bukan bahasa brosur kaku.
+Sertakan angka/data spesifik. Semua copy harus berbasis data yang sudah diberikan di atas.`,
           },
         ],
         stream: true,
-        max_completion_tokens: 4000,
+        max_completion_tokens: 5000,
       });
 
       for await (const chunk of stream) {

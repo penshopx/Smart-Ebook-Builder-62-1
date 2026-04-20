@@ -323,6 +323,15 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [lpCTA, setLpCTA] = useState('Beli Sekarang');
   const [lpStyle, setLpStyle] = useState('long-form');
   const [lpGoal, setLpGoal] = useState('sell');
+  const [lpProblem, setLpProblem] = useState('');
+  const [lpKondisi, setLpKondisi] = useState('');
+  const [lpSolusi, setLpSolusi] = useState('');
+  const [lpValueProp, setLpValueProp] = useState('');
+  const [lpManfaat, setLpManfaat] = useState('');
+  const [lpKredibilitas, setLpKredibilitas] = useState('');
+  const [lpGaransi, setLpGaransi] = useState('30 hari uang kembali tanpa syarat');
+  const [lpHargaCoret, setLpHargaCoret] = useState('');
+  const [lpConfigTab, setLpConfigTab] = useState<'produk' | 'copy' | 'teknis'>('produk');
   // FlipBook Guide
   const [flipbookOpen, setFlipbookOpen] = useState(false);
   // Ecosystem Hub
@@ -2226,9 +2235,17 @@ ${bodyHtml}
           landingPageStyle: config?.style ?? lpStyle,
           landingPageGoal: config?.goal ?? lpGoal,
           landingPagePrice: config?.price ?? lpPrice,
+          landingPageHargaCoret: lpHargaCoret || undefined,
           landingPageBonuses: config?.bonuses ?? lpBonuses,
           landingPageCTA: config?.cta ?? lpCTA,
           landingPageOutputFormat: config?.outputFormat ?? lpOutputFormat,
+          landingPageProblem: lpProblem || undefined,
+          landingPageKondisi: lpKondisi || undefined,
+          landingPageSolusi: lpSolusi || undefined,
+          landingPageValueProp: lpValueProp || undefined,
+          landingPageManfaat: lpManfaat || undefined,
+          landingPageKredibilitas: lpKredibilitas || undefined,
+          landingPageGaransi: lpGaransi || undefined,
         },
         (chunk) => setLpContent(prev => prev + chunk),
         () => setLpLoading(false),
@@ -2237,7 +2254,7 @@ ${bodyHtml}
       setLpLoading(false);
       toast({ title: 'Gagal membuat landing page', variant: 'destructive' });
     }
-  }, [projectTitle, projectTopik, projectTarget, authorName, mockupImages, syllabusContent, docContent, lpStyle, lpGoal, lpPrice, lpBonuses, lpCTA, lpOutputFormat, fetchSSE, toast]);
+  }, [projectTitle, projectTopik, projectTarget, authorName, mockupImages, syllabusContent, docContent, lpStyle, lpGoal, lpPrice, lpHargaCoret, lpBonuses, lpCTA, lpOutputFormat, lpProblem, lpKondisi, lpSolusi, lpValueProp, lpManfaat, lpKredibilitas, lpGaransi, fetchSSE, toast]);
 
   const handleGenerateCoverTemplate = useCallback(async (opts?: {author?: string; colorScheme?: string; style?: string}) => {
     setCoverTplOpen(true);
@@ -5274,118 +5291,301 @@ ${bodyHtml}
 
       {/* ── LANDING PAGE PRE-CONFIG DIALOG ── */}
       <Dialog open={lpConfigOpen} onOpenChange={setLpConfigOpen}>
-        <DialogContent className="max-w-lg">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+          <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Settings2 className="h-5 w-5 text-emerald-500" />
               Konfigurasi Landing Page
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            {/* Data sync info */}
-            <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2">
-              <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline Tersinkronisasi:</p>
-              <div className="flex flex-wrap gap-1.5">
-                {[
-                  { label: 'Konten Ebook', active: !!docContent },
-                  { label: 'Silabus', active: !!syllabusContent },
-                  { label: 'Monetisasi', active: !!monoContent },
-                  { label: 'Mockup 3D', active: mockupImages.length > 0 },
-                  { label: 'Penulis', active: !!authorName },
-                  { label: 'Kuis', active: !!quizContent },
-                  { label: 'Podcast', active: !!podcastContent },
-                ].map(d => (
-                  <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700 dark:text-green-400' : 'bg-muted border-border text-muted-foreground opacity-40')}>
-                    {d.active ? '✓' : '○'} {d.label}
-                  </span>
-                ))}
-              </div>
-              {/* Smart auto-sync from Monetization */}
-              {monoContent && extractMonetizationPrice() && (
-                <div className="rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-2 flex items-center gap-2">
-                  <span className="text-xs text-amber-700 dark:text-amber-400 flex-1">
-                    💡 Harga terdeteksi dari Monetisasi: <strong>{extractMonetizationPrice()}</strong>
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 text-[10px] px-2 border-amber-300 text-amber-700 hover:bg-amber-100"
-                    onClick={() => setLpPrice(extractMonetizationPrice())}
-                  >
-                    Terapkan
-                  </Button>
-                </div>
-              )}
-              {/* Smart bonus suggestions */}
-              {getSmartBonuses() && !lpBonuses && (
-                <div className="rounded bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-2 flex items-start gap-2">
-                  <span className="text-xs text-blue-700 dark:text-blue-400 flex-1">
-                    🎁 {getSmartBonuses().split('\n').length} bonus terdeteksi dari output yang sudah di-generate
-                  </span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-6 text-[10px] px-2 shrink-0 border-blue-300 text-blue-700 hover:bg-blue-100"
-                    onClick={() => setLpBonuses(getSmartBonuses())}
-                  >
-                    Isi Otomatis
-                  </Button>
-                </div>
-              )}
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium flex items-center gap-1"><DollarSign className="h-3 w-3" /> Harga (Rp)</label>
-                <Input placeholder="Contoh: Rp 99.000" value={lpPrice} onChange={e => setLpPrice(e.target.value)} className="h-8 text-sm" />
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">Teks Tombol CTA</label>
-                <Input placeholder="Beli Sekarang" value={lpCTA} onChange={e => setLpCTA(e.target.value)} className="h-8 text-sm" />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">Gaya Landing Page</label>
-                <select value={lpStyle} onChange={e => setLpStyle(e.target.value)} className="w-full h-8 text-xs rounded border border-border bg-background px-2">
-                  <option value="long-form">Long-Form Sales Letter</option>
-                  <option value="short">Short Copy (Ringkas)</option>
-                  <option value="vsl">VSL / Video Sales</option>
-                  <option value="webinar">Webinar Registration</option>
-                </select>
-              </div>
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium">Tujuan</label>
-                <select value={lpGoal} onChange={e => setLpGoal(e.target.value)} className="w-full h-8 text-xs rounded border border-border bg-background px-2">
-                  <option value="sell">Jual Langsung</option>
-                  <option value="lead">Kumpulkan Lead</option>
-                  <option value="webinar">Daftar Webinar</option>
-                  <option value="waitlist">Pre-Launch Waitlist</option>
-                </select>
-              </div>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium flex items-center gap-2">
-                Bonus Produk (satu per baris)
-                {getSmartBonuses() && (
-                  <button onClick={() => setLpBonuses(prev => prev ? prev : getSmartBonuses())} className="text-[10px] text-blue-600 hover:underline">
-                    + auto-isi dari pipeline
-                  </button>
+
+          {/* Tab navigation */}
+          <div className="flex gap-1 border-b shrink-0">
+            {([
+              { key: 'produk', label: '🎯 Produk & Value' },
+              { key: 'copy', label: '✍️ Copy & Konversi' },
+              { key: 'teknis', label: '⚙️ Format & Teknis' },
+            ] as const).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setLpConfigTab(t.key)}
+                className={cn(
+                  'px-3 py-2 text-xs font-medium transition-colors border-b-2 -mb-px',
+                  lpConfigTab === t.key
+                    ? 'border-emerald-500 text-emerald-700 dark:text-emerald-400'
+                    : 'border-transparent text-muted-foreground hover:text-foreground'
                 )}
-              </label>
-              <Textarea
-                placeholder={"Contoh:\nBonus Template Canva\nBonus Video Tutorial\nBonus Konsultasi 1 Jam"}
-                value={lpBonuses}
-                onChange={e => setLpBonuses(e.target.value)}
-                rows={3}
-                className="text-sm resize-none"
-              />
-            </div>
+              >
+                {t.label}
+              </button>
+            ))}
           </div>
-          <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setLpConfigOpen(false)}>Batal</Button>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setLpConfigOpen(false); handleGenerateLandingPage(); }}>
-              <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Landing Page
-            </Button>
+
+          <ScrollArea className="flex-1 min-h-0">
+            <div className="space-y-4 py-3 px-1">
+
+              {/* ===== TAB: PRODUK & VALUE ===== */}
+              {lpConfigTab === 'produk' && (
+                <div className="space-y-4">
+                  {/* Data pipeline sync */}
+                  <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 p-3 space-y-2">
+                    <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline Tersinkronisasi:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {[
+                        { label: 'Konten Ebook', active: !!docContent },
+                        { label: 'Silabus', active: !!syllabusContent },
+                        { label: 'Monetisasi', active: !!monoContent },
+                        { label: 'Mockup 3D', active: mockupImages.length > 0 },
+                        { label: 'Penulis', active: !!authorName },
+                      ].map(d => (
+                        <span key={d.label} className={cn('text-[10px] px-1.5 py-0.5 rounded border', d.active ? 'bg-green-100 border-green-300 text-green-700 dark:bg-green-900/40 dark:border-green-700 dark:text-green-400' : 'bg-muted border-border text-muted-foreground opacity-40')}>
+                          {d.active ? '✓' : '○'} {d.label}
+                        </span>
+                      ))}
+                    </div>
+                    {monoContent && extractMonetizationPrice() && (
+                      <div className="rounded bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-2 flex items-center gap-2">
+                        <span className="text-xs text-amber-700 dark:text-amber-400 flex-1">💡 Harga dari Monetisasi: <strong>{extractMonetizationPrice()}</strong></span>
+                        <Button size="sm" variant="outline" className="h-6 text-[10px] px-2 border-amber-300 text-amber-700 hover:bg-amber-100" onClick={() => setLpPrice(extractMonetizationPrice())}>Terapkan</Button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">❌ Masalah Target Pasar <span className="text-muted-foreground font-normal">(Problem Agitation)</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\n- Sulit mengelola keuangan bisnis karena tidak punya sistem\n- Sering kehilangan uang karena tidak ada pencatatan\n- Tidak tahu cara membuat laporan keuangan sederhana"}
+                      value={lpProblem}
+                      onChange={e => setLpProblem(e.target.value)}
+                      rows={3}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">😔 Kondisi Eksisting (Before) <span className="text-muted-foreground font-normal">— situasi saat ini sebelum beli produk</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\nBanyak pengusaha UMKM yang masih kelola keuangan manual di buku catatan, atau pakai Excel seadanya tanpa tahu apakah bisnis mereka untung atau rugi."}
+                      value={lpKondisi}
+                      onChange={e => setLpKondisi(e.target.value)}
+                      rows={3}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">✅ Solusi yang Ditawarkan <span className="text-muted-foreground font-normal">— apa yang produk ini lakukan</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\nSistem keuangan 3 kolom yang bisa langsung diterapkan hari ini tanpa background akuntansi, dirancang khusus untuk UMKM dengan omzet 10-500 juta/bulan."}
+                      value={lpSolusi}
+                      onChange={e => setLpSolusi(e.target.value)}
+                      rows={3}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">💎 Value Proposition <span className="text-muted-foreground font-normal">— janji utama / USP produk</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\nSatu-satunya ebook keuangan UMKM yang dilengkapi template Excel siap pakai + 30 studi kasus nyata — bukan teori, tapi langsung praktek."}
+                      value={lpValueProp}
+                      onChange={e => setLpValueProp(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">🚀 Manfaat Utama <span className="text-muted-foreground font-normal">(satu per baris)</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\nBisa baca laporan keuangan bisnis dalam 5 menit\nTahu persis kapan bisnis untung atau rugi setiap hari\nHemat 3 jam/minggu dari proses rekap manual"}
+                      value={lpManfaat}
+                      onChange={e => setLpManfaat(e.target.value)}
+                      rows={3}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold text-foreground flex items-center gap-1">🏅 Kredibilitas Penulis <span className="text-muted-foreground font-normal">— pengalaman, pencapaian, klien</span></label>
+                    <Textarea
+                      placeholder={"Contoh:\nKonsultan keuangan 10 tahun, sudah bantu 500+ UMKM, mantan CFO di perusahaan Tbk, pernah tampil di Kompas TV"}
+                      value={lpKredibilitas}
+                      onChange={e => setLpKredibilitas(e.target.value)}
+                      rows={2}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* ===== TAB: COPY & KONVERSI ===== */}
+              {lpConfigTab === 'copy' && (
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold flex items-center gap-1"><DollarSign className="h-3 w-3" /> Harga Jual (Rp)</label>
+                      <Input placeholder="Contoh: Rp 149.000" value={lpPrice} onChange={e => setLpPrice(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-semibold flex items-center gap-1"><DollarSign className="h-3 w-3 opacity-40" /> Harga Coret (Normal)</label>
+                      <Input placeholder="Contoh: Rp 299.000" value={lpHargaCoret} onChange={e => setLpHargaCoret(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">Teks Tombol CTA</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="Beli Sekarang" value={lpCTA} onChange={e => setLpCTA(e.target.value)} className="h-8 text-sm" />
+                      <div className="flex gap-1 shrink-0">
+                        {['Beli Sekarang', 'Dapatkan Sekarang', 'Ya, Saya Mau!', 'Order Sekarang'].map(opt => (
+                          <button key={opt} onClick={() => setLpCTA(opt)} className={cn('text-[10px] px-2 py-1 rounded border transition-colors', lpCTA === opt ? 'bg-emerald-100 border-emerald-400 text-emerald-700' : 'border-border hover:bg-muted')}>
+                            {opt.split(' ')[0]}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold flex items-center gap-2">
+                      🎁 Bonus Produk (satu per baris)
+                      {getSmartBonuses() && (
+                        <button onClick={() => setLpBonuses(prev => prev || getSmartBonuses())} className="text-[10px] text-blue-600 hover:underline">+ auto-isi dari pipeline</button>
+                      )}
+                    </label>
+                    <Textarea
+                      placeholder={"Contoh:\nBonus 1: Template Canva Siap Pakai (Nilai Rp 150.000)\nBonus 2: Video Tutorial 2 Jam (Nilai Rp 200.000)\nBonus 3: Konsultasi via WA 30 menit (Nilai Rp 300.000)"}
+                      value={lpBonuses}
+                      onChange={e => setLpBonuses(e.target.value)}
+                      rows={4}
+                      className="text-sm resize-none"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">🛡️ Garansi</label>
+                    <div className="flex gap-2">
+                      <Input placeholder="Contoh: 30 hari uang kembali tanpa syarat" value={lpGaransi} onChange={e => setLpGaransi(e.target.value)} className="h-8 text-sm" />
+                    </div>
+                    <div className="flex gap-1 flex-wrap">
+                      {['30 hari uang kembali tanpa syarat', '7 hari full refund', 'Kepuasan 100% terjamin', 'Tidak ada garansi'].map(opt => (
+                        <button key={opt} onClick={() => setLpGaransi(opt)} className={cn('text-[10px] px-2 py-1 rounded border transition-colors', lpGaransi === opt ? 'bg-blue-100 border-blue-400 text-blue-700 dark:bg-blue-900/40 dark:border-blue-600' : 'border-border hover:bg-muted')}>
+                          {opt}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ===== TAB: FORMAT & TEKNIS ===== */}
+              {lpConfigTab === 'teknis' && (
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">Gaya / Format Landing Page</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { value: 'long-form', label: 'Long-Form Sales Letter', desc: 'Detail, lengkap, persuasif — cocok untuk harga premium' },
+                        { value: 'short', label: 'Short Copy Ringkas', desc: 'Padat, cepat dibaca — cocok untuk low-ticket / impulse buy' },
+                        { value: 'vsl', label: 'VSL / Video Sales', desc: 'Fokus video, script + page pendukung' },
+                        { value: 'webinar', label: 'Webinar Registration', desc: 'Untuk live atau recorded webinar / masterclass' },
+                      ] as const).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLpStyle(opt.value)}
+                          className={cn(
+                            'text-left p-3 rounded-lg border text-xs transition-colors',
+                            lpStyle === opt.value
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                              : 'border-border hover:border-emerald-300 hover:bg-muted'
+                          )}
+                        >
+                          <div className="font-semibold mb-0.5">{opt.label}</div>
+                          <div className="text-muted-foreground text-[10px]">{opt.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">Tujuan Halaman</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      {([
+                        { value: 'sell', label: '💳 Jual Langsung', desc: 'Direct purchase / order' },
+                        { value: 'lead', label: '📧 Kumpulkan Lead', desc: 'Email / WhatsApp optin' },
+                        { value: 'webinar', label: '🎙️ Daftar Webinar', desc: 'Registrasi event' },
+                        { value: 'waitlist', label: '⏳ Pre-Launch Waitlist', desc: 'Build anticipation' },
+                      ] as const).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLpGoal(opt.value)}
+                          className={cn(
+                            'text-left p-2.5 rounded-lg border text-xs transition-colors',
+                            lpGoal === opt.value
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                              : 'border-border hover:border-emerald-300 hover:bg-muted'
+                          )}
+                        >
+                          <div className="font-semibold mb-0.5">{opt.label}</div>
+                          <div className="text-muted-foreground text-[10px]">{opt.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-semibold">Output Format</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {([
+                        { value: 'copy', label: '📝 Copy Bersih', desc: 'Teks siap paste ke page builder' },
+                        { value: 'sections', label: '📑 Sections', desc: 'Pisah per seksi dengan header' },
+                        { value: 'html', label: '💻 HTML Lengkap', desc: 'Siap upload, ada CSS inline' },
+                      ] as const).map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => setLpOutputFormat(opt.value)}
+                          className={cn(
+                            'text-left p-2.5 rounded-lg border text-xs transition-colors',
+                            lpOutputFormat === opt.value
+                              ? 'border-emerald-500 bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400'
+                              : 'border-border hover:border-emerald-300 hover:bg-muted'
+                          )}
+                        >
+                          <div className="font-semibold mb-0.5">{opt.label}</div>
+                          <div className="text-muted-foreground text-[10px]">{opt.desc}</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+
+          <div className="flex justify-between items-center pt-3 border-t shrink-0">
+            <div className="flex gap-1">
+              {lpConfigTab !== 'produk' && (
+                <Button variant="outline" size="sm" onClick={() => setLpConfigTab(lpConfigTab === 'teknis' ? 'copy' : 'produk')}>← Kembali</Button>
+              )}
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={() => setLpConfigOpen(false)}>Batal</Button>
+              {lpConfigTab !== 'teknis' ? (
+                <Button size="sm" variant="outline" className="border-emerald-400 text-emerald-700" onClick={() => setLpConfigTab(lpConfigTab === 'produk' ? 'copy' : 'teknis')}>
+                  Lanjut →
+                </Button>
+              ) : (
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setLpConfigOpen(false); handleGenerateLandingPage(); }}>
+                  <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Landing Page
+                </Button>
+              )}
+              {lpConfigTab === 'produk' && (
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" onClick={() => { setLpConfigOpen(false); handleGenerateLandingPage(); }}>
+                  <Zap className="h-3.5 w-3.5 mr-1.5" /> Generate Sekarang
+                </Button>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
