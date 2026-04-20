@@ -2073,6 +2073,14 @@ Format setiap segmen:
         docGenericFormat = 'mix',
         // Paket Dokumen params
         docPaket = 'tender_lengkap',
+        // Field Lainnya — universal context
+        docNamaDokumen = '',
+        docDeskripsi = '',
+        docNilaiKontrak = '',
+        docPeriode = '',
+        docLokasiProyek = '',
+        docPenanggungJawab = '',
+        docKonteksLain = '',
         // Legacy
         docJenis = 'ebook',
       } = req.body;
@@ -2133,6 +2141,17 @@ Format setiap segmen:
         docVersi ? `Revisi/Versi: ${docVersi}` : null,
         docTanggalEfektif ? `Tanggal Berlaku: ${docTanggalEfektif}` : null,
         docLingkup ? `Lingkup Penerapan: ${docLingkup}` : null,
+      ].filter(Boolean).join('\n');
+
+      // Build "Field Lainnya" extra context block (universal — semua mode)
+      const fieldLainBlock = [
+        docNamaDokumen ? `Nama/Judul Dokumen: ${docNamaDokumen}` : null,
+        docDeskripsi ? `Deskripsi & Tujuan: ${docDeskripsi}` : null,
+        docNilaiKontrak ? `Nilai/Anggaran: ${docNilaiKontrak}` : null,
+        docPeriode ? `Periode/Tahun: ${docPeriode}` : null,
+        docLokasiProyek ? `Lokasi/Proyek: ${docLokasiProyek}` : null,
+        docPenanggungJawab ? `Penanggung Jawab/PIC: ${docPenanggungJawab}` : null,
+        docKonteksLain ? `Referensi/Regulasi: ${docKonteksLain}` : null,
       ].filter(Boolean).join('\n');
 
       const klausulText = klausulArr.length > 0
@@ -2214,14 +2233,15 @@ LARANGAN KERAS:
 - Jangan buat konten yang generik atau template kosong
 - Setiap bagian harus ditulis dengan konten substantif yang relevan dengan konteks yang diberikan`;
 
-        userPrompt = `Buat ${docGenericJenis || genericKatLabel} lengkap dengan informasi berikut:
+        userPrompt = `Buat ${docNamaDokumen || docGenericJenis || genericKatLabel} lengkap dengan informasi berikut:
 
-📄 JUDUL/JENIS DOKUMEN: "${title || topik || docGenericJenis || genericKatLabel}"
+📄 JUDUL/JENIS DOKUMEN: "${docNamaDokumen || title || topik || docGenericJenis || genericKatLabel}"
 ${genericHeaderBlock ? `\n📌 IDENTITAS:\n${genericHeaderBlock}` : ''}
+${fieldLainBlock ? `\n📋 INFORMASI TAMBAHAN DOKUMEN:\n${fieldLainBlock}` : ''}
 ${target ? `👥 PENGGUNA/PENERIMA DOKUMEN: ${target}` : ''}
 ${authorName ? `✍️ DIBUAT OLEH: ${authorName}` : ''}
 
-KONTEKS & INFORMASI BASIS DOKUMEN:
+KONTEN EBOOK (BASIS PENGETAHUAN UTAMA):
 ${prompt}
 
 Buat dokumen LENGKAP dan PROFESIONAL sesuai semua instruksi di atas. ${docDetailLevel === 'komprehensif' ? 'Pastikan dokumen sangat detail, sertakan semua klausul/pasal/lampiran yang relevan.' : docDetailLevel === 'standar' ? 'Buat dokumen kerja yang lengkap dan siap digunakan.' : 'Buat kerangka dan poin-poin utama yang jelas dan terstruktur.'}`;
@@ -2265,13 +2285,14 @@ LARANGAN KERAS:
 - Jangan abaikan persyaratan documented information yang diwajibkan standar
 - Dokumen harus spesifik pada konteks organisasi yang diberikan, bukan generik`;
 
-        userPrompt = `Buat ${jenisISOMap[docJenisISO] || 'dokumen sistem manajemen'} lengkap dengan informasi berikut:
+        userPrompt = `Buat ${docNamaDokumen || jenisISOMap[docJenisISO] || 'dokumen sistem manajemen'} lengkap dengan informasi berikut:
 
-📋 JUDUL DOKUMEN: "${title || topik}"
+📋 JUDUL DOKUMEN: "${docNamaDokumen || title || topik}"
 ${headerBlock ? `\n📌 IDENTITAS DOKUMEN:\n${headerBlock}` : ''}
+${fieldLainBlock ? `\n📋 INFORMASI TAMBAHAN:\n${fieldLainBlock}` : ''}
 ${target ? `👥 PENGGUNA DOKUMEN: ${target}` : ''}
 
-KONTEKS & KONTEN YANG MENJADI BASIS DOKUMEN:
+KONTEN EBOOK (BASIS PENGETAHUAN UTAMA):
 ${prompt}
 
 Buat dokumen LENGKAP dan UTUH sesuai semua instruksi di atas. Sertakan semua klausul yang diminta dengan isi yang substantif. Gunakan format tabel, daftar bernomor, dan heading yang terstruktur sesuai konvensi dokumen ISO.`;
@@ -2348,7 +2369,8 @@ LARANGAN KERAS:
 📖 BASIS PENGETAHUAN (konten ebook):
 ${prompt}
 
-${paketOrgBlock ? `🏢 IDENTITAS ORGANISASI:\n${paketOrgBlock}\n` : ''}
+${paketOrgBlock ? `🏢 IDENTITAS ORGANISASI:\n${paketOrgBlock}` : ''}
+${fieldLainBlock ? `\n📋 INFORMASI TAMBAHAN:\n${fieldLainBlock}` : ''}
 ${title ? `📌 Topik/Konteks: ${title || topik}` : ''}
 
 BUAT SEMUA ${selectedPaket.docs.length} DOKUMEN BERIKUT SECARA LENGKAP DAN BERURUTAN:

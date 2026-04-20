@@ -237,6 +237,15 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [docGenericKategori, setDocGenericKategori] = useState('tender');
   // Doc Generator — Paket Dokumen
   const [docPaket, setDocPaket] = useState('tender_lengkap');
+  // Doc Generator — Field Lainnya (konteks tambahan, muncul di semua mode)
+  const [docFieldLainOpen, setDocFieldLainOpen] = useState(false);
+  const [docNamaDokumen, setDocNamaDokumen] = useState('');
+  const [docDeskripsi, setDocDeskripsi] = useState('');
+  const [docNilaiKontrak, setDocNilaiKontrak] = useState('');
+  const [docPeriode, setDocPeriode] = useState('');
+  const [docLokasiProyek, setDocLokasiProyek] = useState('');
+  const [docPenanggungJawab, setDocPenanggungJawab] = useState('');
+  const [docKonteksLain, setDocKonteksLain] = useState('');
   const [docGenericJenis, setDocGenericJenis] = useState('');
   const [docGenericTujuan, setDocGenericTujuan] = useState('');
   const [docGenericPihak, setDocGenericPihak] = useState('');
@@ -2546,6 +2555,14 @@ ${bodyHtml}
           docGenericFormat,
           // Paket params
           docPaket,
+          // Field Lainnya (universal context)
+          docNamaDokumen,
+          docDeskripsi,
+          docNilaiKontrak,
+          docPeriode,
+          docLokasiProyek,
+          docPenanggungJawab,
+          docKonteksLain,
         }),
         signal: abortRef.current.signal,
       });
@@ -2596,7 +2613,7 @@ ${bodyHtml}
     } finally {
       setIsGenerating(false);
     }
-  }, [prompt, projectTitle, projectTopik, projectTarget, authorName, docMode, docKategori, docJenisISO, docStandar, docKlausul, docNomorDok, docVersi, docTanggalEfektif, docNamaOrg, docDepartemen, docLingkup, docDetailLevel, docBahasa, docCustomInstruksi, docGenericKategori, docGenericJenis, docGenericTujuan, docGenericPihak, docGenericFormat, docPaket, toast]);
+  }, [prompt, projectTitle, projectTopik, projectTarget, authorName, docMode, docKategori, docJenisISO, docStandar, docKlausul, docNomorDok, docVersi, docTanggalEfektif, docNamaOrg, docDepartemen, docLingkup, docDetailLevel, docBahasa, docCustomInstruksi, docGenericKategori, docGenericJenis, docGenericTujuan, docGenericPihak, docGenericFormat, docPaket, docNamaDokumen, docDeskripsi, docNilaiKontrak, docPeriode, docLokasiProyek, docPenanggungJawab, docKonteksLain, toast]);
 
   const handleRegenerate = useCallback(async () => {
     if (!onRegenerate) return;
@@ -5506,6 +5523,113 @@ ${bodyHtml}
 
               </>}
 
+              {/* ══ FIELD LAINNYA — Universal, muncul di semua mode ══ */}
+              <div className="rounded-xl border border-dashed border-border overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setDocFieldLainOpen(v => !v)}
+                  className="w-full flex items-center justify-between px-3 py-2.5 text-left hover:bg-muted transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">📝</span>
+                    <div>
+                      <div className="text-xs font-bold text-foreground">Informasi Tambahan Dokumen</div>
+                      <div className="text-[10px] text-muted-foreground">
+                        {[docNamaDokumen, docDeskripsi, docNilaiKontrak, docPeriode, docLokasiProyek, docPenanggungJawab, docKonteksLain].filter(Boolean).length > 0
+                          ? `${[docNamaDokumen, docDeskripsi, docNilaiKontrak, docPeriode, docLokasiProyek, docPenanggungJawab, docKonteksLain].filter(Boolean).length} field terisi — AI akan gunakan semua konteks ini`
+                          : 'Nama dokumen, deskripsi, nilai, periode, lokasi, PIC, dan konteks tambahan lainnya'}
+                      </div>
+                    </div>
+                  </div>
+                  <div className={cn('text-muted-foreground transition-transform text-xs font-bold', docFieldLainOpen ? 'rotate-180' : '')}>▼</div>
+                </button>
+
+                {docFieldLainOpen && (
+                  <div className="px-3 pb-3 pt-1 space-y-3 border-t border-dashed border-border bg-muted/20">
+
+                    {/* Row 1: Nama & Deskripsi */}
+                    <div className="grid grid-cols-1 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">📄 Nama / Judul Dokumen <span className="font-normal text-muted-foreground">(lebih spesifik dari template)</span></label>
+                        <input type="text"
+                          placeholder="Mis: Prosedur Pengendalian Mutu Pekerjaan Beton, Surat Penawaran Paket Jalan Provinsi Jatim..."
+                          value={docNamaDokumen}
+                          onChange={e => setDocNamaDokumen(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">📋 Deskripsi & Tujuan Dokumen</label>
+                        <Textarea
+                          placeholder="Jelaskan secara singkat: untuk apa dokumen ini? siapa penggunanya? apa output yang diharapkan? Mis: Dokumen ini dibuat untuk keperluan tender PUPR Provinsi, nilai pekerjaan Rp 2,5 Miliar, kategori konsultansi teknik sipil..."
+                          value={docDeskripsi}
+                          onChange={e => setDocDeskripsi(e.target.value)}
+                          rows={2}
+                          className="text-xs resize-none"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 2: Nilai, Periode, Lokasi */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">💰 Nilai / Anggaran</label>
+                        <input type="text"
+                          placeholder="Mis: Rp 2,5 Miliar / USD 50K"
+                          value={docNilaiKontrak}
+                          onChange={e => setDocNilaiKontrak(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">📅 Periode / Tahun</label>
+                        <input type="text"
+                          placeholder="Mis: Tahun 2025 / Jan-Des 2025"
+                          value={docPeriode}
+                          onChange={e => setDocPeriode(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">📍 Lokasi / Proyek</label>
+                        <input type="text"
+                          placeholder="Mis: Jawa Timur / Jakarta Selatan"
+                          value={docLokasiProyek}
+                          onChange={e => setDocLokasiProyek(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Row 3: PIC & Konteks */}
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">👤 Penanggung Jawab / PIC</label>
+                        <input type="text"
+                          placeholder="Mis: Ir. Budi Santoso, MM / Dept. Keuangan"
+                          value={docPenanggungJawab}
+                          onChange={e => setDocPenanggungJawab(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-semibold text-foreground">🔗 Referensi / Regulasi Terkait</label>
+                        <input type="text"
+                          placeholder="Mis: Perpres 16/2018, Permen PUPR 10/2021"
+                          value={docKonteksLain}
+                          onChange={e => setDocKonteksLain(e.target.value)}
+                          className="w-full px-2.5 py-1.5 text-xs rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                        />
+                      </div>
+                    </div>
+
+                    <p className="text-[10px] text-muted-foreground bg-muted rounded-lg px-2 py-1.5 leading-snug">
+                      💡 <strong>Tips:</strong> Semakin lengkap informasi di atas, semakin spesifik dan relevan dokumen yang dihasilkan AI. Field ini bersifat opsional — isi yang perlu saja.
+                    </p>
+                  </div>
+                )}
+              </div>
+
             </div>
           </div>
           <div className="flex justify-between gap-2 pt-3 border-t shrink-0">
@@ -5518,6 +5642,7 @@ ${bodyHtml}
                 } else {
                   setDocPaket('tender_lengkap'); setDocNamaOrg(''); setDocGenericPihak(''); setDocDetailLevel('standar'); setDocBahasa('id'); setDocCustomInstruksi('');
                 }
+                setDocNamaDokumen(''); setDocDeskripsi(''); setDocNilaiKontrak(''); setDocPeriode(''); setDocLokasiProyek(''); setDocPenanggungJawab(''); setDocKonteksLain('');
               }}>
               Reset ke Default
             </Button>
