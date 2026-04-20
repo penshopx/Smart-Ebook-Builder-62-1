@@ -5291,7 +5291,7 @@ ${bodyHtml}
 
       {/* ── LANDING PAGE PRE-CONFIG DIALOG ── */}
       <Dialog open={lpConfigOpen} onOpenChange={setLpConfigOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
           <DialogHeader className="shrink-0">
             <DialogTitle className="flex items-center gap-2 text-base">
               <Settings2 className="h-5 w-5 text-emerald-500" />
@@ -5321,7 +5321,7 @@ ${bodyHtml}
             ))}
           </div>
 
-          <ScrollArea className="flex-1 min-h-0">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             <div className="space-y-4 py-3 px-1">
 
               {/* ===== TAB: PRODUK & VALUE ===== */}
@@ -5561,7 +5561,7 @@ ${bodyHtml}
                 </div>
               )}
             </div>
-          </ScrollArea>
+          </div>
 
           <div className="flex justify-between items-center pt-3 border-t shrink-0">
             <div className="flex gap-1">
