@@ -271,6 +271,21 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [chatInput, setChatInput] = useState('');
   const [chatLoading, setChatLoading] = useState(false);
   const [chatSystemPrompt, setChatSystemPrompt] = useState('');
+  // GPTs Builder
+  const [gptsOpen, setGptsOpen] = useState(false);
+  const [gptsContent, setGptsContent] = useState('');
+  const [gptsLoading, setGptsLoading] = useState(false);
+  const [gptsTab, setGptsTab] = useState<'instruksi'|'overview'|'starters'|'knowledge'|'capabilities'|'persona'|'publish'|'security'>('instruksi');
+  const [gptsConfigOpen, setGptsConfigOpen] = useState(false);
+  const [gptsNama, setGptsNama] = useState('');
+  const [gptsTujuan, setGptsTujuan] = useState('sales_assistant');
+  const [gptsGaya, setGptsGaya] = useState('profesional');
+  const [gptsCapabilities, setGptsCapabilities] = useState<string[]>(['web_search']);
+  const [gptsBatasan, setGptsBatasan] = useState('');
+  const [gptsOutputFormat, setGptsOutputFormat] = useState('');
+  const [gptsPersonality, setGptsPersonality] = useState('');
+  const [gptsMonetize, setGptsMonetize] = useState(false);
+  const [gptsLanguage, setGptsLanguage] = useState('id');
   // Silabus Kursus
   const [syllabusOpen, setSyllabusOpen] = useState(false);
   const [syllabusContent, setSyllabusContent] = useState('');
@@ -2073,6 +2088,52 @@ ${bodyHtml}
     setChatOpen(true);
   }, [docContent, syllabusContent, quizContent, monoContent, mktContent, lpContent, lpPrice, lpCTA, lpBonuses, projectTitle, projectTopik, prompt, authorName, extractMonetizationPrice]);
 
+  const handleGenerateGPTs = useCallback(() => {
+    const topikFinal = projectTopik || projectTitle;
+    if (!topikFinal) {
+      toast({ title: 'Isi topik / judul proyek terlebih dahulu', variant: 'destructive' });
+      return;
+    }
+    setGptsConfigOpen(true);
+  }, [projectTopik, projectTitle, toast]);
+
+  const doGenerateGPTs = useCallback(async () => {
+    const topikFinal = projectTopik || projectTitle;
+    markEcoUsed('chatbot');
+    setGptsConfigOpen(false);
+    setGptsOpen(true);
+    setGptsContent('');
+    setGptsLoading(true);
+    setGptsTab('instruksi');
+    try {
+      await fetchSSE('/api/generate-gpts', {
+        title: projectTitle || topikFinal,
+        topik: topikFinal,
+        target: projectTarget,
+        authorName,
+        docContent: docContent?.slice(0, 3000),
+        syllabusContent: syllabusContent?.slice(0, 1000),
+        monoContent: monoContent?.slice(0, 800),
+        lpContent: lpContent?.slice(0, 600),
+        lpPrice,
+        gptsNama: gptsNama || undefined,
+        gptsTujuan,
+        gptsGaya,
+        gptsCapabilities,
+        gptsBatasan: gptsBatasan || undefined,
+        gptsOutputFormat: gptsOutputFormat || undefined,
+        gptsPersonality: gptsPersonality || undefined,
+        gptsMonetize,
+        gptsLanguage,
+      },
+        (chunk) => setGptsContent(prev => prev + chunk),
+        () => setGptsLoading(false)
+      );
+    } catch {
+      toast({ title: 'Gagal generate konfigurasi GPTs', variant: 'destructive' });
+    } finally { setGptsLoading(false); }
+  }, [projectTitle, projectTopik, projectTarget, authorName, docContent, syllabusContent, monoContent, lpContent, lpPrice, gptsNama, gptsTujuan, gptsGaya, gptsCapabilities, gptsBatasan, gptsOutputFormat, gptsPersonality, gptsMonetize, gptsLanguage, fetchSSE, toast]);
+
   const handleSendChat = useCallback(async () => {
     if (!chatInput.trim() || chatLoading) return;
     const userMsg = { role: 'user' as const, content: chatInput.trim() };
@@ -2980,6 +3041,19 @@ ${bodyHtml}
                 </span>
                 <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o-mini</span>
                 {chatMessages.length > 0 && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
+              </Button>
+              <Button
+                onClick={handleGenerateGPTs}
+                className="bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs h-10 justify-start relative overflow-hidden"
+                data-testid="button-gpts-builder-main"
+              >
+                <BrainCircuit className="h-4 w-4 mr-2 shrink-0" />
+                <span className="flex flex-col items-start leading-tight">
+                  <span className="font-semibold">GPTs Builder</span>
+                  <span className="text-[10px] opacity-80">{gptsContent ? '✓ Config siap' : 'Custom GPT ChatGPT'}</span>
+                </span>
+                <span className="absolute top-0.5 right-2 text-[7px] font-mono opacity-40">gpt-4o</span>
+                {gptsContent && <div className="absolute right-0 top-0 bottom-0 w-1 bg-green-400" />}
               </Button>
               <Button
                 onClick={() => setSyllabusConfigOpen(true)}
@@ -4023,6 +4097,14 @@ ${bodyHtml}
                   Chatbot Demo
                 </Button>
                 <Button
+                  onClick={handleGenerateGPTs}
+                  className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-700 hover:to-green-700 text-white text-xs h-8"
+                  data-testid="button-gpts-builder"
+                >
+                  <BrainCircuit className="h-3.5 w-3.5 mr-1.5" />
+                  GPTs Builder
+                </Button>
+                <Button
                   onClick={handleGenerateSyllabus}
                   className="flex-1 bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-700 hover:to-teal-700 text-white text-xs h-8"
                   data-testid="button-syllabus"
@@ -4706,6 +4788,299 @@ ${bodyHtml}
               <ClipboardList className="h-4 w-4 mr-2" />Generate Kuis
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── GPTs BUILDER CONFIG DIALOG ── */}
+      <Dialog open={gptsConfigOpen} onOpenChange={setGptsConfigOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col overflow-hidden">
+          <DialogHeader className="shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-600 to-green-700 text-white">
+                <BrainCircuit className="h-3.5 w-3.5" />
+              </div>
+              Konfigurasi Custom GPTs
+              <Badge variant="secondary" className="text-xs">ChatGPT Custom GPT</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div className="space-y-5 py-3 px-1">
+
+              {/* Konteks pipeline */}
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 p-3 space-y-1.5">
+                <p className="text-xs font-semibold text-emerald-700 dark:text-emerald-400">📡 Data Pipeline yang akan digunakan GPTs:</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {[
+                    { label: 'Konten Ebook', active: !!docContent, note: docContent ? `${(docContent.length/1000).toFixed(1)}k char` : '' },
+                    { label: 'Silabus', active: !!syllabusContent },
+                    { label: 'Monetisasi', active: !!monoContent },
+                    { label: 'Landing Page', active: !!lpContent },
+                    { label: 'Harga', active: !!lpPrice },
+                  ].map(d => (
+                    <span key={d.label} className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', d.active ? 'bg-emerald-100 border-emerald-300 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-600 dark:text-emerald-300' : 'bg-muted border-border text-muted-foreground opacity-40')}>
+                      {d.active ? '✓' : '○'} {d.label}{d.note ? ` (${d.note})` : ''}
+                    </span>
+                  ))}
+                </div>
+                <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Semakin lengkap pipeline → semakin cerdas dan spesifik GPTs yang dihasilkan</p>
+              </div>
+
+              {/* Nama GPT */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🏷️ Nama GPTs <span className="font-normal text-muted-foreground">(opsional — auto jika kosong)</span></label>
+                <input
+                  type="text"
+                  placeholder={`Contoh: ${projectTitle ? projectTitle + ' Expert' : 'Ebook Expert AI'}`}
+                  value={gptsNama}
+                  onChange={e => setGptsNama(e.target.value)}
+                  className="w-full px-3 py-2 text-sm rounded-md border border-input bg-background focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              </div>
+
+              {/* Tujuan Utama */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🎯 Tujuan Utama GPTs</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: 'sales_assistant', label: '💰 Sales Assistant', desc: 'Meyakinkan calon pembeli, handle objeksi, tutup penjualan' },
+                    { value: 'tutor', label: '📚 Tutor & Coach', desc: 'Mengajarkan materi ebook, latihan soal, quiz interaktif' },
+                    { value: 'consultant', label: '🧠 Konsultan Ahli', desc: 'Memberikan saran & solusi berbasis isi ebook' },
+                    { value: 'content_creator', label: '✍️ Content Creator', desc: 'Generate konten, caption, artikel dari topik ebook' },
+                    { value: 'support', label: '🎧 Customer Support', desc: 'Jawab pertanyaan pelanggan, FAQ, after-sales' },
+                    { value: 'research', label: '🔬 Research Assistant', desc: 'Riset mendalam, analisis data, summarize topik' },
+                  ] as const).map(opt => (
+                    <button key={opt.value} onClick={() => setGptsTujuan(opt.value)}
+                      className={cn('text-left p-2.5 rounded-lg border text-xs transition-colors', gptsTujuan === opt.value ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-200' : 'border-border hover:border-emerald-400 hover:bg-muted')}>
+                      <div className="font-semibold mb-0.5">{opt.label}</div>
+                      <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Gaya Komunikasi */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">🎨 Gaya Komunikasi & Persona</label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    { value: 'profesional', label: '👔 Profesional', desc: 'Formal, kredibel, berbasis data' },
+                    { value: 'santai', label: '😊 Santai & Ramah', desc: 'Casual, akrab, mudah dipahami' },
+                    { value: 'motivatif', label: '🔥 Motivatif', desc: 'Energik, inspiring, action-oriented' },
+                    { value: 'coaching', label: '🎯 Coaching', desc: 'Bertanya balik, reflektif, guided' },
+                    { value: 'expert', label: '🔬 Pakar/Expert', desc: 'Teknis mendalam, berbasis riset' },
+                    { value: 'storytelling', label: '📖 Storytelling', desc: 'Naratif, contoh kasus, cerita' },
+                  ] as const).map(opt => (
+                    <button key={opt.value} onClick={() => setGptsGaya(opt.value)}
+                      className={cn('text-left p-2 rounded-lg border text-xs transition-colors', gptsGaya === opt.value ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                      <div className="font-semibold mb-0.5">{opt.label}</div>
+                      <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Capabilities */}
+              <div className="space-y-2">
+                <label className="text-xs font-semibold text-foreground">⚡ Capabilities yang Diaktifkan</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {([
+                    { value: 'web_search', label: '🌐 Web Search', desc: 'GPTs bisa browsing internet real-time' },
+                    { value: 'code_interpreter', label: '💻 Code Interpreter', desc: 'Analisis data, buat grafik, jalankan kode Python' },
+                    { value: 'dalle', label: '🎨 DALL-E Image Gen', desc: 'Generate gambar, ilustrasi, diagram visual' },
+                    { value: 'actions', label: '🔌 Actions/Plugins', desc: 'Koneksi ke API eksternal (webhook, Zapier, dll)' },
+                  ] as const).map(opt => (
+                    <button key={opt.value}
+                      onClick={() => setGptsCapabilities(prev => prev.includes(opt.value) ? prev.filter(c => c !== opt.value) : [...prev, opt.value])}
+                      className={cn('text-left p-2.5 rounded-lg border text-xs transition-colors flex items-start gap-2', gptsCapabilities.includes(opt.value) ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30' : 'border-border hover:bg-muted')}>
+                      <div className={cn('mt-0.5 w-3.5 h-3.5 rounded border flex-shrink-0 flex items-center justify-center text-[9px]', gptsCapabilities.includes(opt.value) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-border')}>
+                        {gptsCapabilities.includes(opt.value) && '✓'}
+                      </div>
+                      <div>
+                        <div className="font-semibold">{opt.label}</div>
+                        <div className="text-muted-foreground text-[10px] leading-snug">{opt.desc}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Bahasa + Monetisasi */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">🌍 Bahasa GPTs</label>
+                  {(['id', 'en', 'bilingual'] as const).map(lang => (
+                    <button key={lang} onClick={() => setGptsLanguage(lang)}
+                      className={cn('w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors block', gptsLanguage === lang ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 font-medium' : 'border-border hover:bg-muted')}>
+                      {lang === 'id' ? '🇮🇩 Bahasa Indonesia' : lang === 'en' ? '🇺🇸 English' : '🌐 Bilingual (ID+EN)'}
+                    </button>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold text-foreground">💰 Tujuan Monetisasi</label>
+                  {([
+                    { v: true, label: '✅ Ya — GPTs ini untuk menjual produk' },
+                    { v: false, label: '📚 Tidak — untuk edukasi/komunitas' },
+                  ] as const).map(opt => (
+                    <button key={String(opt.v)} onClick={() => setGptsMonetize(opt.v)}
+                      className={cn('w-full text-left px-3 py-2 rounded-lg border text-xs transition-colors block', gptsMonetize === opt.v ? 'border-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 font-medium' : 'border-border hover:bg-muted')}>
+                      {opt.label}
+                    </button>
+                  ))}
+                  <label className="text-xs font-semibold text-foreground block mt-3">🔒 Persona Khusus <span className="font-normal text-muted-foreground">(opsional)</span></label>
+                  <Textarea placeholder={'Contoh: Kamu adalah mentor bernama "Rani" — seorang pakar keuangan yang pernah bangkrut dan bangkit kembali...'} value={gptsPersonality} onChange={e => setGptsPersonality(e.target.value)} rows={3} className="text-xs resize-none" />
+                </div>
+              </div>
+
+              {/* Batasan */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">🚫 Batasan & Topik yang Dilarang <span className="font-normal text-muted-foreground">(opsional)</span></label>
+                <Textarea placeholder={'Contoh:\nJangan bahas produk kompetitor\nJangan berikan saran medis/hukum\nJangan membahas topik di luar ebook ini\nSelalu arahkan ke pembelian jika ditanya harga'} value={gptsBatasan} onChange={e => setGptsBatasan(e.target.value)} rows={3} className="text-xs resize-none" />
+              </div>
+
+              {/* Format Output */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">📋 Format Output Default <span className="font-normal text-muted-foreground">(opsional)</span></label>
+                <Textarea placeholder={'Contoh:\nGunakan bullet points untuk daftar\nSertakan contoh konkret di setiap penjelasan\nAkhiri setiap jawaban dengan 1 pertanyaan lanjutan\nMaksimal 300 kata per respons kecuali diminta lebih'} value={gptsOutputFormat} onChange={e => setGptsOutputFormat(e.target.value)} rows={3} className="text-xs resize-none" />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end gap-2 pt-3 border-t shrink-0">
+            <Button variant="outline" size="sm" onClick={() => setGptsConfigOpen(false)}>Batal</Button>
+            <Button size="sm" className="bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-700 hover:to-green-800 text-white" onClick={doGenerateGPTs}>
+              <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Generate Konfigurasi GPTs
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* ── GPTs BUILDER RESULT DIALOG ── */}
+      <Dialog open={gptsOpen} onOpenChange={setGptsOpen}>
+        <DialogContent className="max-w-3xl h-[90vh] flex flex-col">
+          <DialogHeader className="flex-shrink-0">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-gradient-to-br from-emerald-600 to-green-700 text-white">
+                <BrainCircuit className="h-3.5 w-3.5" />
+              </div>
+              Custom GPTs Configuration
+              <Badge variant="secondary" className="ml-1 text-xs">Siap paste ke ChatGPT</Badge>
+            </DialogTitle>
+          </DialogHeader>
+          {gptsLoading && !gptsContent && (
+            <div className="flex flex-col items-center justify-center gap-3 py-16 flex-1">
+              <div className="relative">
+                <div className="h-16 w-16 rounded-full border-4 border-emerald-200 border-t-emerald-600 animate-spin" />
+                <BrainCircuit className="absolute inset-0 m-auto h-6 w-6 text-emerald-600" />
+              </div>
+              <p className="text-sm text-muted-foreground">AI sedang merancang Custom GPTs dari ebook kamu...</p>
+              <p className="text-xs text-muted-foreground/60">~30-40 detik</p>
+            </div>
+          )}
+          {(gptsContent || gptsLoading) && (() => {
+            const getSection = (tag: string) => {
+              const m = gptsContent.match(new RegExp(`===${tag}===([\\s\\S]*?)===AKHIR_${tag}===`));
+              return m ? m[1].trim() : '';
+            };
+            const tabs = [
+              { key: 'instruksi', label: '🧠 Instruksi', tag: 'INSTRUKSI', color: 'from-emerald-700 to-green-700', desc: 'Paste ke field "Instructions" di ChatGPT' },
+              { key: 'overview', label: '🏷️ Overview', tag: 'OVERVIEW', color: 'from-slate-700 to-gray-700', desc: 'Nama, deskripsi, dan tagline untuk GPT Store' },
+              { key: 'starters', label: '💬 Starters', tag: 'STARTERS', color: 'from-blue-700 to-indigo-700', desc: 'Conversation starters — pertanyaan pembuka' },
+              { key: 'knowledge', label: '📁 Knowledge', tag: 'KNOWLEDGE', color: 'from-purple-700 to-violet-700', desc: 'File yang perlu diupload ke knowledge base' },
+              { key: 'capabilities', label: '⚡ Capabilities', tag: 'CAPABILITIES', color: 'from-orange-600 to-amber-600', desc: 'Pengaturan capabilities & actions' },
+              { key: 'persona', label: '🎨 Persona', tag: 'PERSONA', color: 'from-pink-600 to-rose-600', desc: 'Karakter, gaya, dan contoh percakapan' },
+              { key: 'publish', label: '🚀 Publish', tag: 'PUBLISH', color: 'from-teal-600 to-cyan-600', desc: 'Langkah demi langkah publish ke GPT Store' },
+              { key: 'security', label: '🔒 Keamanan', tag: 'SECURITY', color: 'from-red-600 to-rose-700', desc: 'Proteksi prompt, batasan, dan anti-jailbreak' },
+            ] as const;
+            const currentTab = tabs.find(t => t.key === gptsTab)!;
+            const instruksiContent = getSection('INSTRUKSI');
+            return (
+              <>
+                <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                  {tabs.map(tab => (
+                    <button key={tab.key} onClick={() => setGptsTab(tab.key)}
+                      className={cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
+                        gptsTab === tab.key ? `bg-gradient-to-r ${tab.color} text-white border-transparent` : "border-border hover:border-emerald-400"
+                      )}>{tab.label}</button>
+                  ))}
+                </div>
+                {currentTab && (
+                  <div className="text-[10px] text-muted-foreground flex-shrink-0 px-1">💡 {currentTab.desc}</div>
+                )}
+                <div className="flex-1 min-h-0 flex flex-col gap-2">
+                  {gptsTab === 'instruksi' ? (
+                    <div className="flex-1 min-h-0 flex flex-col gap-2">
+                      <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg p-3 text-xs text-emerald-700 dark:text-emerald-300 flex-shrink-0">
+                        <strong>🧠 System Prompt Siap Pakai</strong> — Pergi ke <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer" className="underline font-semibold">chatgpt.com/gpts/editor</a> → Tab "Configure" → Field "Instructions" → Paste kode di bawah ini.
+                      </div>
+                      <ScrollArea className="flex-1">
+                        <div className="text-xs font-mono bg-slate-900 text-emerald-300 dark:bg-slate-950 rounded-lg p-3 whitespace-pre-wrap leading-relaxed">
+                          {instruksiContent || (gptsLoading ? '// Generating instructions...' : '—')}
+                        </div>
+                      </ScrollArea>
+                      <div className="flex gap-2 flex-shrink-0">
+                        <Button onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '🧠 Instruksi disalin! Buka chatgpt.com/gpts/editor → Instructions → Paste' }); }} className="bg-emerald-600 hover:bg-emerald-700 text-white flex-1">
+                          <Copy className="h-4 w-4 mr-2" />Salin Instruksi
+                        </Button>
+                        <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer"
+                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '✅ Instruksi disalin! Paste di field Instructions' }); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-slate-800 to-gray-800 text-white text-xs font-semibold hover:from-slate-900 transition-all">
+                          <ExternalLink className="h-3.5 w-3.5" /> Buka GPT Editor
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <ScrollArea className="flex-1">
+                      <div className="p-2">
+                        {getSection(currentTab.tag) ? (
+                          <>
+                            <MarkdownContent content={getSection(currentTab.tag)!} />
+                            {gptsLoading && gptsContent.includes(`===${currentTab.tag}===`) && !gptsContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-emerald-500 animate-pulse ml-1" />}
+                          </>
+                        ) : gptsLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-emerald-500 animate-pulse ml-1" /></span> : <span className="text-muted-foreground text-xs">—</span>}
+                      </div>
+                    </ScrollArea>
+                  )}
+                  {/* Quick Launch */}
+                  {gptsContent && !gptsLoading && (
+                    <div className="flex-shrink-0 border border-emerald-200 dark:border-emerald-700 rounded-xl overflow-hidden">
+                      <div className="bg-gradient-to-r from-emerald-700 to-green-700 px-3 py-2">
+                        <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                          <Rocket className="h-3.5 w-3.5" /> Buat GPTs Sekarang — Pilih Platform:
+                        </p>
+                      </div>
+                      <div className="p-2.5 bg-emerald-50/60 dark:bg-emerald-900/10 flex flex-wrap gap-2">
+                        <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer"
+                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '✅ Instruksi disalin! Paste di ChatGPT GPT Editor → Instructions' }); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-slate-800 to-gray-700 text-white text-xs font-semibold hover:from-slate-900 transition-all shadow-sm">
+                          <ExternalLink className="h-3 w-3" /> ChatGPT GPT Editor
+                          <span className="bg-white/20 rounded px-1 text-[9px] font-bold">UTAMA</span>
+                        </a>
+                        <a href="https://poe.com/create_bot" target="_blank" rel="noopener noreferrer"
+                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Poe.com → Create Bot' }); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-semibold hover:from-violet-700 transition-all shadow-sm">
+                          <Copy className="h-3 w-3" /> Poe.com
+                        </a>
+                        <a href="https://character.ai/character/create" target="_blank" rel="noopener noreferrer"
+                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Character.AI → Create' }); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold hover:from-blue-700 transition-all shadow-sm">
+                          <Copy className="h-3 w-3" /> Character.AI
+                        </a>
+                        <a href="https://flowiseai.com" target="_blank" rel="noopener noreferrer"
+                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin untuk Flowise!' }); }}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-xs font-semibold hover:from-teal-700 transition-all shadow-sm">
+                          <Copy className="h-3 w-3" /> Flowise (self-host)
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                  <div className="flex gap-2 flex-shrink-0">
+                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(gptsContent); toast({ title: 'Semua konfigurasi GPTs disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
+                    <Button variant="outline" onClick={() => { const b=new Blob([gptsContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`config-gpts-${(projectTitle||'gpts').slice(0,20).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
+                    <Button disabled={gptsLoading} onClick={handleGenerateGPTs} className="bg-gradient-to-r from-emerald-600 to-green-700 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
         </DialogContent>
       </Dialog>
 

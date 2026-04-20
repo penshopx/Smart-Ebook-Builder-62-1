@@ -1420,6 +1420,257 @@ START BY creating the main layout and the most important feature first.
     }
   });
 
+  app.post("/api/generate-gpts", isAuthenticated, async (req, res) => {
+    try {
+      const { title, topik, target, authorName, docContent, syllabusContent, monoContent, lpContent, lpPrice, gptsNama, gptsTujuan, gptsGaya, gptsCapabilities, gptsBatasan, gptsOutputFormat, gptsPersonality, gptsMonetize, gptsLanguage } = req.body;
+      if (!topik && !title) return res.status(400).json({ error: "Topic required" });
+
+      res.setHeader("Content-Type", "text/event-stream");
+      res.setHeader("Cache-Control", "no-cache");
+      res.setHeader("Connection", "keep-alive");
+
+      const judulEbook = title || topik;
+      const namaGPTs = gptsNama || `${judulEbook} AI Expert`;
+      const langLabel = gptsLanguage === 'id' ? 'Bahasa Indonesia' : gptsLanguage === 'en' ? 'English' : 'Bilingual (Indonesia & English)';
+      const caps = Array.isArray(gptsCapabilities) ? gptsCapabilities : [];
+
+      const tujuanMap: Record<string, string> = {
+        sales_assistant: 'Sales Assistant — meyakinkan calon pembeli, handle objeksi, tutup penjualan',
+        tutor: 'Tutor & Coach — mengajarkan materi ebook, latihan soal, quiz interaktif',
+        consultant: 'Konsultan Ahli — memberikan saran & solusi berbasis isi ebook',
+        content_creator: 'Content Creator — generate konten, caption, artikel dari topik ebook',
+        support: 'Customer Support — jawab pertanyaan pelanggan, FAQ, after-sales',
+        research: 'Research Assistant — riset mendalam, analisis data, summarize topik',
+      };
+      const gayaMap: Record<string, string> = {
+        profesional: 'Profesional — formal, kredibel, berbasis data dan fakta',
+        santai: 'Santai & Ramah — casual, akrab, mudah dipahami oleh siapa saja',
+        motivatif: 'Motivatif — energik, inspiring, selalu mendorong action',
+        coaching: 'Coaching — bertanya balik, reflektif, guided discovery',
+        expert: 'Pakar/Expert — teknis mendalam, berbasis riset dan studi kasus',
+        storytelling: 'Storytelling — naratif, penuh contoh kasus, cerita yang engage',
+      };
+
+      const contextBlock = [
+        docContent ? `KONTEN EBOOK:\n${docContent.slice(0, 3000)}` : '',
+        syllabusContent ? `SILABUS E-COURSE:\n${syllabusContent.slice(0, 1000)}` : '',
+        monoContent ? `MONETISASI & HARGA:\n${monoContent.slice(0, 800)}` : '',
+        lpContent || lpPrice ? `LANDING PAGE INFO:\n${lpPrice ? `Harga: ${lpPrice}\n` : ''}${lpContent?.slice(0, 600) || ''}` : '',
+      ].filter(Boolean).join('\n\n---\n\n');
+
+      const stream = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages: [
+          {
+            role: "system",
+            content: `Kamu adalah expert AI Systems Designer spesialis Custom GPTs untuk platform ChatGPT (OpenAI).
+
+Kamu menulis konfigurasi GPTs yang:
+1. SANGAT SPESIFIK pada topik dan konten ebook — bukan generic chatbot
+2. Punya "character depth" — persona yang kuat, konsisten, dan relatable
+3. Mampu menjalankan fungsi ${tujuanMap[gptsTujuan] || gptsTujuan} dengan sempurna
+4. Dilengkapi anti-jailbreak dan keamanan yang solid
+5. Siap langsung di-paste ke ChatGPT GPT Editor tanpa perlu edit manual
+
+Bahasa output untuk konten GPTs: ${langLabel}
+Bahasa respons kamu kepada user: Bahasa Indonesia`,
+          },
+          {
+            role: "user",
+            content: `Buat konfigurasi CUSTOM GPTs yang lengkap dan powerful untuk ebook berikut:
+
+📚 EBOOK: "${judulEbook}"
+🤖 NAMA GPTs: "${namaGPTs}"
+👤 TARGET PENGGUNA: ${target || 'pembaca ebook dan calon pembeli'}
+${authorName ? `✍️ PENULIS: ${authorName}` : ''}
+🎯 TUJUAN: ${tujuanMap[gptsTujuan] || gptsTujuan}
+🎨 GAYA KOMUNIKASI: ${gayaMap[gptsGaya] || gptsGaya}
+🌍 BAHASA: ${langLabel}
+⚡ CAPABILITIES: ${caps.length > 0 ? caps.join(', ') : 'Tidak ada tambahan'}
+💰 UNTUK MONETISASI: ${gptsMonetize ? 'Ya — GPTs ini dirancang untuk menjual produk/ebook' : 'Tidak — untuk edukasi/komunitas'}
+${gptsPersonality ? `🎭 PERSONA KHUSUS:\n${gptsPersonality}` : ''}
+${gptsBatasan ? `🚫 BATASAN:\n${gptsBatasan}` : ''}
+${gptsOutputFormat ? `📋 FORMAT OUTPUT:\n${gptsOutputFormat}` : ''}
+
+${contextBlock ? `--- KONTEN EBOOK (untuk dijadikan knowledge base GPTs) ---\n${contextBlock}\n--- AKHIR KONTEN ---` : ''}
+
+Tulis konfigurasi LENGKAP dalam format berikut (jangan skip satu section pun):
+
+===INSTRUKSI===
+[Tulis SYSTEM PROMPT LENGKAP yang akan di-paste ke field "Instructions" di ChatGPT GPT Editor]
+[Ini adalah bagian PALING PENTING — harus sangat detail, min 500 kata]
+[Format: prosa + bullet points, tidak ada markdown header #]
+[Struktur instruksi: (1) Identitas & persona, (2) Misi & tujuan, (3) Pengetahuan inti dari ebook, (4) Cara merespons berbagai tipe pertanyaan, (5) Rules & boundaries, (6) Format output, (7) Jika ditanya soal harga/beli → cara handle]
+===AKHIR_INSTRUKSI===
+
+===OVERVIEW===
+## Nama GPTs
+${namaGPTs}
+
+## Tagline (maks 50 karakter, untuk GPT Store)
+[1 kalimat catchy]
+
+## Deskripsi Singkat (untuk GPT Store, maks 300 karakter)
+[Deskripsi yang menarik klik dari calon pengguna di store]
+
+## Deskripsi Panjang (untuk landing page/promosi)
+[3-4 kalimat yang menjelaskan value proposition GPTs ini]
+
+## Kategori GPT Store
+[Pilih dari: Productivity / Education / Writing / Research / Lifestyle / Other]
+
+## Gambar Profil Rekomendasi
+[Deskripsi gambar yang cocok sebagai avatar GPTs — bisa diminta ke DALL-E]
+===AKHIR_OVERVIEW===
+
+===STARTERS===
+## Conversation Starters (6 pertanyaan pembuka)
+[Tulis 6 pertanyaan yang relevan, menarik, dan mendorong engagement awal]
+[Pertanyaan harus mencerminkan tujuan ${tujuanMap[gptsTujuan] || gptsTujuan}]
+
+1. [pertanyaan 1 — singkat, action-oriented]
+2. [pertanyaan 2]
+3. [pertanyaan 3]
+4. [pertanyaan 4]
+5. [pertanyaan 5]
+6. [pertanyaan 6]
+
+## Welcome Message
+[Pesan sambutan yang muncul pertama kali — ramah, informatif, dan langsung tunjukkan value]
+===AKHIR_STARTERS===
+
+===KNOWLEDGE===
+## File yang Perlu Diupload ke Knowledge Base
+
+### File Utama (wajib ada):
+[Daftar file yang harus diupload berdasarkan konten ebook ini]
+
+### Format File yang Didukung:
+- PDF, TXT, DOCX, CSV, JSON (maks 20 file, maks 512MB total)
+
+### Cara Menyiapkan Knowledge Base yang Optimal:
+[Panduan step-by-step cara menyiapkan, memformat, dan mengupload file ke GPTs]
+
+### Tips Retrieval Augmentation:
+[Cara membuat konten ebook lebih mudah di-retrieve oleh GPTs]
+
+### Contoh Query yang Akan Dijawab dari Knowledge:
+[5 contoh pertanyaan yang akan dijawab menggunakan knowledge base]
+===AKHIR_KNOWLEDGE===
+
+===CAPABILITIES===
+## Capabilities yang Direkomendasikan
+
+${caps.includes('web_search') ? '### Web Search\n**Status:** AKTIFKAN\n[Cara web search akan digunakan dalam konteks ebook ini]\n[Contoh query yang akan dilakukan]\n' : ''}
+${caps.includes('code_interpreter') ? '### Code Interpreter / Data Analysis\n**Status:** AKTIFKAN\n[Use case spesifik untuk ebook ini]\n[Contoh analisis yang bisa dilakukan]\n' : ''}
+${caps.includes('dalle') ? '### DALL-E Image Generation\n**Status:** AKTIFKAN\n[Bagaimana image generation akan digunakan]\n[Prompt template untuk generate gambar yang relevan]\n' : ''}
+${caps.includes('actions') ? '### Actions (API Integration)\n**Status:** AKTIFKAN\n[Rekomendasi API yang bisa diintegrasikan]\n[Contoh action schema untuk webhook/Zapier]\n```json\n[contoh OpenAPI schema sederhana]\n```\n' : ''}
+
+## Pengaturan Tambahan
+- **Response Format:** [pilihan terbaik untuk tujuan ini]
+- **Temperature Setting:** [rekomendasi: low=konsisten, high=kreatif]
+- **Context Window:** [strategi penggunaan context yang efisien]
+===AKHIR_CAPABILITIES===
+
+===PERSONA===
+## Identitas Karakter GPTs
+
+**Nama Karakter:** [nama yang akan digunakan GPTs ketika memperkenalkan diri]
+**Latar Belakang:** [backstory singkat yang relevan dengan topik ebook]
+**Kepribadian:** [5 sifat utama]
+**Cara Berbicara:** [ciri khas bahasa, frase yang sering digunakan]
+**Yang TIDAK Dilakukan:** [hal-hal yang tidak sesuai dengan karakter]
+
+## Contoh Percakapan Ideal
+
+**Skenario 1 — Pertanyaan pemula:**
+User: [contoh pertanyaan]
+GPTs: [contoh respons ideal — tunjukkan persona, gaya, dan value]
+
+**Skenario 2 — Pertanyaan lanjutan:**
+User: [contoh pertanyaan lebih dalam]
+GPTs: [contoh respons yang menunjukkan kedalaman pengetahuan]
+
+**Skenario 3 — ${gptsMonetize ? 'Tanya harga/beli' : 'Pertanyaan di luar topik'}:**
+User: [contoh pertanyaan]
+GPTs: [contoh cara handle dengan elegan]
+===AKHIR_PERSONA===
+
+===PUBLISH===
+## Panduan Langkah-demi-Langkah Membuat & Publish Custom GPTs
+
+### LANGKAH 1: Setup Awal
+[instruksi spesifik, termasuk URL yang harus dibuka]
+
+### LANGKAH 2: Konfigurasi Dasar (Tab "Create")
+[apa yang perlu dilakukan di tab Create]
+
+### LANGKAH 3: Konfigurasi Lanjutan (Tab "Configure")
+[detail setiap field: Name, Description, Instructions, Conversation Starters, Knowledge, Capabilities, Actions]
+
+### LANGKAH 4: Upload Knowledge Base
+[cara upload file, format yang direkomendasikan, tips retrieval]
+
+### LANGKAH 5: Test & Iterasi
+[cara test GPTs, apa yang perlu dicek, cara improve]
+
+### LANGKAH 6: Publish ke GPT Store
+[pilihan visibility: Only me / Anyone with link / Public]
+[persyaratan untuk publish ke store publik]
+[cara submit ke GPT Store]
+
+### LANGKAH 7: Promosi & Monetisasi
+${gptsMonetize ? '[Cara promosikan GPTs sebagai bonuses/upsell ebook, cara setting ChatGPT Revenue Share]' : '[Cara bagikan GPTs ke komunitas, cara mendapat review positif]'}
+
+### Estimasi Waktu Total
+[berapa lama dari awal sampai live]
+===AKHIR_PUBLISH===
+
+===SECURITY===
+## Proteksi & Keamanan GPTs
+
+### Anti-Prompt Injection (tambahkan di akhir Instruksi):
+\`\`\`
+[Tulis teks proteksi yang bisa langsung di-copy dan ditambahkan ke bagian akhir instruksi]
+\`\`\`
+
+### Anti-Jailbreak Rules:
+[5 rule yang harus ada di instruksi untuk mencegah manipulasi]
+
+### Proteksi Instruksi (mencegah bocor):
+[cara mencegah user mendapatkan instruksi asli GPTs]
+
+### Batasan Topik yang Direkomendasikan:
+[topik-topik yang sebaiknya dibatasi untuk GPTs ini]
+
+### Monitoring & Maintenance:
+[cara memantau percakapan, kapan perlu update instruksi, tanda-tanda instruksi perlu direvisi]
+
+### GDPR & Privacy Considerations:
+[hal-hal yang perlu diperhatikan soal privasi pengguna]
+===AKHIR_SECURITY===`,
+          },
+        ],
+        stream: true,
+        max_completion_tokens: 6000,
+      });
+
+      for await (const chunk of stream) {
+        const content = chunk.choices[0]?.delta?.content || "";
+        if (content) res.write(`data: ${JSON.stringify({ content })}\n\n`);
+      }
+      res.write(`data: ${JSON.stringify({ done: true })}\n\n`);
+      res.end();
+    } catch (error: any) {
+      if (res.headersSent) {
+        res.write(`data: ${JSON.stringify({ error: "Gagal generate konfigurasi GPTs" })}\n\n`);
+        res.end();
+      } else {
+        res.status(500).json({ error: "Failed to generate GPTs configuration" });
+      }
+    }
+  });
+
   app.post("/api/generate-quiz", isAuthenticated, async (req, res) => {
     try {
       const { title, topik, target, docContent, level } = req.body;
