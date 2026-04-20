@@ -275,7 +275,7 @@ export function PromptOutput({ prompt, onRegenerate, activeMode, onModeChange, s
   const [gptsOpen, setGptsOpen] = useState(false);
   const [gptsContent, setGptsContent] = useState('');
   const [gptsLoading, setGptsLoading] = useState(false);
-  const [gptsTab, setGptsTab] = useState<'instruksi'|'overview'|'starters'|'knowledge'|'capabilities'|'persona'|'publish'|'security'>('instruksi');
+  const [gptsTab, setGptsTab] = useState<'instruksi'|'overview'|'starters'|'knowledge'|'capabilities'|'persona'|'publish'|'security'|'formfill'>('instruksi');
   const [gptsConfigOpen, setGptsConfigOpen] = useState(false);
   const [gptsNama, setGptsNama] = useState('');
   const [gptsTujuan, setGptsTujuan] = useState('sales_assistant');
@@ -4981,6 +4981,7 @@ ${bodyHtml}
               return m ? m[1].trim() : '';
             };
             const tabs = [
+              { key: 'formfill', label: '📋 Form Filler', tag: '' as const, color: 'from-emerald-600 to-teal-600', desc: 'Auto-fill siap pakai untuk ChatGPT GPT Editor & Poe.com Create Agent' },
               { key: 'instruksi', label: '🧠 Instruksi', tag: 'INSTRUKSI', color: 'from-emerald-700 to-green-700', desc: 'Paste ke field "Instructions" di ChatGPT' },
               { key: 'overview', label: '🏷️ Overview', tag: 'OVERVIEW', color: 'from-slate-700 to-gray-700', desc: 'Nama, deskripsi, dan tagline untuk GPT Store' },
               { key: 'starters', label: '💬 Starters', tag: 'STARTERS', color: 'from-blue-700 to-indigo-700', desc: 'Conversation starters — pertanyaan pembuka' },
@@ -4989,14 +4990,28 @@ ${bodyHtml}
               { key: 'persona', label: '🎨 Persona', tag: 'PERSONA', color: 'from-pink-600 to-rose-600', desc: 'Karakter, gaya, dan contoh percakapan' },
               { key: 'publish', label: '🚀 Publish', tag: 'PUBLISH', color: 'from-teal-600 to-cyan-600', desc: 'Langkah demi langkah publish ke GPT Store' },
               { key: 'security', label: '🔒 Keamanan', tag: 'SECURITY', color: 'from-red-600 to-rose-700', desc: 'Proteksi prompt, batasan, dan anti-jailbreak' },
-            ] as const;
-            const currentTab = tabs.find(t => t.key === gptsTab)!;
+            ];
+            const currentTab = tabs.find(t => t.key === gptsTab);
             const instruksiContent = getSection('INSTRUKSI');
+
+            // Helper: extract fields for form filling
+            const overviewRaw = getSection('OVERVIEW');
+            const startersRaw = getSection('STARTERS');
+            const extractLine = (raw: string, label: string) => {
+              const m = raw.match(new RegExp(`## ${label}[^\\n]*\\n([^\\n#]+)`));
+              return m ? m[1].trim() : '';
+            };
+            const formNama = extractLine(overviewRaw, 'Nama GPTs?') || gptsNama || (projectTitle ? `${projectTitle} AI Expert` : 'AI Expert');
+            const formDesc = extractLine(overviewRaw, 'Deskripsi Singkat') || extractLine(overviewRaw, 'Tagline');
+            const formDescPanjang = extractLine(overviewRaw, 'Deskripsi Panjang');
+            const formStarters = startersRaw.split('\n').filter(l => /^[1-9]\./.test(l.trim())).slice(0, 6).map(l => l.replace(/^\d\.\s*/, '').trim());
+            const formWelcome = (() => { const m = startersRaw.match(/## Welcome Message\n([\s\S]*?)(?=\n##|$)/); return m ? m[1].trim() : ''; })();
+
             return (
               <>
                 <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
                   {tabs.map(tab => (
-                    <button key={tab.key} onClick={() => setGptsTab(tab.key)}
+                    <button key={tab.key} onClick={() => setGptsTab(tab.key as typeof gptsTab)}
                       className={cn("px-2.5 py-1 rounded-full text-xs font-medium border transition-all",
                         gptsTab === tab.key ? `bg-gradient-to-r ${tab.color} text-white border-transparent` : "border-border hover:border-emerald-400"
                       )}>{tab.label}</button>
@@ -5006,7 +5021,207 @@ ${bodyHtml}
                   <div className="text-[10px] text-muted-foreground flex-shrink-0 px-1">💡 {currentTab.desc}</div>
                 )}
                 <div className="flex-1 min-h-0 flex flex-col gap-2">
-                  {gptsTab === 'instruksi' ? (
+                  {gptsTab === 'formfill' ? (
+                    // ── FORM FILLER TAB ──
+                    <ScrollArea className="flex-1">
+                      <div className="space-y-4 p-1">
+
+                        {/* === CHATGPT GPT EDITOR === */}
+                        <div className="rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
+                          <div className="bg-gradient-to-r from-slate-800 to-gray-800 px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              🤖 ChatGPT GPT Editor
+                            </span>
+                            <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-slate-300 hover:text-white flex items-center gap-1 underline">
+                              <ExternalLink className="h-2.5 w-2.5" /> chatgpt.com/gpts/editor
+                            </a>
+                          </div>
+                          <div className="p-3 space-y-3 bg-white dark:bg-slate-900">
+                            {/* Name */}
+                            {(() => {
+                              const copyBtn = (val: string, label: string) => (
+                                <button onClick={() => { navigator.clipboard.writeText(val); toast({ title: `✅ ${label} disalin!` }); }}
+                                  className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-[10px] font-semibold text-slate-700 dark:text-slate-200 transition-colors">
+                                  <Copy className="h-2.5 w-2.5" /> Salin
+                                </button>
+                              );
+                              return (
+                                <>
+                                  {/* Name */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Name</label>
+                                      {copyBtn(formNama, 'Nama')}
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-xs text-foreground font-medium">
+                                      {formNama || <span className="text-muted-foreground italic">Belum tersedia — generate terlebih dahulu</span>}
+                                    </div>
+                                  </div>
+                                  {/* Description */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Description <span className="font-normal normal-case">(maks 300 karakter)</span></label>
+                                      {copyBtn(formDesc || formDescPanjang, 'Description')}
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-xs text-foreground leading-relaxed">
+                                      {formDesc || formDescPanjang || <span className="text-muted-foreground italic">Belum tersedia</span>}
+                                    </div>
+                                    {(formDesc || formDescPanjang) && (
+                                      <p className="text-[10px] text-muted-foreground">{(formDesc || formDescPanjang).length}/300 karakter</p>
+                                    )}
+                                  </div>
+                                  {/* Instructions */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Instructions <span className="font-normal normal-case text-emerald-600 dark:text-emerald-400">← field terpenting</span></label>
+                                      <button onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '🧠 Instructions disalin! Paste di field Instructions ChatGPT' }); }}
+                                        className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-emerald-100 dark:bg-emerald-900/40 hover:bg-emerald-200 dark:hover:bg-emerald-800/60 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300 transition-colors">
+                                        <Copy className="h-2.5 w-2.5" /> Salin Instructions
+                                      </button>
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-emerald-200 dark:border-emerald-700 bg-emerald-50/50 dark:bg-emerald-900/10 text-[10px] font-mono text-foreground leading-relaxed max-h-28 overflow-hidden relative">
+                                      {instruksiContent ? instruksiContent.slice(0, 300) + '...' : <span className="text-muted-foreground italic">Belum tersedia</span>}
+                                      {instruksiContent && <div className="absolute bottom-0 inset-x-0 h-8 bg-gradient-to-t from-emerald-50/80 dark:from-emerald-900/40 to-transparent" />}
+                                    </div>
+                                    {instruksiContent && <p className="text-[10px] text-muted-foreground">{instruksiContent.length} karakter total — klik "Salin Instructions" untuk copy semua</p>}
+                                  </div>
+                                  {/* Conversation Starters */}
+                                  <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block">Conversation Starters <span className="font-normal normal-case">(maks 4, copy satu-satu)</span></label>
+                                    {formStarters.length > 0 ? formStarters.slice(0, 4).map((s, i) => (
+                                      <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800">
+                                        <span className="text-[10px] text-muted-foreground w-4 flex-shrink-0">{i + 1}.</span>
+                                        <span className="text-xs flex-1 leading-snug">{s}</span>
+                                        {copyBtn(s, `Starter ${i + 1}`)}
+                                      </div>
+                                    )) : <span className="text-[10px] text-muted-foreground italic">Belum tersedia</span>}
+                                  </div>
+                                  {/* Step guide */}
+                                  <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-2.5 space-y-1">
+                                    <p className="text-[10px] font-bold text-blue-700 dark:text-blue-300">📋 Cara Isi Form ChatGPT GPT Editor:</p>
+                                    <ol className="text-[10px] text-blue-700 dark:text-blue-300 space-y-0.5 list-decimal list-inside">
+                                      <li>Buka <a href="https://chatgpt.com/gpts/editor" target="_blank" className="underline font-semibold">chatgpt.com/gpts/editor</a></li>
+                                      <li>Klik tab <strong>"Configure"</strong> (bukan "Create")</li>
+                                      <li>Isi field <strong>Name</strong> → salin dari atas</li>
+                                      <li>Isi field <strong>Description</strong> → salin dari atas</li>
+                                      <li>Isi field <strong>Instructions</strong> → klik "Salin Instructions" → paste</li>
+                                      <li>Isi <strong>Conversation Starters</strong> → salin 1 per 1, max 4</li>
+                                      <li>Klik <strong>Save</strong> → pilih siapa yang bisa akses</li>
+                                    </ol>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
+                        {/* === POE.COM CREATE AGENT === */}
+                        <div className="rounded-xl border border-violet-200 dark:border-violet-700 overflow-hidden">
+                          <div className="bg-gradient-to-r from-violet-700 to-purple-700 px-3 py-2 flex items-center justify-between">
+                            <span className="text-xs font-bold text-white flex items-center gap-1.5">
+                              🟣 Poe.com — Create a Bot/Agent
+                            </span>
+                            <a href="https://poe.com/create_bot" target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] text-violet-200 hover:text-white flex items-center gap-1 underline">
+                              <ExternalLink className="h-2.5 w-2.5" /> poe.com/create_bot
+                            </a>
+                          </div>
+                          <div className="p-3 space-y-3 bg-white dark:bg-slate-900">
+                            {(() => {
+                              const copyBtn = (val: string, label: string) => (
+                                <button onClick={() => { navigator.clipboard.writeText(val); toast({ title: `✅ ${label} disalin!` }); }}
+                                  className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-violet-100 dark:bg-violet-900/40 hover:bg-violet-200 text-[10px] font-semibold text-violet-700 dark:text-violet-300 transition-colors">
+                                  <Copy className="h-2.5 w-2.5" /> Salin
+                                </button>
+                              );
+                              return (
+                                <>
+                                  {/* Name */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Name</label>
+                                      {copyBtn(formNama, 'Nama')}
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-xs font-medium">
+                                      {formNama || <span className="text-muted-foreground italic">Belum tersedia</span>}
+                                    </div>
+                                  </div>
+                                  {/* Description */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Description</label>
+                                      {copyBtn(formDesc || formDescPanjang, 'Description')}
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-xs leading-relaxed">
+                                      {formDesc || formDescPanjang || <span className="text-muted-foreground italic">Belum tersedia</span>}
+                                    </div>
+                                  </div>
+                                  {/* Content / System Prompt */}
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Content <span className="font-normal normal-case text-violet-600 dark:text-violet-400">(System Prompt / Instructions)</span></label>
+                                      <button onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '🟣 Content/Instructions disalin! Paste di field Content Poe.com' }); }}
+                                        className="flex-shrink-0 inline-flex items-center gap-1 px-2 py-1 rounded bg-violet-100 dark:bg-violet-900/40 hover:bg-violet-200 text-[10px] font-semibold text-violet-700 dark:text-violet-300 transition-colors">
+                                        <Copy className="h-2.5 w-2.5" /> Salin Content
+                                      </button>
+                                    </div>
+                                    <div className="px-3 py-2 rounded-lg border border-violet-200 dark:border-violet-700 bg-violet-50/50 dark:bg-violet-900/10 text-[10px] font-mono leading-relaxed max-h-24 overflow-hidden relative">
+                                      {instruksiContent ? instruksiContent.slice(0, 200) + '...' : <span className="text-muted-foreground italic">Belum tersedia</span>}
+                                      {instruksiContent && <div className="absolute bottom-0 inset-x-0 h-6 bg-gradient-to-t from-violet-50/80 dark:from-violet-900/40 to-transparent" />}
+                                    </div>
+                                  </div>
+                                  {/* Start Messages */}
+                                  <div className="space-y-1.5">
+                                    <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide block">Add Start Messages <span className="font-normal normal-case">(tambahkan satu per satu)</span></label>
+                                    {formStarters.length > 0 ? formStarters.map((s, i) => (
+                                      <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg border border-violet-100 dark:border-violet-800 bg-violet-50/50 dark:bg-violet-900/10">
+                                        <span className="text-[10px] text-muted-foreground w-4 flex-shrink-0">{i + 1}.</span>
+                                        <span className="text-xs flex-1 leading-snug">{s}</span>
+                                        {copyBtn(s, `Start Message ${i + 1}`)}
+                                      </div>
+                                    )) : <span className="text-[10px] text-muted-foreground italic">Belum tersedia</span>}
+                                  </div>
+                                  {/* Welcome Message */}
+                                  {formWelcome && (
+                                    <div className="space-y-1">
+                                      <div className="flex items-center justify-between">
+                                        <label className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">Welcome Message <span className="font-normal normal-case">(opsional)</span></label>
+                                        {copyBtn(formWelcome, 'Welcome Message')}
+                                      </div>
+                                      <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 bg-slate-50 dark:bg-slate-800 text-xs leading-relaxed">
+                                        {formWelcome}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {/* Capabilities recommendation */}
+                                  <div className="rounded-lg bg-violet-50 dark:bg-violet-900/20 border border-violet-200 dark:border-violet-700 p-2.5 space-y-1">
+                                    <p className="text-[10px] font-bold text-violet-700 dark:text-violet-300">⚡ Capabilities yang Direkomendasikan di Poe:</p>
+                                    <div className="flex flex-wrap gap-1.5">
+                                      {gptsCapabilities?.includes('web_search') && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-800 text-violet-700 dark:text-violet-200 border border-violet-300 dark:border-violet-600 font-medium">✓ Web Search</span>}
+                                      {gptsCapabilities?.includes('dalle') && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-800 text-violet-700 dark:text-violet-200 border border-violet-300 dark:border-violet-600 font-medium">✓ Image Generation</span>}
+                                      {gptsCapabilities?.includes('code_interpreter') && <span className="text-[10px] px-2 py-0.5 rounded-full bg-violet-100 dark:bg-violet-800 text-violet-700 dark:text-violet-200 border border-violet-300 dark:border-violet-600 font-medium">✓ Code Interpreter</span>}
+                                      <span className="text-[10px] text-violet-600 dark:text-violet-400">Aktifkan sesuai kebutuhan di tab Capabilities</span>
+                                    </div>
+                                    <ol className="text-[10px] text-violet-700 dark:text-violet-300 space-y-0.5 list-decimal list-inside mt-1">
+                                      <li>Buka <a href="https://poe.com/create_bot" target="_blank" className="underline font-semibold">poe.com/create_bot</a></li>
+                                      <li>Pilih <strong>"Custom bot"</strong> atau <strong>"Server bot"</strong></li>
+                                      <li>Isi <strong>Name</strong> + <strong>Description</strong> → salin dari atas</li>
+                                      <li>Isi <strong>Content</strong> (system prompt) → klik "Salin Content" → paste</li>
+                                      <li>Tambahkan <strong>Start Messages</strong> satu per satu → salin dari atas</li>
+                                      <li>Pilih model (GPT-4o atau Claude recommended)</li>
+                                      <li>Klik <strong>Create bot</strong></li>
+                                    </ol>
+                                  </div>
+                                </>
+                              );
+                            })()}
+                          </div>
+                        </div>
+
+                      </div>
+                    </ScrollArea>
+                  ) : gptsTab === 'instruksi' ? (
                     <div className="flex-1 min-h-0 flex flex-col gap-2">
                       <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-700 rounded-lg p-3 text-xs text-emerald-700 dark:text-emerald-300 flex-shrink-0">
                         <strong>🧠 System Prompt Siap Pakai</strong> — Pergi ke <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer" className="underline font-semibold">chatgpt.com/gpts/editor</a> → Tab "Configure" → Field "Instructions" → Paste kode di bawah ini.
@@ -5030,7 +5245,7 @@ ${bodyHtml}
                   ) : (
                     <ScrollArea className="flex-1">
                       <div className="p-2">
-                        {getSection(currentTab.tag) ? (
+                        {currentTab?.tag && getSection(currentTab.tag) ? (
                           <>
                             <MarkdownContent content={getSection(currentTab.tag)!} />
                             {gptsLoading && gptsContent.includes(`===${currentTab.tag}===`) && !gptsContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-emerald-500 animate-pulse ml-1" />}
