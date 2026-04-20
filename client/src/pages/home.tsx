@@ -29,9 +29,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield } from 'lucide-react';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield, Upload, X } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
 import { JudulTerlaris } from '@/components/judul-terlaris';
+import { ExternalEbookImport } from '@/components/external-ebook-import';
 import { PersonaConfigTab, defaultAssistantPersona } from '@/components/persona-config-tab';
 import type { AssistantPersona } from '@/components/persona-config-tab';
 import { useAuth } from '@/hooks/use-auth';
@@ -330,6 +331,8 @@ function UserProfileDropdown({ user }: { user: any }) {
   );
 }
 
+const TRANSFER_MODES = ['ECOURSE_BUILDER', 'DOC_GENERATOR', 'GPT_BUILDER', 'MINI_APP_BUILDER', 'QUIZ_MAKER', 'PODCAST_GENERATOR', 'AUDIOBOOK_SCRIPT', 'VIDEO_SCRIPT', 'PROMPT_PACK', 'MARKETING_KIT', 'LANDING_PAGE'];
+
 export default function Home() {
   const [projectData, setProjectData] = useState<ProjectData>(defaultProjectData);
   const [taskConfig, setTaskConfig] = useState<TaskConfig>(defaultTaskConfig);
@@ -340,6 +343,8 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
+  const [externalEbookContent, setExternalEbookContent] = useState('');
+  const [externalFileName, setExternalFileName] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
 
@@ -390,6 +395,21 @@ export default function Home() {
     setUploadedFiles([]);
     setActiveMode('BRAINSTORM');
     setProjectName('');
+    setExternalEbookContent('');
+    setExternalFileName('');
+  };
+
+  const handleExternalEbookLoaded = (content: string, fileName: string, meta: { judul?: string; topik?: string }) => {
+    setExternalEbookContent(content);
+    setExternalFileName(fileName);
+    if (meta.judul) setProjectData(prev => ({ ...prev, judul: prev.judul || meta.judul! }));
+    if (meta.topik) setProjectData(prev => ({ ...prev, topik: prev.topik || meta.topik! }));
+    if (!TRANSFER_MODES.includes(activeMode)) setActiveMode('ECOURSE_BUILDER');
+  };
+
+  const handleClearExternalEbook = () => {
+    setExternalEbookContent('');
+    setExternalFileName('');
   };
 
   const handleTopicUpdate = (topik: string, judul?: string) => {
@@ -461,6 +481,10 @@ export default function Home() {
   const generatedPrompt = useMemo(() => {
     return generatePrompt(activeMode, projectData, taskConfig, extendConfig, uploadedFiles);
   }, [activeMode, projectData, taskConfig, extendConfig, uploadedFiles, refreshKey]);
+
+  const effectivePrompt = externalEbookContent && TRANSFER_MODES.includes(activeMode)
+    ? externalEbookContent
+    : generatedPrompt;
 
   const handleRegenerate = () => {
     setRefreshKey(prev => prev + 1);
@@ -547,25 +571,42 @@ export default function Home() {
       </header>
 
       <main className="container px-4 py-6 mx-auto max-w-screen-2xl">
-        <div className="mb-6">
+        <div className="mb-6 space-y-2">
+          {externalEbookContent && (
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800">
+              <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">📥 Mode Ebook Eksternal Aktif:</span>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 truncate flex-1">{externalFileName}</span>
+              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 shrink-0">Gunakan mode Transfer Kompetensi atau Marketing ↓</span>
+              <button onClick={handleClearExternalEbook} className="text-muted-foreground hover:text-destructive ml-1 shrink-0">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
           <ModeSelector activeMode={activeMode} onModeChange={setActiveMode} allowedModes={allowedModes} />
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="space-y-6">
-            <Tabs defaultValue="project" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+            <Tabs defaultValue={externalEbookContent ? "external" : "project"} className="w-full">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="project" data-testid="tab-project" className="text-xs">
-                  Data Proyek
+                  Proyek
                 </TabsTrigger>
                 <TabsTrigger value="config" data-testid="tab-config" className="text-xs">
                   Konfigurasi
+                </TabsTrigger>
+                <TabsTrigger value="external" data-testid="tab-external-ebook" className="text-xs relative">
+                  <Upload className="h-3 w-3 mr-1" />
+                  Import
+                  {externalEbookContent && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-emerald-500" />
+                  )}
                 </TabsTrigger>
                 <TabsTrigger value="files" data-testid="tab-files" className="text-xs">
                   File
                 </TabsTrigger>
                 <TabsTrigger value="persona" data-testid="tab-persona" className="text-xs relative">
-                  Asisten AI
+                  Asisten
                   {(assistantPersona.namaAsisten || assistantPersona.knowledgeBase) && (
                     <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-violet-500" />
                   )}
@@ -610,6 +651,16 @@ export default function Home() {
                   />
                 </div>
               </TabsContent>
+              <TabsContent value="external" className="mt-4">
+                <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
+                  <ExternalEbookImport
+                    externalContent={externalEbookContent}
+                    externalFileName={externalFileName}
+                    onContentLoaded={handleExternalEbookLoaded}
+                    onClear={handleClearExternalEbook}
+                  />
+                </div>
+              </TabsContent>
               <TabsContent value="files" className="mt-4">
                 <div className="max-h-[50vh] lg:max-h-[calc(100vh-280px)] overflow-y-auto pr-2">
                   <FileUpload
@@ -639,7 +690,7 @@ export default function Home() {
             />
             <div className="lg:sticky lg:top-20">
               <PromptOutput
-                prompt={generatedPrompt}
+                prompt={effectivePrompt}
                 onRegenerate={handleRegenerate}
                 onModeChange={setActiveMode}
                 activeMode={activeMode}

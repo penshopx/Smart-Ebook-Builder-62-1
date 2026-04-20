@@ -7,6 +7,11 @@ import { authStorage } from "./replit_integrations/auth/storage";
 import { PLAN_LIMITS } from "@shared/models/auth";
 import { getChaesaResponse } from "./chaesa";
 import OpenAI from "openai";
+import multer from "multer";
+import mammoth from "mammoth";
+import { createRequire } from "module";
+const _require = createRequire(import.meta.url);
+const pdfParse = _require("pdf-parse");
 
 function getUserId(req: any): string {
   return req.user?.claims?.sub ?? req.user?.id ?? '';
@@ -128,6 +133,40 @@ export async function registerRoutes(
   // Setup authentication (BEFORE other routes)
   await setupAuth(app);
   registerAuthRoutes(app);
+
+  // ===== EBOOK TEXT EXTRACTION =====
+  const ebookUpload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+  app.post("/api/extract-ebook", isAuthenticated, ebookUpload.single("file"), async (req: any, res: any) => {
+    try {
+      if (!req.file) return res.status(400).json({ error: "Tidak ada file yang diupload" });
+      const { originalname, mimetype, buffer } = req.file;
+      let text = "";
+
+      if (mimetype === "application/pdf" || originalname.endsWith(".pdf")) {
+        const data = await pdfParse(buffer);
+        text = data.text;
+      } else if (
+        mimetype === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" ||
+        originalname.endsWith(".docx")
+      ) {
+        const result = await mammoth.extractRawText({ buffer });
+        text = result.value;
+      } else if (mimetype === "text/plain" || originalname.endsWith(".txt") || originalname.endsWith(".md")) {
+        text = buffer.toString("utf-8");
+      } else {
+        return res.status(400).json({ error: "Format file tidak didukung. Gunakan PDF, DOCX, atau TXT." });
+      }
+
+      text = text.replace(/\r\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+
+      res.json({ text, wordCount, fileName: originalname });
+    } catch (err: any) {
+      console.error("extract-ebook error:", err);
+      res.status(500).json({ error: "Gagal mengekstrak teks dari file", detail: err.message });
+    }
+  });
 
   // ===== ADMIN MIDDLEWARE HELPERS =====
   const ADMIN_ROLES = ['super_admin', 'admin', 'sub_admin'];
