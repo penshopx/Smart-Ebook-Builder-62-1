@@ -5039,39 +5039,149 @@ ${bodyHtml}
                       </div>
                     </ScrollArea>
                   )}
-                  {/* Quick Launch */}
-                  {gptsContent && !gptsLoading && (
-                    <div className="flex-shrink-0 border border-emerald-200 dark:border-emerald-700 rounded-xl overflow-hidden">
-                      <div className="bg-gradient-to-r from-emerald-700 to-green-700 px-3 py-2">
-                        <p className="text-xs font-semibold text-white flex items-center gap-1.5">
-                          <Rocket className="h-3.5 w-3.5" /> Buat GPTs Sekarang — Pilih Platform:
-                        </p>
+                  {/* Quick Launch — 2 kategori */}
+                  {gptsContent && !gptsLoading && (() => {
+                    const overviewContent = getSection('OVERVIEW');
+                    const namaGPT = overviewContent.match(/Nama GPTs?\n([^\n]+)/)?.[1]?.trim() || gptsNama || projectTitle || 'AI Expert';
+                    const taglineGPT = overviewContent.match(/Tagline[^\n]*\n([^\n]+)/)?.[1]?.trim() || '';
+
+                    // Prompt untuk build web chatbot app via Bolt/Lovable/Replit
+                    const webChatbotPrompt = `Build a professional web chatbot application called "${namaGPT}"${taglineGPT ? ` — ${taglineGPT}` : ''}.
+
+TOPIC: ${projectTitle || projectTopik}
+TARGET USERS: ${projectTarget || 'ebook readers and interested users'}
+
+SYSTEM INSTRUCTIONS FOR THE CHATBOT (paste exactly as the AI system prompt):
+---
+${instruksiContent.slice(0, 2000)}
+---
+
+TECHNICAL REQUIREMENTS:
+- Framework: React + TypeScript + Tailwind CSS
+- Chat UI: Clean, modern chat interface (similar to ChatGPT UI)
+- Message bubbles: user on right (blue), AI on left (gray/white)
+- Show typing indicator while AI is responding
+- Support markdown rendering in AI responses
+- Mobile responsive design
+- OpenAI API integration (GPT-4o-mini for cost efficiency)
+- Store chat history in component state
+- Clear chat button
+- Welcome message on load
+
+UI FEATURES:
+- Header with bot name "${namaGPT}" and avatar
+- Input field with send button (also send on Enter)
+- Smooth scroll to bottom on new messages
+- Copy button on each AI message
+- Suggested starter questions shown before first message
+
+STARTER QUESTIONS TO SHOW:
+${getSection('STARTERS').split('\n').filter(l => /^\d\./.test(l.trim())).slice(0, 4).map(l => `- ${l.replace(/^\d\.\s*/,'')}`).join('\n') || '- Apa yang bisa kamu bantu?\n- Jelaskan tentang topik ini\n- Berikan rekomendasi untuk saya'}
+
+START by creating the main App component with the chat interface.`;
+
+                    const encodedWebPrompt = encodeURIComponent(webChatbotPrompt);
+
+                    return (
+                      <div className="flex-shrink-0 border border-border rounded-xl overflow-hidden">
+                        <div className="bg-gradient-to-r from-slate-800 to-gray-800 px-3 py-2 flex items-center justify-between">
+                          <p className="text-xs font-semibold text-white flex items-center gap-1.5">
+                            <Rocket className="h-3.5 w-3.5" /> Deploy GPTs — Pilih Platform:
+                          </p>
+                          <span className="text-[10px] text-slate-400">2 jalur tersedia</span>
+                        </div>
+                        <div className="p-3 bg-slate-50 dark:bg-slate-900/40 space-y-2.5">
+
+                          {/* JALUR 1: Custom GPT di ChatGPT */}
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                              🤖 Jalur 1 — Custom GPT di Platform AI (paste instruksi):
+                            </p>
+                            <div className="flex gap-2 flex-wrap">
+                              <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '✅ Instruksi disalin! Buka ChatGPT → Paste di field Instructions' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-slate-800 to-gray-700 text-white text-xs font-semibold hover:from-slate-900 transition-all shadow-sm">
+                                <Copy className="h-3 w-3" /> ChatGPT GPT Editor
+                                <span className="bg-white/20 rounded px-1 text-[9px] font-bold">UTAMA</span>
+                              </a>
+                              <a href="https://poe.com/create_bot" target="_blank" rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Poe.com → Create Bot' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-semibold hover:from-violet-700 transition-all shadow-sm">
+                                <Copy className="h-3 w-3" /> Poe.com
+                              </a>
+                              <a href="https://character.ai/character/create" target="_blank" rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Character.AI' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold hover:from-blue-700 transition-all shadow-sm">
+                                <Copy className="h-3 w-3" /> Character.AI
+                              </a>
+                              <a href="https://flowiseai.com" target="_blank" rel="noopener noreferrer"
+                                onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin untuk Flowise!' }); }}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-xs font-semibold hover:from-teal-700 transition-all shadow-sm">
+                                <Copy className="h-3 w-3" /> Flowise
+                              </a>
+                            </div>
+                          </div>
+
+                          <div className="border-t border-border" />
+
+                          {/* JALUR 2: Build web chatbot app */}
+                          <div className="space-y-1.5">
+                            <p className="text-[10px] font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
+                              🌐 Jalur 2 — Build Web Chatbot App sendiri (full control):
+                            </p>
+                            <div className="space-y-1">
+                              <p className="text-[10px] text-green-700 dark:text-green-400 flex items-center gap-1 font-medium">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-green-500" />
+                                Otomatis — klik langsung, prompt sudah terisi:
+                              </p>
+                              <div className="flex gap-2 flex-wrap">
+                                <a
+                                  href={`https://bolt.new/?prompt=${encodedWebPrompt}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => toast({ title: '⚡ Membuka Bolt.new — prompt chatbot sudah otomatis terisi!' })}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-orange-500 to-yellow-500 text-white text-xs font-semibold hover:from-orange-600 hover:to-yellow-600 transition-all shadow-sm">
+                                  <Zap className="h-3 w-3" /> Bolt.new
+                                  <span className="bg-white/20 rounded px-1 text-[9px] font-bold">AUTO</span>
+                                </a>
+                                <a
+                                  href={`https://replit.com/new?${new URLSearchParams({ description: webChatbotPrompt.slice(0, 500) }).toString()}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={() => { navigator.clipboard.writeText(webChatbotPrompt); toast({ title: '⚡ Membuka Replit — prompt juga disalin sebagai backup!' }); }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold hover:from-blue-700 hover:to-indigo-700 transition-all shadow-sm">
+                                  <Zap className="h-3 w-3" /> Replit
+                                  <span className="bg-white/20 rounded px-1 text-[9px] font-bold">AUTO</span>
+                                </a>
+                              </div>
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-[10px] text-amber-700 dark:text-amber-400 flex items-center gap-1 font-medium">
+                                <span className="inline-block w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                Copy + Paste — prompt disalin otomatis:
+                              </p>
+                              <div className="flex gap-2 flex-wrap">
+                                <a href="https://lovable.dev/projects/new" target="_blank" rel="noopener noreferrer"
+                                  onClick={() => { navigator.clipboard.writeText(webChatbotPrompt); toast({ title: '📋 Prompt chatbot disalin! Paste ke Lovable.dev' }); }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white text-xs font-semibold hover:from-purple-700 transition-all shadow-sm">
+                                  <Copy className="h-3 w-3" /> Lovable.dev
+                                </a>
+                                <button
+                                  onClick={() => { navigator.clipboard.writeText(webChatbotPrompt); toast({ title: '📋 Prompt disalin! Buka Cursor → New Chat → Paste', description: 'Cursor adalah IDE desktop — buka aplikasinya lalu paste prompt di AI chat.' }); }}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-slate-600 to-gray-600 text-white text-xs font-semibold hover:from-slate-700 transition-all shadow-sm">
+                                  <Copy className="h-3 w-3" /> Cursor IDE
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 p-2 text-[10px] text-blue-700 dark:text-blue-300">
+                            <strong>💡 Mana yang dipilih?</strong> Jalur 1 (ChatGPT) = paling cepat, gratis, tapi pengguna butuh akun ChatGPT. Jalur 2 (Web App) = full kontrol, bisa branding sendiri, bisa di-embed di website, tidak tergantung ChatGPT.
+                          </div>
+                        </div>
                       </div>
-                      <div className="p-2.5 bg-emerald-50/60 dark:bg-emerald-900/10 flex flex-wrap gap-2">
-                        <a href="https://chatgpt.com/gpts/editor" target="_blank" rel="noopener noreferrer"
-                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '✅ Instruksi disalin! Paste di ChatGPT GPT Editor → Instructions' }); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-slate-800 to-gray-700 text-white text-xs font-semibold hover:from-slate-900 transition-all shadow-sm">
-                          <ExternalLink className="h-3 w-3" /> ChatGPT GPT Editor
-                          <span className="bg-white/20 rounded px-1 text-[9px] font-bold">UTAMA</span>
-                        </a>
-                        <a href="https://poe.com/create_bot" target="_blank" rel="noopener noreferrer"
-                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Poe.com → Create Bot' }); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-violet-600 to-purple-600 text-white text-xs font-semibold hover:from-violet-700 transition-all shadow-sm">
-                          <Copy className="h-3 w-3" /> Poe.com
-                        </a>
-                        <a href="https://character.ai/character/create" target="_blank" rel="noopener noreferrer"
-                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin! Paste di Character.AI → Create' }); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 text-white text-xs font-semibold hover:from-blue-700 transition-all shadow-sm">
-                          <Copy className="h-3 w-3" /> Character.AI
-                        </a>
-                        <a href="https://flowiseai.com" target="_blank" rel="noopener noreferrer"
-                          onClick={() => { navigator.clipboard.writeText(instruksiContent); toast({ title: '📋 Instruksi disalin untuk Flowise!' }); }}
-                          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-gradient-to-r from-teal-600 to-cyan-600 text-white text-xs font-semibold hover:from-teal-700 transition-all shadow-sm">
-                          <Copy className="h-3 w-3" /> Flowise (self-host)
-                        </a>
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   <div className="flex gap-2 flex-shrink-0">
                     <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(gptsContent); toast({ title: 'Semua konfigurasi GPTs disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
                     <Button variant="outline" onClick={() => { const b=new Blob([gptsContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`config-gpts-${(projectTitle||'gpts').slice(0,20).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
