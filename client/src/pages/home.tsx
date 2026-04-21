@@ -343,6 +343,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
+  const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [externalEbookContent, setExternalEbookContent] = useState('');
   const [externalFileName, setExternalFileName] = useState('');
   const { toast } = useToast();
@@ -395,6 +396,7 @@ export default function Home() {
     setUploadedFiles([]);
     setActiveMode('BRAINSTORM');
     setProjectName('');
+    setCurrentProjectId(null);
     setExternalEbookContent('');
     setExternalFileName('');
   };
@@ -421,22 +423,33 @@ export default function Home() {
   };
 
   const saveMutation = useMutation({
-    mutationFn: async () => {
-      const data = {
-        name: projectName || projectData.judul || projectData.topik || 'Proyek Tanpa Judul',
-        projectData,
-        taskConfig,
-      };
+    mutationFn: async (nameOverride?: string) => {
+      const name = nameOverride || projectName || projectData.judul || projectData.topik || 'Proyek Tanpa Judul';
+      const data = { name, projectData, taskConfig };
+      if (currentProjectId) {
+        return await apiRequest('PUT', `/api/projects/${currentProjectId}`, data);
+      }
       return await apiRequest('POST', '/api/projects', data);
     },
-    onSuccess: () => {
+    onSuccess: async (res: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
+      const wasNew = !currentProjectId;
+      if (wasNew && res) {
+        try {
+          const json = await (res as Response).json();
+          if (json?.id) {
+            setCurrentProjectId(json.id);
+            if (json.name) setProjectName(json.name);
+          }
+        } catch {}
+      }
       toast({
-        title: "Proyek tersimpan!",
-        description: "Konfigurasi proyek berhasil disimpan.",
+        title: wasNew ? "Proyek tersimpan!" : "Proyek diperbarui!",
+        description: wasNew
+          ? "Konfigurasi proyek berhasil disimpan."
+          : "Perubahan berhasil disimpan (menimpa data lama).",
       });
       setSaveDialogOpen(false);
-      setProjectName('');
     },
     onError: (error: any) => {
       const is401 = error?.message?.startsWith('401');
@@ -453,10 +466,19 @@ export default function Home() {
     },
   });
 
+  const handleSaveClick = () => {
+    if (currentProjectId) {
+      saveMutation.mutate(undefined);
+    } else {
+      setSaveDialogOpen(true);
+    }
+  };
+
   const handleLoadProject = (project: any) => {
     setProjectData(project.projectData);
     setTaskConfig(project.taskConfig);
     setProjectName(project.name);
+    setCurrentProjectId(project.id);
     toast({
       title: "Proyek dimuat",
       description: `"${project.name}" berhasil dimuat.`,
@@ -539,7 +561,9 @@ export default function Home() {
               variant="outline"
               size="icon"
               className="sm:hidden"
-              onClick={() => setSaveDialogOpen(true)}
+              onClick={handleSaveClick}
+              disabled={saveMutation.isPending}
+              title={currentProjectId ? "Perbarui proyek (overwrite)" : "Simpan proyek baru"}
               data-testid="button-save-project-mobile"
             >
               <Save className="h-4 w-4" />
@@ -548,11 +572,13 @@ export default function Home() {
               variant="outline"
               size="sm"
               className="hidden sm:flex"
-              onClick={() => setSaveDialogOpen(true)}
+              onClick={handleSaveClick}
+              disabled={saveMutation.isPending}
+              title={currentProjectId ? "Perbarui proyek (overwrite)" : "Simpan proyek baru"}
               data-testid="button-save-project"
             >
               <Save className="h-4 w-4 mr-2" />
-              <span>Simpan</span>
+              <span>{saveMutation.isPending ? 'Menyimpan...' : currentProjectId ? 'Perbarui' : 'Simpan'}</span>
             </Button>
             <Button
               variant="ghost"
@@ -721,7 +747,7 @@ export default function Home() {
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Simpan Proyek</DialogTitle>
+            <DialogTitle>Simpan Proyek Baru</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -731,11 +757,12 @@ export default function Home() {
                 placeholder="Contoh: Ebook Digital Marketing v1"
                 value={projectName}
                 onChange={(e) => setProjectName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && saveMutation.mutate(projectName || undefined)}
                 data-testid="input-project-name"
               />
             </div>
             <p className="text-sm text-muted-foreground">
-              Simpan konfigurasi proyek untuk digunakan kembali nanti.
+              Berikan nama untuk proyek baru ini. Setelah tersimpan, tombol akan berubah menjadi <strong>Perbarui</strong> yang langsung menimpa data tanpa dialog.
             </p>
           </div>
           <DialogFooter>
@@ -743,7 +770,7 @@ export default function Home() {
               Batal
             </Button>
             <Button
-              onClick={() => saveMutation.mutate()}
+              onClick={() => saveMutation.mutate(projectName || undefined)}
               disabled={saveMutation.isPending}
               data-testid="button-confirm-save"
             >
