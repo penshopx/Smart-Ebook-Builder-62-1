@@ -29,7 +29,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield, Upload, X } from 'lucide-react';
+import { Book, Sparkles, Save, RotateCcw, FolderOpen, LogOut, Factory, Crown, Zap, User, Settings, ChevronDown, Shield, Upload, X, FilePlus } from 'lucide-react';
 import { TopicSuggester } from '@/components/topic-suggester';
 import { JudulTerlaris } from '@/components/judul-terlaris';
 import { ExternalEbookImport } from '@/components/external-ebook-import';
@@ -342,6 +342,7 @@ export default function Home() {
   const [activeMode, setActiveMode] = useState('BRAINSTORM');
   const [refreshKey, setRefreshKey] = useState(0);
   const [saveDialogOpen, setSaveDialogOpen] = useState(false);
+  const [newProjectDialogOpen, setNewProjectDialogOpen] = useState(false);
   const [projectName, setProjectName] = useState('');
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [externalEbookContent, setExternalEbookContent] = useState('');
@@ -598,6 +599,37 @@ export default function Home() {
               variant="outline"
               size="icon"
               className="sm:hidden"
+              onClick={() => {
+                const hasData = currentProjectId ||
+                  JSON.stringify(projectData) !== JSON.stringify(defaultProjectData);
+                if (hasData) setNewProjectDialogOpen(true);
+                else handleReset();
+              }}
+              title="Buat proyek baru"
+              data-testid="button-new-project-mobile"
+            >
+              <FilePlus className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="hidden sm:flex"
+              onClick={() => {
+                const hasData = currentProjectId ||
+                  JSON.stringify(projectData) !== JSON.stringify(defaultProjectData);
+                if (hasData) setNewProjectDialogOpen(true);
+                else handleReset();
+              }}
+              title="Buat proyek baru"
+              data-testid="button-new-project"
+            >
+              <FilePlus className="h-4 w-4 mr-2" />
+              <span>Baru</span>
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              className="sm:hidden"
               onClick={handleSaveClick}
               disabled={saveMutation.isPending}
               title={currentProjectId ? "Perbarui proyek (overwrite)" : "Simpan proyek baru"}
@@ -616,14 +648,6 @@ export default function Home() {
             >
               <Save className="h-4 w-4 mr-2" />
               <span>{saveMutation.isPending ? 'Menyimpan...' : currentProjectId ? 'Perbarui' : 'Simpan'}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleReset}
-              data-testid="button-reset"
-            >
-              <RotateCcw className="h-4 w-4" />
             </Button>
             <ThemeToggle />
             <div className="flex items-center gap-1 sm:gap-2 ml-1 sm:ml-2 pl-1 sm:pl-2 border-l">
@@ -780,6 +804,34 @@ export default function Home() {
           </div>
         </div>
       </footer>
+
+      <Dialog open={newProjectDialogOpen} onOpenChange={setNewProjectDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Buat Proyek Baru</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm text-muted-foreground">
+            {currentProjectId
+              ? 'Proyek yang sedang aktif akan ditutup. Pastikan sudah klik "Perbarui" jika ingin menyimpan perubahan terbaru. Lanjutkan membuat proyek baru?'
+              : 'Data di form akan dihapus dan diganti dengan form kosong. Lanjutkan?'}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNewProjectDialogOpen(false)}>
+              Batal
+            </Button>
+            <Button
+              onClick={() => {
+                setNewProjectDialogOpen(false);
+                handleReset();
+              }}
+              data-testid="button-confirm-new-project"
+            >
+              <FilePlus className="h-4 w-4 mr-2" />
+              Ya, Proyek Baru
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog open={saveDialogOpen} onOpenChange={setSaveDialogOpen}>
         <DialogContent>
