@@ -358,6 +358,10 @@ export default function Home() {
     const savedMode = localStorage.getItem('chaesa_last_mode');
     if (!savedId) return;
 
+    const hasUserChanges = JSON.stringify(projectData) !== JSON.stringify(defaultProjectData) ||
+      JSON.stringify(taskConfig) !== JSON.stringify(defaultTaskConfig);
+    if (hasUserChanges) return;
+
     fetch(`/api/projects/${savedId}`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then((project: any) => {
@@ -460,30 +464,24 @@ export default function Home() {
   const saveMutation = useMutation({
     mutationFn: async (nameOverride?: string) => {
       const name = nameOverride || projectName || projectData.judul || projectData.topik || 'Proyek Tanpa Judul';
-      const data = { name, projectData, taskConfig };
-      if (currentProjectId) {
-        return await apiRequest('PUT', `/api/projects/${currentProjectId}`, data);
-      }
-      return await apiRequest('POST', '/api/projects', data);
+      const snapshot = { name, projectData: { ...projectData }, taskConfig: { ...taskConfig } };
+      const isUpdate = !!currentProjectId;
+      const res = isUpdate
+        ? await apiRequest('PUT', `/api/projects/${currentProjectId}`, snapshot)
+        : await apiRequest('POST', '/api/projects', snapshot);
+      const json = await res.json();
+      return { json, isUpdate };
     },
-    onSuccess: async (res: any) => {
+    onSuccess: ({ json, isUpdate }: { json: any; isUpdate: boolean }) => {
       queryClient.invalidateQueries({ queryKey: ['/api/projects'] });
-      const wasNew = !currentProjectId;
-      if (wasNew && res) {
-        try {
-          const json = await (res as Response).json();
-          if (json?.id) {
-            setCurrentProjectId(json.id);
-            localStorage.setItem('chaesa_last_project_id', json.id);
-            if (json.name) setProjectName(json.name);
-          }
-        } catch {}
-      } else if (currentProjectId) {
-        localStorage.setItem('chaesa_last_project_id', currentProjectId);
+      if (json?.id) {
+        setCurrentProjectId(json.id);
+        localStorage.setItem('chaesa_last_project_id', json.id);
+        if (json.name) setProjectName(json.name);
       }
       toast({
-        title: wasNew ? "Proyek tersimpan!" : "Proyek diperbarui!",
-        description: wasNew
+        title: !isUpdate ? "Proyek tersimpan!" : "Proyek diperbarui!",
+        description: !isUpdate
           ? "Konfigurasi proyek berhasil disimpan."
           : "Perubahan berhasil disimpan (menimpa data lama).",
       });
