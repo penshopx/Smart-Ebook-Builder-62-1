@@ -597,6 +597,14 @@ ATURAN PENTING:
       const parsed = createProjectSchema.safeParse(req.body);
       if (!parsed.success) return res.status(400).json({ error: "Invalid project data", details: parsed.error.issues });
 
+      const existing = await storage.getProjectByName(userId, parsed.data.name);
+      if (existing) {
+        return res.status(409).json({
+          error: `Nama proyek "${parsed.data.name}" sudah digunakan. Gunakan nama lain untuk menyimpan sebagai proyek baru, atau buka proyek tersebut dan klik "Perbarui" untuk menimpa datanya.`,
+          existingId: existing.id,
+        });
+      }
+
       const project = await storage.createProject(userId, parsed.data);
       res.status(201).json(project);
     } catch (error) {

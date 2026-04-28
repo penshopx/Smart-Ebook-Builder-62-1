@@ -62,6 +62,7 @@ export interface PromptHistory {
 export interface IStorage {
   getProjects(userId: string): Promise<SavedProject[]>;
   getProject(id: string, userId: string): Promise<SavedProject | undefined>;
+  getProjectByName(userId: string, name: string): Promise<SavedProject | undefined>;
   createProject(userId: string, project: Omit<SavedProject, 'id' | 'userId' | 'createdAt' | 'updatedAt'>): Promise<SavedProject>;
   updateProject(id: string, userId: string, project: Partial<SavedProject>): Promise<SavedProject | undefined>;
   deleteProject(id: string, userId: string): Promise<boolean>;
@@ -89,6 +90,14 @@ class DatabaseStorage implements IStorage {
       .select()
       .from(projects)
       .where(and(eq(projects.id, id), eq(projects.userId, userId)));
+    return row ? this.toProject(row) : undefined;
+  }
+
+  async getProjectByName(userId: string, name: string): Promise<SavedProject | undefined> {
+    const [row] = await db
+      .select()
+      .from(projects)
+      .where(and(eq(projects.userId, userId), eq(projects.name, name)));
     return row ? this.toProject(row) : undefined;
   }
 

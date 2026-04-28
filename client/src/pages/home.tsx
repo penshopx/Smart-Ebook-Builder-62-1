@@ -501,16 +501,29 @@ export default function Home() {
       setSaveDialogOpen(false);
     },
     onError: (error: any) => {
-      const is401 = error?.message?.startsWith('401');
-      const is403 = error?.message?.startsWith('403');
+      const msg = error?.message ?? '';
+      const is401 = msg.startsWith('401');
+      const is403 = msg.startsWith('403');
+      const is409 = msg.startsWith('409');
+
+      let description = "Terjadi kesalahan saat menyimpan proyek. Coba lagi.";
+      if (is401) description = "Sesi login kadaluarsa. Silakan refresh halaman dan login ulang.";
+      else if (is403) description = "Batas proyek tercapai pada paket ini. Upgrade ke Pro untuk menyimpan lebih banyak proyek.";
+      else if (is409) {
+        try {
+          const jsonStr = msg.replace(/^\d+:\s*/, '');
+          const parsed = JSON.parse(jsonStr);
+          description = parsed.error || "Nama proyek sudah digunakan. Pilih nama lain.";
+        } catch {
+          description = "Nama proyek sudah digunakan. Pilih nama yang berbeda.";
+        }
+      }
+
       toast({
-        title: "Gagal menyimpan",
-        description: is401
-          ? "Sesi login kadaluarsa. Silakan refresh halaman dan login ulang."
-          : is403
-          ? "Batas proyek tercapai pada paket ini. Upgrade ke Pro untuk menyimpan lebih banyak proyek."
-          : "Terjadi kesalahan saat menyimpan proyek. Coba lagi.",
+        title: is409 ? "Nama sudah digunakan" : "Gagal menyimpan",
+        description,
         variant: "destructive",
+        duration: 8000,
       });
     },
   });
@@ -861,11 +874,14 @@ export default function Home() {
                 onChange={(e) => setProjectName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && saveMutation.mutate(projectName || undefined)}
                 data-testid="input-project-name"
+                autoFocus
               />
             </div>
-            <p className="text-sm text-muted-foreground">
-              Berikan nama untuk proyek baru ini. Setelah tersimpan, tombol akan berubah menjadi <strong>Perbarui</strong> yang langsung menimpa data tanpa dialog.
-            </p>
+            <div className="space-y-1.5 text-xs text-muted-foreground">
+              <p>• Nama proyek harus <strong>unik</strong> — tidak boleh sama dengan proyek yang sudah ada.</p>
+              <p>• Setelah tersimpan, tombol berubah menjadi <strong>Perbarui</strong> yang langsung menimpa data tanpa dialog.</p>
+              <p>• Untuk memperbarui proyek yang sudah ada, buka proyek tersebut lalu klik <strong>Perbarui</strong>.</p>
+            </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setSaveDialogOpen(false)}>
@@ -873,7 +889,7 @@ export default function Home() {
             </Button>
             <Button
               onClick={() => saveMutation.mutate(projectName || undefined)}
-              disabled={saveMutation.isPending}
+              disabled={saveMutation.isPending || !projectName.trim()}
               data-testid="button-confirm-save"
             >
               {saveMutation.isPending ? 'Menyimpan...' : 'Simpan Proyek'}
