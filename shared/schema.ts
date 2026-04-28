@@ -980,4 +980,6 @@ export type UploadedFile = {
   name: string;
   type: string;
   size: string;
+  content?: string;
+  youtubeUrl?: string;
 };

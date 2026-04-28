@@ -167,6 +167,47 @@ export async function registerRoutes(
     }
   });
 
+  // ===== YOUTUBE TRANSCRIPT EXTRACTION =====
+  app.post("/api/extract-youtube", isAuthenticated, async (req, res) => {
+    try {
+      const { url } = req.body;
+      if (!url) return res.status(400).json({ error: "URL YouTube diperlukan" });
+
+      const match = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
+      if (!match) return res.status(400).json({ error: "URL YouTube tidak valid" });
+
+      const videoId = match[1];
+      const { YoutubeTranscript } = await import("youtube-transcript");
+
+      let transcriptItems: Array<{ text: string }>;
+      try {
+        transcriptItems = await YoutubeTranscript.fetchTranscript(videoId, { lang: 'id' });
+      } catch {
+        transcriptItems = await YoutubeTranscript.fetchTranscript(videoId);
+      }
+
+      if (!transcriptItems || transcriptItems.length === 0) {
+        return res.status(404).json({ error: "Transkrip tidak tersedia untuk video ini. Pastikan video memiliki subtitle/caption." });
+      }
+
+      const text = transcriptItems.map((t: { text: string }) => t.text).join(' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+      const wordCount = text.split(/\s+/).filter(Boolean).length;
+      const videoTitle = `YouTube Video (${videoId})`;
+
+      res.json({ text, wordCount, videoId, videoTitle, url });
+    } catch (err: any) {
+      console.error("extract-youtube error:", err);
+      const msg = err.message || '';
+      if (msg.includes('Transcript is disabled') || msg.includes('No transcript')) {
+        return res.status(404).json({ error: "Transkrip tidak tersedia. Video ini mungkin tidak memiliki subtitle otomatis." });
+      }
+      res.status(500).json({ error: "Gagal mengambil transkrip YouTube", detail: err.message });
+    }
+  });
+
   // ===== ADMIN MIDDLEWARE HELPERS =====
   const ADMIN_ROLES = ['super_admin', 'admin', 'sub_admin'];
   const MAIN_ADMIN_ROLES = ['super_admin', 'admin'];

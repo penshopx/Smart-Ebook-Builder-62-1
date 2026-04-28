@@ -25,6 +25,26 @@ Gunakan istilah teknis yang umum digunakan di sektor ini.
 `;
 }
 
+function buildFileContext(uploadedFiles: UploadedFile[]): string {
+  if (!uploadedFiles.length) return '';
+  const withContent = uploadedFiles.filter(f => f.content);
+  const withoutContent = uploadedFiles.filter(f => !f.content);
+  let out = '\n=== KONTEN FILE REFERENSI YANG DILAMPIRKAN ===\n';
+  if (withContent.length > 0) {
+    out += withContent.map(f => {
+      const label = f.youtubeUrl ? `🎬 YouTube: ${f.name}` : `📄 ${f.name}`;
+      const preview = f.content!.length > 8000 ? f.content!.slice(0, 8000) + '\n...[teks dipotong karena terlalu panjang]' : f.content!;
+      return `--- ${label} ---\n${preview}\n`;
+    }).join('\n');
+  }
+  if (withoutContent.length > 0) {
+    out += '\nFile tambahan (upload bersama di chat AI):\n';
+    out += withoutContent.map(f => `- ${f.name} (${f.size})`).join('\n');
+  }
+  out += '\n=== AKHIR KONTEN FILE ===\n';
+  return out;
+}
+
 function getMultiIndustryContext(industryValue: string): { context: string; displayName: string } {
   const ids = industryValue ? industryValue.split(',').filter(Boolean) : ['general'];
   const nonGeneral = ids.filter(id => id !== 'general');
@@ -124,6 +144,7 @@ Instruksi di bawah ini bersifat MANDATORI:
 Setelah prompt ini selesai, disarankan untuk mengeksekusi di **chat.dokumentender.com** 
 untuk hasil optimal dalam Bahasa Indonesia dan dokumen teknis industri.
 
+${uploadedFiles.length > 0 ? buildFileContext(uploadedFiles) : ''}
 === INSTRUKSI UMUM ===
 Kerjakan tugas di bawah ini dengan output yang TERSTRUKTUR, MENDALAM, dan SIAP PAKAI.
 `;
@@ -156,9 +177,7 @@ DATA INPUT:
 3. Level Kedalaman: **${taskConfig.fokusLevel || 'Intermediate'}**
 ${hasFiles ? `
 4. FILE REFERENSI YANG DILAMPIRKAN:
-   (Saya telah mengupload file ke dalam chat ini. Tolong baca dan analisis kontennya)
-   Daftar File:
-   ${uploadedFiles.map(f => `- [${f.name}]`).join('\n   ')}
+   ${uploadedFiles.map(f => `- ${f.youtubeUrl ? '🎬 YouTube:' : '📄'} ${f.name}${f.content ? ` (${f.content.split(/\s+/).filter(Boolean).length.toLocaleString()} kata - teks sudah diekstrak di atas)` : ''}`).join('\n   ')}
 ` : ''}
 ${!isAutoGenerate ? `
 5. Data Tambahan User:
