@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { ModeSelector } from '@/components/mode-selector';
@@ -348,6 +348,39 @@ export default function Home() {
   const [externalFileName, setExternalFileName] = useState('');
   const { toast } = useToast();
   const { user } = useAuth();
+  const restoredRef = useRef(false);
+
+  useEffect(() => {
+    if (restoredRef.current || !user) return;
+    restoredRef.current = true;
+
+    const savedId = localStorage.getItem('chaesa_last_project_id');
+    const savedMode = localStorage.getItem('chaesa_last_mode');
+    if (!savedId) return;
+
+    fetch(`/api/projects/${savedId}`, { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then((project: any) => {
+        if (!project) {
+          localStorage.removeItem('chaesa_last_project_id');
+          return;
+        }
+        setProjectData({ ...defaultProjectData, ...project.projectData });
+        setTaskConfig({ ...defaultTaskConfig, ...project.taskConfig });
+        setProjectName(project.name ?? '');
+        setCurrentProjectId(project.id);
+        if (savedMode) setActiveMode(savedMode);
+      })
+      .catch(() => {
+        localStorage.removeItem('chaesa_last_project_id');
+      });
+  }, [user]);
+
+  useEffect(() => {
+    if (currentProjectId) {
+      localStorage.setItem('chaesa_last_mode', activeMode);
+    }
+  }, [activeMode, currentProjectId]);
 
   const { data: planData } = useQuery<{ plan: string; allowedModes: string[] | 'all' }>({
     queryKey: ['/api/user/plan'],
@@ -399,6 +432,8 @@ export default function Home() {
     setCurrentProjectId(null);
     setExternalEbookContent('');
     setExternalFileName('');
+    localStorage.removeItem('chaesa_last_project_id');
+    localStorage.removeItem('chaesa_last_mode');
   };
 
   const handleExternalEbookLoaded = (content: string, fileName: string, meta: { judul?: string; topik?: string }) => {
@@ -439,9 +474,12 @@ export default function Home() {
           const json = await (res as Response).json();
           if (json?.id) {
             setCurrentProjectId(json.id);
+            localStorage.setItem('chaesa_last_project_id', json.id);
             if (json.name) setProjectName(json.name);
           }
         } catch {}
+      } else if (currentProjectId) {
+        localStorage.setItem('chaesa_last_project_id', currentProjectId);
       }
       toast({
         title: wasNew ? "Proyek tersimpan!" : "Proyek diperbarui!",
@@ -475,10 +513,11 @@ export default function Home() {
   };
 
   const handleLoadProject = (project: any) => {
-    setProjectData(project.projectData);
-    setTaskConfig(project.taskConfig);
+    setProjectData({ ...defaultProjectData, ...project.projectData });
+    setTaskConfig({ ...defaultTaskConfig, ...project.taskConfig });
     setProjectName(project.name);
     setCurrentProjectId(project.id);
+    localStorage.setItem('chaesa_last_project_id', project.id);
     toast({
       title: "Proyek dimuat",
       description: `"${project.name}" berhasil dimuat.`,
