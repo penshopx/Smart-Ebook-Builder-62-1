@@ -208,6 +208,68 @@ export async function registerRoutes(
     }
   });
 
+  // ===== ANALYZE DOCUMENT → FORM FIELDS =====
+  app.post("/api/analyze-document-fields", isAuthenticated, async (req, res) => {
+    try {
+      const { text, fileName } = req.body;
+      if (!text || text.trim().length < 50) {
+        return res.status(400).json({ error: "Teks terlalu pendek untuk dianalisis" });
+      }
+
+      const truncated = text.slice(0, 12000);
+
+      const prompt = `Kamu adalah analis konten profesional Indonesia. Baca dokumen berikut dan ekstrak informasi untuk mengisi field-field form proyek ebook/konten digital.
+
+DOKUMEN (dari file: ${fileName || 'unknown'}):
+---
+${truncated}
+---
+
+Ekstrak dan kembalikan JSON dengan field-field berikut. Jika informasi untuk field tertentu TIDAK ADA dalam dokumen, isi dengan string kosong "".
+
+{
+  "topik": "kata kunci atau topik utama dokumen (maks 80 karakter)",
+  "judul": "judul lengkap dokumen atau judul yang tepat (maks 120 karakter)",
+  "target": "target pembaca / audiens yang dituju berdasarkan konten (maks 100 karakter)",
+  "tujuan": "tujuan atau manfaat utama dokumen ini (maks 150 karakter)",
+  "painPoint": "masalah utama atau pain point yang dibahas dalam dokumen (maks 200 karakter)",
+  "bigIdea": "konsep unik, pendekatan, atau big idea dari dokumen ini (maks 200 karakter)",
+  "hasilRiset": "data, fakta, statistik, atau temuan riset yang disebutkan (maks 300 karakter)",
+  "produk": "produk, layanan, atau solusi yang disebutkan/dipromosikan dalam dokumen (maks 100 karakter)"
+}
+
+ATURAN PENTING:
+- Gunakan Bahasa Indonesia yang natural
+- Hanya isi field yang benar-benar ada informasinya dalam dokumen
+- Kosongkan ("") field yang tidak relevan atau tidak ada datanya
+- Ringkas dan padat, jangan terlalu panjang
+- Kembalikan HANYA JSON valid, tanpa markdown atau komentar`;
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [{ role: "user", content: prompt }],
+        response_format: { type: "json_object" },
+        temperature: 0.3,
+        max_tokens: 800,
+      });
+
+      const raw = completion.choices[0]?.message?.content ?? '{}';
+      let fields: Record<string, string> = {};
+      try { fields = JSON.parse(raw); } catch { fields = {}; }
+
+      const allowed = ['topik', 'judul', 'target', 'tujuan', 'painPoint', 'bigIdea', 'hasilRiset', 'produk'];
+      const result: Record<string, string> = {};
+      for (const key of allowed) {
+        result[key] = typeof fields[key] === 'string' ? fields[key] : '';
+      }
+
+      res.json({ fields: result });
+    } catch (err: any) {
+      console.error("analyze-document-fields error:", err);
+      res.status(500).json({ error: "Gagal menganalisis dokumen", detail: err.message });
+    }
+  });
+
   // ===== ADMIN MIDDLEWARE HELPERS =====
   const ADMIN_ROLES = ['super_admin', 'admin', 'sub_admin'];
   const MAIN_ADMIN_ROLES = ['super_admin', 'admin'];

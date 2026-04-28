@@ -444,9 +444,21 @@ export default function Home() {
   const handleExternalEbookLoaded = (content: string, fileName: string, meta: { judul?: string; topik?: string }) => {
     setExternalEbookContent(content);
     setExternalFileName(fileName);
-    if (meta.judul) setProjectData(prev => ({ ...prev, judul: prev.judul || meta.judul! }));
-    if (meta.topik) setProjectData(prev => ({ ...prev, topik: prev.topik || meta.topik! }));
     if (!TRANSFER_MODES.includes(activeMode)) setActiveMode('ECOURSE_BUILDER');
+  };
+
+  const handleDocumentFieldsExtracted = (fields: Partial<{ topik: string; judul: string; target: string; tujuan: string; painPoint: string; bigIdea: string; hasilRiset: string; produk: string }>) => {
+    setProjectData(prev => ({
+      ...prev,
+      topik: fields.topik ?? '',
+      judul: fields.judul ?? '',
+      target: fields.target ?? '',
+      tujuan: fields.tujuan ?? '',
+      painPoint: fields.painPoint ?? '',
+      bigIdea: fields.bigIdea ?? '',
+      hasilRiset: fields.hasilRiset ?? '',
+      produk: fields.produk ?? '',
+    }));
   };
 
   const handleClearExternalEbook = () => {
@@ -744,6 +756,7 @@ export default function Home() {
                     externalContent={externalEbookContent}
                     externalFileName={externalFileName}
                     onContentLoaded={handleExternalEbookLoaded}
+                    onFieldsExtracted={handleDocumentFieldsExtracted}
                     onClear={handleClearExternalEbook}
                   />
                 </div>
