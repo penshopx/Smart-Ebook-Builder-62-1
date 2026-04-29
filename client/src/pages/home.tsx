@@ -354,6 +354,7 @@ export default function Home() {
   const [isLargeScreen, setIsLargeScreen] = useState(false);
   const isDraggingRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const hasRestoredRef = useRef(false);
   const { toast } = useToast();
   const { user } = useAuth();
   const restoredRef = useRef(false);
@@ -374,6 +375,7 @@ export default function Home() {
         setExternalFileName(savedFileName);
       }
     } catch {}
+    hasRestoredRef.current = true;
   }, []);
 
   useEffect(() => {
@@ -429,6 +431,7 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    if (!hasRestoredRef.current) return;
     try {
       const capped = uploadedFiles.map(f => ({
         ...f,
@@ -439,6 +442,7 @@ export default function Home() {
   }, [uploadedFiles]);
 
   useEffect(() => {
+    if (!hasRestoredRef.current) return;
     try {
       const capped = externalEbookContent.length > 500000 ? externalEbookContent.slice(0, 500000) : externalEbookContent;
       localStorage.setItem('chaesa_external_content', capped);
