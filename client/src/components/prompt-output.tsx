@@ -6459,10 +6459,69 @@ START by creating the main App component with the chat interface.`;
                       ) : syllabusLoading ? <span className="text-muted-foreground text-xs">Generating... <span className="inline-block w-2 h-3 bg-cyan-500 animate-pulse ml-1" /></span> : <span className="text-muted-foreground text-xs">—</span>}
                     </div>
                   </ScrollArea>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(syllabusContent); toast({ title: 'Silabus disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
-                    <Button variant="outline" onClick={() => { const b = new Blob([syllabusContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`silabus-${(projectTitle||'kursus').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
-                    <Button disabled={syllabusLoading} onClick={handleGenerateSyllabus} className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                    <Button variant="outline" size="sm" className="flex-1 min-w-[100px]" onClick={() => { const content = getSection(currentTab.tag); navigator.clipboard.writeText(content); toast({ title: `Tab "${currentTab.label.replace(/[^a-zA-Z\s]/g,'').trim()}" disalin!` }); }}><Copy className="h-3.5 w-3.5 mr-1.5" />Salin Tab Ini</Button>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const content = getSection(currentTab.tag);
+                      const tabName = currentTab.label.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                      const pageW = doc.internal.pageSize.getWidth();
+                      const pageH = doc.internal.pageSize.getHeight();
+                      const margin = 20;
+                      const textW = pageW - margin * 2;
+                      doc.setFillColor(37, 99, 235);
+                      doc.rect(0, 0, pageW, 50, 'F');
+                      doc.setTextColor(255, 255, 255);
+                      doc.setFont('helvetica', 'bold');
+                      doc.setFontSize(13);
+                      doc.text(doc.splitTextToSize(`${projectTitle || 'E-Course'} – ${tabName}`, textW).slice(0,2), margin, 22);
+                      doc.setFontSize(8);
+                      doc.setFont('helvetica', 'normal');
+                      doc.setTextColor(200, 220, 255);
+                      doc.text('Chaesa AI Studio', margin, 40);
+                      doc.setTextColor(30, 30, 30);
+                      let y = 60;
+                      for (const rawLine of content.split('\n')) {
+                        const line = rawLine.trim();
+                        if (!line) { y += 3; continue; }
+                        const isH = /^#{1,3}\s/.test(line) || (line.length < 80 && line === line.toUpperCase() && line.length > 2);
+                        if (isH) {
+                          if (y > pageH - 40) { addFooter(doc, pageW, pageH, margin); doc.addPage(); y = 20; }
+                          y += 3;
+                          doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(37, 99, 235);
+                          const cleaned = line.replace(/^#+\s*/, '');
+                          const w = doc.splitTextToSize(cleaned, textW);
+                          doc.text(w, margin, y); y += w.length * 6 + 3; doc.setTextColor(30, 30, 30);
+                        } else {
+                          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(30, 30, 30);
+                          const w = doc.splitTextToSize(line, textW);
+                          for (const wl of w) { if (y > pageH - 25) { addFooter(doc, pageW, pageH, margin); doc.addPage(); y = 20; } doc.text(wl, margin, y); y += 5.5; }
+                        }
+                      }
+                      addFooter(doc, pageW, pageH, margin);
+                      doc.save(`${tabName}-${(projectTitle||'ecourse').slice(0,20).replace(/\s+/g,'-').toLowerCase()}.pdf`);
+                      toast({ title: `PDF "${tabName}" berhasil didownload!` });
+                    }}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+                    <Button variant="outline" size="sm" onClick={async () => {
+                      const content = getSection(currentTab.tag);
+                      const tabName = currentTab.label.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                      const paragraphs = content.split('\n').map(line => {
+                        const t = line.trim();
+                        if (!t) return new Paragraph({});
+                        if (/^# /.test(t)) return new Paragraph({ text: t.slice(2), heading: HeadingLevel.HEADING_1 });
+                        if (/^## /.test(t)) return new Paragraph({ text: t.slice(3), heading: HeadingLevel.HEADING_2 });
+                        if (/^### /.test(t)) return new Paragraph({ text: t.slice(4), heading: HeadingLevel.HEADING_3 });
+                        if (/^[•\-\*] /.test(t)) return new Paragraph({ text: t.slice(2), bullet: { level: 0 } });
+                        return new Paragraph({ children: [new TextRun({ text: t, font: 'Calibri', size: 22 })] });
+                      });
+                      const d = new Document({ sections: [{ children: [new Paragraph({ text: `${projectTitle||'E-Course'} – ${tabName}`, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }), new Paragraph({}), ...paragraphs] }] });
+                      const blob = await Packer.toBlob(d);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = `${tabName}-${(projectTitle||'ecourse').slice(0,20).replace(/\s+/g,'-').toLowerCase()}.docx`; a.click();
+                      URL.revokeObjectURL(url);
+                      toast({ title: `Word "${tabName}" berhasil didownload!` });
+                    }}><FileDown className="h-3.5 w-3.5 mr-1.5" />Word</Button>
+                    <Button disabled={syllabusLoading} onClick={handleGenerateSyllabus} size="sm" className="bg-gradient-to-r from-cyan-600 to-teal-600 text-white"><Sparkles className="h-3.5 w-3.5 mr-1.5" />Buat Ulang</Button>
                   </div>
                 </div>
               </>
@@ -7058,10 +7117,57 @@ START by creating the main App component with the chat interface.`;
                       {quizLoading && quizContent.includes(`===${currentTab.tag}===`) && !quizContent.includes(`===AKHIR_${currentTab.tag}===`) && <span className="inline-block w-2 h-4 bg-purple-500 animate-pulse ml-1" />}
                     </div>
                   </ScrollArea>
-                  <div className="flex gap-2 flex-shrink-0">
-                    <Button variant="outline" className="flex-1" onClick={() => { navigator.clipboard.writeText(quizContent); toast({ title: 'Semua soal disalin!' }); }}><Copy className="h-4 w-4 mr-2" />Salin Semua</Button>
-                    <Button variant="outline" onClick={() => { const b=new Blob([quizContent],{type:'text/plain'}); const u=URL.createObjectURL(b); const a=document.createElement('a'); a.href=u; a.download=`kuis-${(projectTitle||'ebook').slice(0,25).replace(/\s+/g,'-')}.txt`; a.click(); URL.revokeObjectURL(u); }}><Download className="h-4 w-4 mr-2" />Download</Button>
-                    <Button disabled={quizLoading} onClick={handleGenerateQuiz} className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"><Sparkles className="h-4 w-4 mr-2" />Buat Ulang</Button>
+                  <div className="flex gap-1.5 flex-shrink-0 flex-wrap">
+                    <Button variant="outline" size="sm" className="flex-1 min-w-[90px]" onClick={() => { navigator.clipboard.writeText(content); toast({ title: `Soal "${currentTab.label.replace(/[^a-zA-Z\s]/g,'').trim()}" disalin!` }); }}><Copy className="h-3.5 w-3.5 mr-1.5" />Salin Tab Ini</Button>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const tabName = currentTab.label.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                      const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                      const pageW = doc.internal.pageSize.getWidth();
+                      const pageH = doc.internal.pageSize.getHeight();
+                      const margin = 20; const textW = pageW - margin * 2;
+                      doc.setFillColor(147, 51, 234);
+                      doc.rect(0, 0, pageW, 50, 'F');
+                      doc.setTextColor(255, 255, 255); doc.setFont('helvetica', 'bold'); doc.setFontSize(13);
+                      doc.text(doc.splitTextToSize(`${projectTitle || 'E-Course'} – ${tabName}`, textW).slice(0,2), margin, 22);
+                      doc.setFontSize(8); doc.setFont('helvetica', 'normal'); doc.setTextColor(220, 200, 255);
+                      doc.text('Chaesa AI Studio', margin, 40);
+                      doc.setTextColor(30, 30, 30); let y = 60;
+                      for (const rawLine of content.split('\n')) {
+                        const line = rawLine.trim();
+                        if (!line) { y += 3; continue; }
+                        const isH = /^#{1,3}\s/.test(line) || (/^[A-Z0-9\s]+:$/.test(line) && line.length < 60);
+                        if (isH) {
+                          if (y > pageH - 40) { addFooter(doc, pageW, pageH, margin); doc.addPage(); y = 20; }
+                          y += 3; doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(147, 51, 234);
+                          const w = doc.splitTextToSize(line.replace(/^#+\s*/, ''), textW);
+                          doc.text(w, margin, y); y += w.length * 6 + 3; doc.setTextColor(30, 30, 30);
+                        } else {
+                          doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(30, 30, 30);
+                          const w = doc.splitTextToSize(line, textW);
+                          for (const wl of w) { if (y > pageH - 25) { addFooter(doc, pageW, pageH, margin); doc.addPage(); y = 20; } doc.text(wl, margin, y); y += 5.5; }
+                        }
+                      }
+                      addFooter(doc, pageW, pageH, margin);
+                      doc.save(`kuis-${tabName.replace(/\s+/g,'-').toLowerCase()}-${(projectTitle||'ebook').slice(0,15).replace(/\s+/g,'-').toLowerCase()}.pdf`);
+                      toast({ title: `PDF "${tabName}" berhasil didownload!` });
+                    }}><FileText className="h-3.5 w-3.5 mr-1.5" />PDF</Button>
+                    <Button variant="outline" size="sm" onClick={async () => {
+                      const tabName = currentTab.label.replace(/[^a-zA-Z0-9\s]/g, '').trim();
+                      const paragraphs = content.split('\n').map((line: string) => {
+                        const t = line.trim();
+                        if (!t) return new Paragraph({});
+                        if (/^# /.test(t)) return new Paragraph({ text: t.slice(2), heading: HeadingLevel.HEADING_1 });
+                        if (/^## /.test(t)) return new Paragraph({ text: t.slice(3), heading: HeadingLevel.HEADING_2 });
+                        if (/^[A-Z]\. /.test(t)) return new Paragraph({ text: t, bullet: { level: 0 } });
+                        return new Paragraph({ children: [new TextRun({ text: t, font: 'Calibri', size: 22 })] });
+                      });
+                      const d = new Document({ sections: [{ children: [new Paragraph({ text: `${projectTitle||'Quiz'} – ${tabName}`, heading: HeadingLevel.TITLE, alignment: AlignmentType.CENTER }), new Paragraph({}), ...paragraphs] }] });
+                      const blob = await Packer.toBlob(d);
+                      const url = URL.createObjectURL(blob);
+                      const a = document.createElement('a'); a.href = url; a.download = `kuis-${tabName.replace(/\s+/g,'-').toLowerCase()}-${(projectTitle||'ebook').slice(0,15).replace(/\s+/g,'-').toLowerCase()}.docx`; a.click();
+                      URL.revokeObjectURL(url); toast({ title: `Word "${tabName}" berhasil didownload!` });
+                    }}><FileDown className="h-3.5 w-3.5 mr-1.5" />Word</Button>
+                    <Button disabled={quizLoading} onClick={handleGenerateQuiz} size="sm" className="bg-gradient-to-r from-purple-600 to-fuchsia-600 text-white"><Sparkles className="h-3.5 w-3.5 mr-1.5" />Buat Ulang</Button>
                   </div>
                 </div>
               </>
