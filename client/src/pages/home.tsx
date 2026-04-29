@@ -424,7 +424,7 @@ export default function Home() {
   }, [activeMode, currentProjectId]);
 
   useEffect(() => {
-    const check = () => setIsLargeScreen(window.innerWidth >= 1024);
+    const check = () => setIsLargeScreen(window.innerWidth >= 900);
     check();
     window.addEventListener('resize', check);
     return () => window.removeEventListener('resize', check);
@@ -455,16 +455,20 @@ export default function Home() {
     isDraggingRef.current = true;
     const startX = e.clientX;
     const startWidth = leftPanelWidth;
+    document.body.style.cursor = 'col-resize';
+    document.body.style.userSelect = 'none';
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!isDraggingRef.current || !containerRef.current) return;
       const containerWidth = containerRef.current.getBoundingClientRect().width;
       const dx = ev.clientX - startX;
-      const newWidth = Math.max(25, Math.min(75, startWidth + (dx / containerWidth) * 100));
+      const newWidth = Math.max(20, Math.min(80, startWidth + (dx / containerWidth) * 100));
       setLeftPanelWidth(newWidth);
     };
     const onMouseUp = () => {
       isDraggingRef.current = false;
+      document.body.style.cursor = '';
+      document.body.style.userSelect = '';
       document.removeEventListener('mousemove', onMouseMove);
       document.removeEventListener('mouseup', onMouseUp);
       setLeftPanelWidth(prev => {
@@ -788,11 +792,12 @@ export default function Home() {
 
         <div
           ref={containerRef}
-          className="flex flex-col lg:flex-row"
+          className="flex"
+          style={{ flexDirection: isLargeScreen ? 'row' : 'column' }}
         >
           <div
-            className="space-y-6 lg:pr-3 shrink-0"
-            style={isLargeScreen ? { width: `${leftPanelWidth}%` } : undefined}
+            className="space-y-6 shrink-0"
+            style={isLargeScreen ? { width: `${leftPanelWidth}%`, paddingRight: '12px' } : undefined}
           >
             <Tabs defaultValue={externalEbookContent ? "external" : "project"} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
@@ -894,14 +899,24 @@ export default function Home() {
           {isLargeScreen && (
             <div
               onMouseDown={handleDragStart}
-              className="hidden lg:flex items-center justify-center w-2 cursor-col-resize group shrink-0 mx-1"
-              title="Geser untuk ubah ukuran kolom"
+              className="flex items-center justify-center shrink-0 cursor-col-resize group select-none"
+              style={{ width: '14px', margin: '0 2px' }}
+              title="Geser untuk ubah ukuran panel"
             >
-              <div className="w-0.5 h-full min-h-[200px] bg-border group-hover:bg-primary group-active:bg-primary transition-colors rounded-full" />
+              <div
+                className="flex flex-col items-center justify-center gap-[3px] h-12 w-full rounded group-hover:bg-primary/10 group-active:bg-primary/20 transition-colors"
+              >
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+                <div className="w-[3px] h-[3px] rounded-full bg-muted-foreground/40 group-hover:bg-primary transition-colors" />
+              </div>
             </div>
           )}
 
-          <div className="space-y-4 flex-1 min-w-0 mt-6 lg:mt-0">
+          <div className="space-y-4 flex-1 min-w-0" style={isLargeScreen ? undefined : { marginTop: '24px' }}>
             <BookPreview 
               projectData={projectData} 
               activeMode={activeMode} 
