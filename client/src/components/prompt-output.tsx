@@ -7938,17 +7938,32 @@ START by creating the main App component with the chat interface.`;
                 toast({ description: 'Membuat gambar PNG...' });
                 try {
                   const tmpFrame = document.createElement('iframe');
-                  tmpFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;height:594px;border:none;visibility:hidden;';
+                  tmpFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:900px;height:1272px;border:none;visibility:hidden;overflow:hidden;';
                   document.body.appendChild(tmpFrame);
                   await new Promise<void>(resolve => {
-                    tmpFrame.onload = () => setTimeout(resolve, 600);
+                    tmpFrame.onload = () => setTimeout(resolve, 800);
                     tmpFrame.srcdoc = clean;
                   });
+                  const doc = tmpFrame.contentDocument!;
+                  const body = doc.body;
+                  const root = doc.documentElement;
+                  // Find the actual cover element (first full-height child or body itself)
+                  const coverEl = (body.firstElementChild as HTMLElement) || body;
+                  const natW = Math.max(coverEl.scrollWidth, coverEl.offsetWidth, root.scrollWidth, 420);
+                  const natH = Math.max(coverEl.scrollHeight, coverEl.offsetHeight, root.scrollHeight, 594);
+                  // Resize iframe to natural dimensions so nothing is clipped
+                  tmpFrame.style.width = natW + 'px';
+                  tmpFrame.style.height = natH + 'px';
+                  await new Promise(r => setTimeout(r, 200));
                   const h2c = (await import('html2canvas')).default;
-                  const canvas = await h2c(tmpFrame.contentDocument!.documentElement as HTMLElement, {
-                    width: 420, height: 594, scale: 2,
+                  const canvas = await h2c(coverEl, {
+                    width: natW, height: natH,
+                    windowWidth: natW, windowHeight: natH,
+                    scale: 2,
                     useCORS: true, allowTaint: true, logging: false,
                     backgroundColor: null,
+                    x: 0, y: 0,
+                    scrollX: 0, scrollY: 0,
                   });
                   document.body.removeChild(tmpFrame);
                   const url = canvas.toDataURL('image/png');
