@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Link } from 'wouter';
 import { ModeSelector } from '@/components/mode-selector';
@@ -347,9 +347,34 @@ export default function Home() {
   const [currentProjectId, setCurrentProjectId] = useState<string | null>(null);
   const [externalEbookContent, setExternalEbookContent] = useState('');
   const [externalFileName, setExternalFileName] = useState('');
+  const [leftPanelWidth, setLeftPanelWidth] = useState<number>(() => {
+    const saved = localStorage.getItem('chaesa_panel_width');
+    return saved ? Math.max(25, Math.min(75, Number(saved))) : 50;
+  });
+  const [isLargeScreen, setIsLargeScreen] = useState(false);
+  const isDraggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { user } = useAuth();
   const restoredRef = useRef(false);
+
+  const restoreTemporaryData = useCallback(() => {
+    try {
+      const savedFiles = localStorage.getItem('chaesa_uploaded_files');
+      if (savedFiles) {
+        const parsed = JSON.parse(savedFiles);
+        if (Array.isArray(parsed) && parsed.length > 0) setUploadedFiles(parsed);
+      }
+    } catch {}
+    try {
+      const savedContent = localStorage.getItem('chaesa_external_content') || '';
+      const savedFileName = localStorage.getItem('chaesa_external_filename') || '';
+      if (savedContent && savedContent.length > 50) {
+        setExternalEbookContent(savedContent);
+        setExternalFileName(savedFileName);
+      }
+    } catch {}
+  }, []);
 
   useEffect(() => {
     if (restoredRef.current || !user) return;
@@ -357,27 +382,36 @@ export default function Home() {
 
     const savedId = localStorage.getItem('chaesa_last_project_id');
     const savedMode = localStorage.getItem('chaesa_last_mode');
-    if (!savedId) return;
 
     const hasUserChanges = JSON.stringify(projectData) !== JSON.stringify(defaultProjectData) ||
       JSON.stringify(taskConfig) !== JSON.stringify(defaultTaskConfig);
-    if (hasUserChanges) return;
+    if (hasUserChanges) {
+      restoreTemporaryData();
+      return;
+    }
+
+    if (!savedId) {
+      restoreTemporaryData();
+      return;
+    }
 
     fetch(`/api/projects/${savedId}`, { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then((project: any) => {
         if (!project) {
           localStorage.removeItem('chaesa_last_project_id');
-          return;
+        } else {
+          setProjectData({ ...defaultProjectData, ...project.projectData });
+          setTaskConfig({ ...defaultTaskConfig, ...project.taskConfig });
+          setProjectName(project.name ?? '');
+          setCurrentProjectId(project.id);
+          if (savedMode) setActiveMode(savedMode);
         }
-        setProjectData({ ...defaultProjectData, ...project.projectData });
-        setTaskConfig({ ...defaultTaskConfig, ...project.taskConfig });
-        setProjectName(project.name ?? '');
-        setCurrentProjectId(project.id);
-        if (savedMode) setActiveMode(savedMode);
+        restoreTemporaryData();
       })
       .catch(() => {
         localStorage.removeItem('chaesa_last_project_id');
+        restoreTemporaryData();
       });
   }, [user]);
 
@@ -386,6 +420,57 @@ export default function Home() {
       localStorage.setItem('chaesa_last_mode', activeMode);
     }
   }, [activeMode, currentProjectId]);
+
+  useEffect(() => {
+    const check = () => setIsLargeScreen(window.innerWidth >= 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
+  useEffect(() => {
+    try {
+      const capped = uploadedFiles.map(f => ({
+        ...f,
+        content: f.content && f.content.length > 150000 ? f.content.slice(0, 150000) : f.content,
+      }));
+      localStorage.setItem('chaesa_uploaded_files', JSON.stringify(capped));
+    } catch {}
+  }, [uploadedFiles]);
+
+  useEffect(() => {
+    try {
+      const capped = externalEbookContent.length > 500000 ? externalEbookContent.slice(0, 500000) : externalEbookContent;
+      localStorage.setItem('chaesa_external_content', capped);
+      localStorage.setItem('chaesa_external_filename', externalFileName);
+    } catch {}
+  }, [externalEbookContent, externalFileName]);
+
+  const handleDragStart = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDraggingRef.current = true;
+    const startX = e.clientX;
+    const startWidth = leftPanelWidth;
+
+    const onMouseMove = (ev: MouseEvent) => {
+      if (!isDraggingRef.current || !containerRef.current) return;
+      const containerWidth = containerRef.current.getBoundingClientRect().width;
+      const dx = ev.clientX - startX;
+      const newWidth = Math.max(25, Math.min(75, startWidth + (dx / containerWidth) * 100));
+      setLeftPanelWidth(newWidth);
+    };
+    const onMouseUp = () => {
+      isDraggingRef.current = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      setLeftPanelWidth(prev => {
+        localStorage.setItem('chaesa_panel_width', String(prev));
+        return prev;
+      });
+    };
+    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mouseup', onMouseUp);
+  }, [leftPanelWidth]);
 
   const { data: planData } = useQuery<{ plan: string; allowedModes: string[] | 'all' }>({
     queryKey: ['/api/user/plan'],
@@ -697,8 +782,14 @@ export default function Home() {
           <ModeSelector activeMode={activeMode} onModeChange={setActiveMode} allowedModes={allowedModes} />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div className="space-y-6">
+        <div
+          ref={containerRef}
+          className="flex flex-col lg:flex-row"
+        >
+          <div
+            className="space-y-6 lg:pr-3 shrink-0"
+            style={isLargeScreen ? { width: `${leftPanelWidth}%` } : undefined}
+          >
             <Tabs defaultValue={externalEbookContent ? "external" : "project"} className="w-full">
               <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="project" data-testid="tab-project" className="text-xs">
@@ -796,7 +887,17 @@ export default function Home() {
             <EcosystemTracker />
           </div>
 
-          <div className="space-y-4">
+          {isLargeScreen && (
+            <div
+              onMouseDown={handleDragStart}
+              className="hidden lg:flex items-center justify-center w-2 cursor-col-resize group shrink-0 mx-1"
+              title="Geser untuk ubah ukuran kolom"
+            >
+              <div className="w-0.5 h-full min-h-[200px] bg-border group-hover:bg-primary group-active:bg-primary transition-colors rounded-full" />
+            </div>
+          )}
+
+          <div className="space-y-4 flex-1 min-w-0 mt-6 lg:mt-0">
             <BookPreview 
               projectData={projectData} 
               activeMode={activeMode} 

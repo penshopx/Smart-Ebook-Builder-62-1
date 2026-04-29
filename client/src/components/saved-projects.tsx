@@ -173,53 +173,53 @@ export function SavedProjects({ onLoad }: SavedProjectsProps) {
                 {projects.map((project) => (
                   <div
                     key={project.id}
-                    className="flex items-center justify-between p-3 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors"
+                    className="p-3 rounded-md border bg-muted/30 hover:bg-muted/50 transition-colors"
                   >
-                    <div className="flex-1 min-w-0 mr-3">
-                      <p className="font-medium text-sm truncate">{project.name}</p>
-                      <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
-                        <span>{formatDate(project.updatedAt)}</span>
-                      </div>
-                      {project.projectData?.topik && (
-                        <Badge variant="outline" className="mt-2 text-xs">
-                          {project.projectData.topik.substring(0, 30)}
-                          {project.projectData.topik.length > 30 ? '...' : ''}
-                        </Badge>
-                      )}
+                    <p className="font-medium text-sm truncate">{project.name}</p>
+                    <div className="flex items-center gap-1.5 mt-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 shrink-0" />
+                      <span className="truncate">{formatDate(project.updatedAt)}</span>
                     </div>
-                    <div className="flex items-center gap-1">
+                    {project.projectData?.topik && (
+                      <Badge variant="outline" className="mt-1.5 text-xs max-w-full truncate block w-fit">
+                        {project.projectData.topik.substring(0, 35)}
+                        {project.projectData.topik.length > 35 ? '...' : ''}
+                      </Badge>
+                    )}
+                    <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border/40">
                       {/* Buka / Load */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
-                        title="Buka proyek"
+                        className="flex-1 text-xs h-7"
                         onClick={() => onLoad(project)}
                         data-testid={`button-load-project-${project.id}`}
                       >
-                        <FolderOpen className="h-4 w-4" />
+                        <FolderOpen className="h-3.5 w-3.5 mr-1" />
+                        Buka
                       </Button>
                       {/* Edit nama */}
                       <Button
-                        variant="ghost"
+                        variant="outline"
                         size="sm"
+                        className="h-7 px-2"
                         title="Ubah nama"
                         onClick={() => openEditDialog(project)}
                         data-testid={`button-edit-project-${project.id}`}
                       >
-                        <Pencil className="h-4 w-4 text-blue-500" />
+                        <Pencil className="h-3.5 w-3.5 text-blue-500" />
                       </Button>
                       {/* Hapus */}
                       <AlertDialog>
                         <AlertDialogTrigger asChild>
                           <Button
-                            variant="ghost"
+                            variant="outline"
                             size="sm"
-                            className="text-destructive hover:text-destructive"
+                            className="h-7 px-2 text-destructive hover:text-destructive border-destructive/30 hover:border-destructive/60"
                             title="Hapus proyek"
                             data-testid={`button-delete-project-${project.id}`}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
