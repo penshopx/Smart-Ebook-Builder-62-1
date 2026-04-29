@@ -7932,6 +7932,39 @@ START by creating the main App component with the chat interface.`;
           <div className="px-6 py-3 border-t flex flex-wrap items-center gap-2 shrink-0 bg-muted/30">
             <Button
               size="sm" variant="outline"
+              onClick={async () => {
+                if (!coverTplContent) return;
+                const clean = coverTplContent.replace(/```html\n?/g, '').replace(/```\n?/g, '');
+                toast({ description: 'Membuat gambar PNG...' });
+                try {
+                  const tmpFrame = document.createElement('iframe');
+                  tmpFrame.style.cssText = 'position:fixed;left:-9999px;top:0;width:420px;height:594px;border:none;visibility:hidden;';
+                  document.body.appendChild(tmpFrame);
+                  await new Promise<void>(resolve => {
+                    tmpFrame.onload = () => setTimeout(resolve, 600);
+                    tmpFrame.srcdoc = clean;
+                  });
+                  const h2c = (await import('html2canvas')).default;
+                  const canvas = await h2c(tmpFrame.contentDocument!.documentElement as HTMLElement, {
+                    width: 420, height: 594, scale: 2,
+                    useCORS: true, allowTaint: true, logging: false,
+                    backgroundColor: null,
+                  });
+                  document.body.removeChild(tmpFrame);
+                  const url = canvas.toDataURL('image/png');
+                  const a = document.createElement('a');
+                  a.href = url; a.download = 'ebook-cover.png'; a.click();
+                  toast({ description: 'Cover berhasil diunduh sebagai PNG!' });
+                } catch (err) {
+                  toast({ description: 'Gagal buat PNG, coba Unduh HTML', variant: 'destructive' });
+                }
+              }}
+              disabled={!coverTplContent}
+            >
+              <ImagePlus className="h-3.5 w-3.5 mr-1.5" /> Unduh PNG
+            </Button>
+            <Button
+              size="sm" variant="outline"
               onClick={() => {
                 const clean = coverTplContent.replace(/```html\n?/g, '').replace(/```\n?/g, '');
                 const b = new Blob([clean], { type: 'text/html' });
