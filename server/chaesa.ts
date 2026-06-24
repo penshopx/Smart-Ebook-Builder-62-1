@@ -1,8 +1,8 @@
 import OpenAI from "openai";
 
 const openai = new OpenAI({
-  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY || process.env.OPENAI_API_KEY,
+  ...(process.env.AI_INTEGRATIONS_OPENAI_BASE_URL ? { baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL } : {}),
 });
 
 const CHAESA_SYSTEM_PROMPT = `Kamu adalah Chaesa, asisten AI yang ramah dan helpful untuk "Chaesa AI Studio" — platform AI Prompt Generator Indonesia-first untuk membangun Ekosistem Kompetensi Digital dari satu ebook.
