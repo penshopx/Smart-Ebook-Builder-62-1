@@ -1554,6 +1554,8 @@ export function TaskConfigPanel({
                       <SelectItem value="chatgpt">🤖 ChatGPT (GPT-4/4o)</SelectItem>
                       <SelectItem value="claude">🔵 Claude (Anthropic)</SelectItem>
                       <SelectItem value="gemini">💎 Gemini (Google)</SelectItem>
+                      <SelectItem value="deepseek">🔎 DeepSeek</SelectItem>
+                      <SelectItem value="qwen">🟣 Qwen (Alibaba)</SelectItem>
                       <SelectItem value="perplexity">🔍 Perplexity AI</SelectItem>
                       <SelectItem value="copilot">🪟 Microsoft Copilot</SelectItem>
                       <SelectItem value="grok">⚡ Grok (xAI)</SelectItem>
@@ -3133,7 +3135,7 @@ export function TaskConfigPanel({
       case 'PROMPT_PACK': {
         const packLabelMap: Record<string,string> = { ebook_author:'📚 Ebook Author Kit', social_media:'📱 Social Media', product_launch:'🚀 Product Launch', online_course:'🎓 Online Course', seo_blog:'🔍 SEO Blog', business_starter:'💼 Business Starter', personal_brand:'🌟 Personal Branding', ecourse_marketing:'💰 E-Course Marketing', umkm_digital:'🏪 UMKM Digital', youtube_channel:'▶️ YouTube Builder', newsletter_series:'📧 Newsletter', consultant_kit:'🧠 Consultant Kit', training_module:'🏫 Training Module', research_writer:'🔬 Research Writer', startup_mvp:'⚡ Startup MVP', custom:'✏️ Kustom' };
         const techCount = (taskConfig.packTechniques || '').split('|||').filter(Boolean).length;
-        const aiMap: Record<string,string> = { chatgpt:'ChatGPT', claude:'Claude', gemini:'Gemini', perplexity:'Perplexity', copilot:'Copilot', grok:'Grok', chaesa:'Chaesa', universal:'Universal' };
+        const aiMap: Record<string,string> = { chatgpt:'ChatGPT', claude:'Claude', gemini:'Gemini', deepseek:'DeepSeek', qwen:'Qwen', perplexity:'Perplexity', copilot:'Copilot', grok:'Grok', chaesa:'Chaesa', universal:'Universal' };
         return `${packLabelMap[taskConfig.packType] || taskConfig.packType} | ${taskConfig.packNumPrompts || 5} prompt | ${aiMap[taskConfig.packAiTool || 'chatgpt']} | ${techCount} teknik`;
       }
       case 'GPT_BUILDER': return 'Buat system prompt untuk chatbot berbasis ebook';

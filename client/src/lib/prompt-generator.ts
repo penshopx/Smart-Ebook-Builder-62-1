@@ -421,6 +421,8 @@ REKOMENDASI HARGA (dalam Rupiah, berdasarkan segmen target):
         chatgpt: 'ChatGPT (GPT-4o)',
         claude: 'Claude (Anthropic)',
         gemini: 'Gemini (Google)',
+        deepseek: 'DeepSeek',
+        qwen: 'Qwen (Alibaba)',
         perplexity: 'Perplexity AI',
         copilot: 'Microsoft Copilot',
         grok: 'Grok (xAI)',

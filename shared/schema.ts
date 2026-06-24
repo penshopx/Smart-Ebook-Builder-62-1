@@ -391,6 +391,18 @@ export const AI_MODEL_RECOMMENDATIONS = [
     bestFor: ['Kalkulasi teknis', 'Coding', 'Dokumen matematis']
   },
   { 
+    id: 'qwen', 
+    name: 'Qwen (Alibaba)', 
+    url: 'https://chat.qwen.ai',
+    icon: 'Sparkles',
+    color: 'bg-indigo-500',
+    textColor: 'text-white',
+    description: 'Model multilingual kuat dengan dukungan bahasa Asia.',
+    recommended: false,
+    strengths: ['Multilingual', 'Reasoning', 'Coding', 'Long-context'],
+    bestFor: ['Konten multibahasa', 'Coding', 'Analisis dokumen panjang']
+  },
+  { 
     id: 'perplexity', 
     name: 'Perplexity AI', 
     url: 'https://www.perplexity.ai',
